@@ -60,32 +60,32 @@ jobs:
             DOMAIN_TARGET="$DEPLOY_ROOT/aavgodesk.xyz"
           fi
 
-          lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" <<EOF
+          lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
           set cmd:fail-exit yes
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
-          mirror -R --verbose deploy/ "$DEPLOY_ROOT"
+          mirror -R --verbose deploy/ \"$DEPLOY_ROOT\"
           bye
-          EOF
+          "
 
-          if lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" <<EOF
+          if lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
           set cmd:fail-exit yes
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
-          cls -d "$DOMAIN_TARGET"
+          cls -d \"$DOMAIN_TARGET\"
           bye
-          EOF
+          "
           then
-            lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" <<EOF
+            lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
             set cmd:fail-exit yes
             set ftp:ssl-force true
             set ftp:ssl-protect-data true
             set ssl:verify-certificate no
-            mirror -R --verbose deploy/ "$DOMAIN_TARGET"
+            mirror -R --verbose deploy/ \"$DOMAIN_TARGET\"
             bye
-            EOF
+            "
           else
             echo "No domain-specific deploy directory found at $DOMAIN_TARGET"
           fi
