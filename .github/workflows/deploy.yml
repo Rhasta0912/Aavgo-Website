@@ -31,6 +31,7 @@ jobs:
           cp auth/discord/login/index.php deploy/auth/discord/login/index.php
           cp auth/discord/callback/index.php deploy/auth/discord/callback/index.php
           cp auth/logout/index.php deploy/auth/logout/index.php
+          printf "sha=%s\nbuilt_at=%s\n" "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > deploy/_aavgo_deploy.txt
 
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
@@ -54,45 +55,48 @@ jobs:
             DEPLOY_ROOT="/"
           fi
 
-          lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
-          set cmd:fail-exit yes
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ssl:verify-certificate no
-          mirror -R --verbose deploy/ \"$DEPLOY_ROOT\"
-          bye
-          "
+          TARGETS="$DEPLOY_ROOT"
+          for EXTRA in public_html /public_html aavgodesk.xyz /aavgodesk.xyz public_html/aavgodesk.xyz /public_html/aavgodesk.xyz; do
+            case " $TARGETS " in
+              *" $EXTRA "*) ;;
+              *) TARGETS="$TARGETS $EXTRA" ;;
+            esac
+          done
 
-          DOMAIN_CANDIDATES=""
-          if [ "$DEPLOY_ROOT" = "/" ]; then
-            DOMAIN_CANDIDATES="aavgodesk.xyz /aavgodesk.xyz"
-          else
-            DOMAIN_CANDIDATES="$DEPLOY_ROOT/aavgodesk.xyz"
-          fi
+          DEPLOYED_ANY="false"
+          for TARGET in $TARGETS; do
+            if [ "$TARGET" = "/" ]; then
+              EXISTS="true"
+            else
+              if lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
+              set cmd:fail-exit yes
+              set ftp:ssl-force true
+              set ftp:ssl-protect-data true
+              set ssl:verify-certificate no
+              cls -d \"$TARGET\"
+              bye
+              "
+              then
+                EXISTS="true"
+              else
+                EXISTS="false"
+              fi
+            fi
 
-          DOMAIN_DEPLOYED="false"
-          for DOMAIN_TARGET in $DOMAIN_CANDIDATES; do
-            if lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
-            set cmd:fail-exit yes
-            set ftp:ssl-force true
-            set ftp:ssl-protect-data true
-            set ssl:verify-certificate no
-            cls -d \"$DOMAIN_TARGET\"
-            bye
-            "
-            then
+            if [ "$EXISTS" = "true" ]; then
               lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
               set cmd:fail-exit yes
               set ftp:ssl-force true
               set ftp:ssl-protect-data true
               set ssl:verify-certificate no
-              mirror -R --verbose deploy/ \"$DOMAIN_TARGET\"
+              mirror -R --verbose deploy/ \"$TARGET\"
               bye
               "
-              DOMAIN_DEPLOYED="true"
+              DEPLOYED_ANY="true"
             fi
           done
 
-          if [ "$DOMAIN_DEPLOYED" != "true" ]; then
-            echo "No domain-specific deploy directory found in candidates: $DOMAIN_CANDIDATES"
+          if [ "$DEPLOYED_ANY" != "true" ]; then
+            echo "No deploy targets were found in candidates: $TARGETS"
+            exit 1
           fi
