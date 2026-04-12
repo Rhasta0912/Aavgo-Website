@@ -18,7 +18,7 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta
     name="description"
-    content="Private Aavgo leadership suite for Team Leaders and Operations Managers."
+    content="Private Aavgo leadership suite for Team Leaders, Operations Managers, and Developers."
   >
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

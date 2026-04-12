@@ -16,59 +16,154 @@
   >
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="gateway-page-premium">
-  <div class="gateway-shell-premium">
-    <header class="gateway-topbar">
-      <a class="brand brand-plain" href="/" aria-label="Aavgo home">Aavgo</a>
-      <a class="button button-secondary" href="/auth/discord/login/">Log In</a>
-    </header>
+<body class="workspace-page workspace-dashboard workspace-page-access">
+  <div class="dashboard-shell dashboard-shell-access">
+    <aside class="dashboard-sidebar reveal reveal-in">
+      <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
 
-    <main class="gateway-main gateway-main-centered gateway-main-premium">
-      <section class="login-stage login-stage-premium reveal reveal-in">
-        <div class="login-stage-copy">
-          <p class="eyebrow eyebrow-light">Private access</p>
-          <h1>Log in</h1>
-          <p class="hero-text">
-            Discord opens the full Aavgo website only after your role is verified. One secure door, premium workspace inside.
-          </p>
-          <div class="hero-actions hero-actions-centered">
-            <a class="button button-primary" href="/auth/discord/login/">Continue with Discord</a>
-            <a class="button button-secondary button-secondary-dark" href="/auth/discord/login/">Secure Sign-In</a>
-          </div>
-          <div class="role-band role-band-centered">
-            <span>Trainees</span>
-            <span>Agents</span>
-            <span>Team Leaders</span>
-            <span>Operations Managers</span>
-            <span>Developers</span>
-          </div>
-          <p class="locked-note">No Aavgo role, no entry.</p>
+      <section class="dashboard-profile-card">
+        <div class="dashboard-avatar">A</div>
+        <div class="dashboard-profile-copy">
+          <strong>Private front door</strong>
+          <p>Discord-secured access only</p>
         </div>
+      </section>
 
-        <article class="panel-card panel-card-dark login-stage-panel login-stage-panel-premium reveal reveal-delay-1">
-          <p class="section-label section-label-light">Access map</p>
-          <h2>Two private routes behind one cleaner front door.</h2>
-          <div class="login-route-stack">
-            <div class="login-route-card">
-              <span class="login-route-label">/user</span>
-              <strong>Trainees and Agents</strong>
-              <p>Calmer operations surface for shifts, training, and handovers.</p>
+      <div class="dashboard-sidebar-meta">
+        <span class="dashboard-chip dashboard-chip-accent">Role locked</span>
+        <span class="dashboard-chip">Discord verified</span>
+        <span class="dashboard-chip">No public browse</span>
+      </div>
+
+      <div class="dashboard-command-box">
+        <span class="dashboard-command-label">Access mode</span>
+        <strong>One secure front door for the full Aavgo workspace.</strong>
+      </div>
+
+      <nav class="dashboard-nav" aria-label="Private access navigation">
+        <a class="dashboard-nav-link is-active" href="/">Log in</a>
+        <a class="dashboard-nav-link" href="/user/">/user route</a>
+        <a class="dashboard-nav-link" href="/admin/">/admin route</a>
+        <a class="dashboard-nav-link" href="/auth/discord/login/">Continue with Discord</a>
+      </nav>
+
+      <div class="dashboard-side-note">
+        <p class="dashboard-kicker">Admitted roles</p>
+        <h3>Trainees, Agents, Leaders, Ops, Developers</h3>
+        <p>Discord decides before the site renders. No Aavgo role means no entry to the private website.</p>
+      </div>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-header reveal reveal-in">
+        <div>
+          <p class="dashboard-breadcrumb">Access / Front Door</p>
+          <h1 class="dashboard-title dashboard-title-access">Log in</h1>
+          <p class="dashboard-subtitle dashboard-subtitle-access">
+            Discord unlocks the full Aavgo website only after your role is verified. One secure door, premium workspace inside.
+          </p>
+        </div>
+        <div class="dashboard-toolbar">
+          <a class="dashboard-toolbar-link" href="/auth/discord/login/">Continue with Discord</a>
+        </div>
+      </header>
+
+      <section class="dashboard-hero-card dashboard-access-hero reveal reveal-delay-1">
+        <div class="dashboard-hero-grid dashboard-hero-grid-access">
+          <div class="dashboard-access-copy">
+            <p class="dashboard-kicker">Private access</p>
+            <h2 class="dashboard-hero-title dashboard-hero-title-access">One secure door for every premium Aavgo workspace.</h2>
+            <p class="dashboard-hero-copy">
+              Trainees, Agents, Team Leaders, Operations Managers, and Developers enter here first. Everyone else stops at the door
+              before the site opens.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="/auth/discord/login/">Continue with Discord</a>
+              <a class="button button-secondary button-secondary-dark" href="/auth/discord/login/">Secure Sign-In</a>
             </div>
-            <div class="login-route-card">
-              <span class="login-route-label">/admin</span>
-              <strong>Team Leaders, Operations Managers, Developers</strong>
-              <p>Premium leadership board for decisions, approvals, and oversight.</p>
+            <div class="role-band role-band-dashboard">
+              <span>Trainees</span>
+              <span>Agents</span>
+              <span>Team Leaders</span>
+              <span>Operations Managers</span>
+              <span>Developers</span>
+            </div>
+            <p class="locked-note locked-note-dashboard">No Aavgo role, no entry.</p>
+          </div>
+
+          <div class="dashboard-hero-aside dashboard-hero-aside-access">
+            <span class="dashboard-chip dashboard-chip-accent">Access map</span>
+            <strong>Route is assigned after Discord verifies the role.</strong>
+            <div class="dashboard-route-grid">
+              <div class="dashboard-route-card">
+                <span class="dashboard-route-label">/user</span>
+                <strong>Trainees and Agents</strong>
+                <p>Calmer operations surface for shifts, training, and handovers.</p>
+              </div>
+              <div class="dashboard-route-card">
+                <span class="dashboard-route-label">/admin</span>
+                <strong>Team Leaders, Operations Managers, Developers</strong>
+                <p>Leadership board for decisions, approvals, escalation review, and developer work.</p>
+              </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="dashboard-stat-grid reveal reveal-delay-1">
+        <article class="dashboard-stat-card">
+          <p>Front door</p>
+          <strong>01</strong>
+          <span>One Discord-secured login before any private route opens</span>
+        </article>
+        <article class="dashboard-stat-card">
+          <p>User route</p>
+          <strong>/user</strong>
+          <span>Reserved for Trainees and Agents after role verification</span>
+        </article>
+        <article class="dashboard-stat-card">
+          <p>Admin route</p>
+          <strong>/admin</strong>
+          <span>Reserved for Team Leaders, Operations Managers, and Developers</span>
+        </article>
+        <article class="dashboard-stat-card">
+          <p>Access rule</p>
+          <strong>Locked</strong>
+          <span>No matching Aavgo role means the site never fully opens</span>
         </article>
       </section>
-    </main>
 
-    <footer class="footer gateway-footer">
-      <p>Aavgo</p>
-      <p>Private access for live hospitality operations.</p>
-      <p>&copy; <span id="year"></span> Aavgo</p>
-    </footer>
+      <section class="dashboard-content-grid reveal reveal-delay-2">
+        <article class="dashboard-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Why it stays private</p>
+              <h2>Security should feel premium, not clunky.</h2>
+            </div>
+          </div>
+          <p class="dashboard-panel-copy">
+            The website is designed to feel exclusive because access is actually controlled before the private surfaces load. Discord checks the role,
+            then Aavgo sends each person into the right lane.
+          </p>
+        </article>
+
+        <aside class="dashboard-stack">
+          <article class="dashboard-panel">
+            <p class="dashboard-kicker">After login</p>
+            <h2>Clean routing, no mixed access.</h2>
+            <p class="dashboard-panel-copy">
+              Staff land in <strong>/user</strong>. Leadership and Developers land in <strong>/admin</strong>. Wrong-role access is blocked and redirected.
+            </p>
+          </article>
+
+          <article class="dashboard-panel">
+            <p class="dashboard-kicker">Aavgo</p>
+            <h2>Private access for live hospitality operations.</h2>
+            <p class="dashboard-panel-copy">&copy; <span id="year"></span> Aavgo</p>
+          </article>
+        </aside>
+      </section>
+    </main>
   </div>
 
   <script src="script.js"></script>

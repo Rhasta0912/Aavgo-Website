@@ -718,6 +718,16 @@ h2 {
     linear-gradient(180deg, #0c0f12 0%, #12161a 54%, #15181d 100%);
 }
 
+.workspace-dashboard.workspace-page-access {
+  --workspace-accent: #d8b05f;
+  --workspace-accent-soft: rgba(216, 176, 95, 0.18);
+  --workspace-secondary: #8093ff;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(109, 120, 255, 0.14), transparent 22%),
+    radial-gradient(circle at 84% 12%, rgba(216, 176, 95, 0.12), transparent 24%),
+    linear-gradient(180deg, #090b10 0%, #101219 54%, #14171c 100%);
+}
+
 .dashboard-shell {
   width: min(1440px, calc(100% - 1.5rem));
   min-height: 100vh;
@@ -727,6 +737,10 @@ h2 {
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+}
+
+.dashboard-shell-access {
+  align-items: stretch;
 }
 
 .dashboard-sidebar,
@@ -916,12 +930,21 @@ h2 {
   color: #fff8ef;
 }
 
+.dashboard-title-access {
+  max-width: none;
+  font-size: clamp(4rem, 10vw, 7rem);
+}
+
 .dashboard-subtitle {
   max-width: 54rem;
   margin: 0.85rem 0 0;
   color: rgba(255, 255, 255, 0.62);
   font-size: 1rem;
   line-height: 1.72;
+}
+
+.dashboard-subtitle-access {
+  max-width: 44rem;
 }
 
 .dashboard-toolbar {
@@ -969,12 +992,20 @@ h2 {
   align-items: end;
 }
 
+.dashboard-hero-grid-access {
+  align-items: stretch;
+}
+
 .dashboard-hero-title {
   max-width: 13ch;
   color: #fff9f1;
   font-size: clamp(1.9rem, 4vw, 3.45rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
+}
+
+.dashboard-hero-title-access {
+  max-width: 12ch;
 }
 
 .dashboard-hero-copy {
@@ -1003,6 +1034,57 @@ h2 {
   margin: 0.65rem 0 0;
   color: rgba(255, 255, 255, 0.62);
   line-height: 1.7;
+}
+
+.dashboard-access-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dashboard-access-hero {
+  min-height: 34rem;
+}
+
+.dashboard-hero-aside-access {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-route-grid {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
+}
+
+.dashboard-route-card {
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dashboard-route-label {
+  display: inline-flex;
+  margin-bottom: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.dashboard-route-card strong {
+  display: block;
+  color: #fff8ef;
+  line-height: 1.24;
+}
+
+.dashboard-route-card p {
+  margin: 0.55rem 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.62;
 }
 
 .dashboard-stat-grid {
@@ -1208,6 +1290,28 @@ h2 {
 
 .dashboard-action-row-message {
   margin-top: 1.5rem;
+}
+
+.workspace-page-access .hero-actions {
+  margin-top: 1.7rem;
+}
+
+.workspace-page-access .role-band-dashboard {
+  margin-top: 1.6rem;
+}
+
+.workspace-page-access .role-band span,
+.workspace-page-access .locked-note-dashboard {
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspace-page-access .locked-note-dashboard {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 1rem;
+  color: #fff8ef;
 }
 
 .reveal {

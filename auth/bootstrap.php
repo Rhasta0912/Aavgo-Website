@@ -6,8 +6,10 @@ const AAVGO_EXTERNAL_CONFIG = '/home/aavgodes/discord-auth-config.php';
 const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
 const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
+const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
+        AAVGO_DEVELOPER_ROLE_ID, // Developer
         '1482732583660818636', // Team Leader
         '1482226842047090809', // Operations Manager
     ],
@@ -69,6 +71,17 @@ function aavgo_normalize_role_ids(array $roleIds): array
     ];
 }
 
+function aavgo_ensure_required_role_ids(array $roleIds): array
+{
+    $normalized = aavgo_normalize_role_ids($roleIds);
+    $normalized['admin'] = aavgo_parse_id_list(array_merge(
+        [AAVGO_DEVELOPER_ROLE_ID],
+        $normalized['admin']
+    ));
+
+    return $normalized;
+}
+
 function aavgo_load_config(): array
 {
     static $config = null;
@@ -77,7 +90,7 @@ function aavgo_load_config(): array
         return $config;
     }
 
-    $roleIds = AAVGO_DEFAULT_ROLE_IDS;
+    $roleIds = aavgo_ensure_required_role_ids(AAVGO_DEFAULT_ROLE_IDS);
     $envAdminRoleIds = aavgo_parse_id_list(getenv('AAVGO_ADMIN_ROLE_IDS') ?: '');
     $envUserRoleIds = aavgo_parse_id_list(getenv('AAVGO_USER_ROLE_IDS') ?: '');
     $adminUserIds = aavgo_parse_id_list(getenv('AAVGO_ADMIN_USER_IDS') ?: '') ?: AAVGO_DEFAULT_ADMIN_USER_IDS;
@@ -114,7 +127,7 @@ function aavgo_load_config(): array
             ];
 
             if (is_array($rawRoleIds)) {
-                $config['role_ids'] = aavgo_normalize_role_ids($rawRoleIds);
+                $config['role_ids'] = aavgo_ensure_required_role_ids($rawRoleIds);
             }
 
             $rawAdminUserIds = $fileConfig['admin_user_ids'] ?? $fileConfig['developer_user_ids'] ?? $config['admin_user_ids'];
@@ -465,20 +478,24 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="workspace-page workspace-dashboard workspace-page-admin">
+<body class="workspace-page workspace-dashboard workspace-page-access">
   <div class="dashboard-shell dashboard-shell-message">
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       <section class="dashboard-profile-card">
         <div class="dashboard-avatar">A</div>
         <div class="dashboard-profile-copy">
-          <strong>Private access</strong>
+          <strong>Private front door</strong>
           <p>Discord-secured website surface</p>
         </div>
       </section>
       <div class="dashboard-sidebar-meta">
-        <span class="dashboard-chip dashboard-chip-accent">Secure gate</span>
-        <span class="dashboard-chip">No public access</span>
+        <span class="dashboard-chip dashboard-chip-accent">Access gate</span>
+        <span class="dashboard-chip">No public browse</span>
+      </div>
+      <div class="dashboard-command-box">
+        <span class="dashboard-command-label">Access mode</span>
+        <strong>The website stays private until the right Discord role opens the route.</strong>
       </div>
       <div class="dashboard-side-note">
         <p class="dashboard-kicker">Status</p>
@@ -498,7 +515,7 @@ function aavgo_render_message_page(string $title, string $message, string $actio
           <div class="dashboard-hero-aside">
             <span class="dashboard-chip dashboard-chip-accent">Next step</span>
             <strong>Return through the secure front door.</strong>
-            <p>Use the guided route below to continue without leaving the premium private surface.</p>
+            <p>Move back into the correct workspace lane without dropping out of the premium private surface.</p>
           </div>
         </div>
         <div class="dashboard-action-row dashboard-action-row-message">

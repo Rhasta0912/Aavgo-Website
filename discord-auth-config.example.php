@@ -8,6 +8,7 @@ return [
     // Optional override if your server role IDs ever change.
     'role_ids' => [
         'admin' => [
+            '1482312134875418737', // Developer
             '1482732583660818636', // Team Leader
             '1482226842047090809', // Operations Manager
         ],
