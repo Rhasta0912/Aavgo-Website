@@ -44,6 +44,7 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
       <div class="dashboard-sidebar-meta">
         <span class="dashboard-chip dashboard-chip-accent">Admin</span>
         <span class="dashboard-chip">Discord verified</span>
+        <span class="dashboard-chip">Developers allowed</span>
       </div>
 
       <div class="dashboard-command-box">
@@ -73,7 +74,7 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
           <p class="dashboard-breadcrumb">Dashboard / Leadership</p>
           <h1 class="dashboard-title">Operational command for <?php echo $safeDisplayName; ?></h1>
           <p class="dashboard-subtitle">
-            Team Leaders and Operations Managers land here after Discord verifies the right role. This is the
+            Team Leaders, Operations Managers, and approved Developers land here after Discord verifies the right access. This is the
             premium oversight surface for service quality, staffing clarity, and leadership decisions.
           </p>
         </div>
@@ -91,7 +92,7 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
             <h2 class="dashboard-hero-title">A tighter control room for coverage, approvals, and live operational pressure.</h2>
             <p class="dashboard-hero-copy">
               The layout is built to feel private, trusted, and high-end before heavier reporting tools even arrive.
-              Leadership should step into a surface that already feels like command, not clutter.
+              Leadership and developer workflows should step into a surface that already feels like command, not clutter.
             </p>
           </div>
 

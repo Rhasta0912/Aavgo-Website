@@ -16,6 +16,10 @@ const AAVGO_DEFAULT_ROLE_IDS = [
         '1482227287159078964', // Agent
     ],
 ];
+const AAVGO_DEFAULT_ADMIN_USER_IDS = [
+    '320128931971727360', // Alpha
+    '1186978205018632242', // Astra
+];
 
 function aavgo_bootstrap_session(): void
 {
@@ -76,6 +80,7 @@ function aavgo_load_config(): array
     $roleIds = AAVGO_DEFAULT_ROLE_IDS;
     $envAdminRoleIds = aavgo_parse_id_list(getenv('AAVGO_ADMIN_ROLE_IDS') ?: '');
     $envUserRoleIds = aavgo_parse_id_list(getenv('AAVGO_USER_ROLE_IDS') ?: '');
+    $adminUserIds = aavgo_parse_id_list(getenv('AAVGO_ADMIN_USER_IDS') ?: '') ?: AAVGO_DEFAULT_ADMIN_USER_IDS;
 
     if ($envAdminRoleIds !== []) {
         $roleIds['admin'] = $envAdminRoleIds;
@@ -91,6 +96,7 @@ function aavgo_load_config(): array
         'guild_id' => getenv('AAVGO_DISCORD_GUILD_ID') ?: '',
         'base_url' => rtrim(getenv('AAVGO_BASE_URL') ?: AAVGO_DEFAULT_BASE_URL, '/'),
         'role_ids' => $roleIds,
+        'admin_user_ids' => $adminUserIds,
     ];
 
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
@@ -110,6 +116,9 @@ function aavgo_load_config(): array
             if (is_array($rawRoleIds)) {
                 $config['role_ids'] = aavgo_normalize_role_ids($rawRoleIds);
             }
+
+            $rawAdminUserIds = $fileConfig['admin_user_ids'] ?? $fileConfig['developer_user_ids'] ?? $config['admin_user_ids'];
+            $config['admin_user_ids'] = aavgo_parse_id_list($rawAdminUserIds);
 
             $config['base_url'] = rtrim((string) ($config['base_url'] ?: AAVGO_DEFAULT_BASE_URL), '/');
         }
@@ -144,6 +153,11 @@ function aavgo_get_callback_url(): string
     return aavgo_get_config_string('base_url') . '/auth/discord/callback/';
 }
 
+function aavgo_get_admin_user_ids(): array
+{
+    return aavgo_parse_id_list(aavgo_get_config('admin_user_ids') ?? []);
+}
+
 function aavgo_is_configured(): bool
 {
     return aavgo_get_config_string('client_id') !== ''
@@ -153,7 +167,9 @@ function aavgo_is_configured(): bool
 
 function aavgo_has_role_mapping(): bool
 {
-    return aavgo_get_role_ids('admin') !== [] || aavgo_get_role_ids('user') !== [];
+    return aavgo_get_role_ids('admin') !== []
+        || aavgo_get_role_ids('user') !== []
+        || aavgo_get_admin_user_ids() !== [];
 }
 
 function aavgo_is_fully_configured(): bool
@@ -264,8 +280,13 @@ function aavgo_member_role_ids(array $member): array
     return aavgo_parse_id_list($member['roles'] ?? []);
 }
 
-function aavgo_resolve_access_level(array $memberRoleIds): ?string
+function aavgo_resolve_access_level(array $discordUser, array $memberRoleIds): ?string
 {
+    $userId = trim((string) ($discordUser['id'] ?? ''));
+    if ($userId !== '' && in_array($userId, aavgo_get_admin_user_ids(), true)) {
+        return 'admin';
+    }
+
     if (array_intersect($memberRoleIds, aavgo_get_role_ids('admin')) !== []) {
         return 'admin';
     }
@@ -397,7 +418,7 @@ function aavgo_require_access(string $route): array
     http_response_code(403);
     aavgo_render_message_page(
         'That area is not open to this role.',
-        'Aavgo verified your Discord access, but this route belongs to a different workspace.',
+        'Aavgo verified your Discord access, but this route belongs to a different workspace tier.',
         'Open My Workspace',
         $defaultPath
     );
@@ -444,23 +465,45 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="workspace-page workspace-page-admin">
-  <div class="site-shell">
-    <header class="topbar topbar-minimal">
-      <a class="brand brand-plain" href="/" aria-label="Aavgo home">Aavgo</a>
-      <a class="button button-secondary" href="/">Front Door</a>
-    </header>
+<body class="workspace-page workspace-dashboard workspace-page-admin">
+  <div class="dashboard-shell dashboard-shell-message">
+    <aside class="dashboard-sidebar reveal reveal-in">
+      <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+      <section class="dashboard-profile-card">
+        <div class="dashboard-avatar">A</div>
+        <div class="dashboard-profile-copy">
+          <strong>Private access</strong>
+          <p>Discord-secured website surface</p>
+        </div>
+      </section>
+      <div class="dashboard-sidebar-meta">
+        <span class="dashboard-chip dashboard-chip-accent">Secure gate</span>
+        <span class="dashboard-chip">No public access</span>
+      </div>
+      <div class="dashboard-side-note">
+        <p class="dashboard-kicker">Status</p>
+        <h3>{$safeTitle}</h3>
+        <p>{$safeMessage}</p>
+      </div>
+    </aside>
 
-    <main class="workspace-main">
-      <section class="workspace-hero workspace-hero-message reveal reveal-in">
-        <div class="workspace-copy">
-          <p class="eyebrow">Private access status</p>
-          <h1>{$safeTitle}</h1>
-          <p class="hero-text">{$safeMessage}</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
-            <a class="button button-secondary" href="/">Back Home</a>
+    <main class="dashboard-main">
+      <section class="dashboard-hero-card dashboard-message-hero reveal reveal-in">
+        <div class="dashboard-hero-grid">
+          <div>
+            <p class="dashboard-kicker">Private access status</p>
+            <h1 class="dashboard-title dashboard-title-message">{$safeTitle}</h1>
+            <p class="dashboard-subtitle">{$safeMessage}</p>
           </div>
+          <div class="dashboard-hero-aside">
+            <span class="dashboard-chip dashboard-chip-accent">Next step</span>
+            <strong>Return through the secure front door.</strong>
+            <p>Use the guided route below to continue without leaving the premium private surface.</p>
+          </div>
+        </div>
+        <div class="dashboard-action-row dashboard-action-row-message">
+          <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
+          <a class="button button-secondary" href="/">Back Home</a>
         </div>
       </section>
     </main>

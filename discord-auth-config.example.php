@@ -16,4 +16,9 @@ return [
             '1482227287159078964', // Agent
         ],
     ],
+    // Optional admin user override for approved developers or owners.
+    'admin_user_ids' => [
+        '320128931971727360', // Alpha
+        '1186978205018632242', // Astra
+    ],
 ];

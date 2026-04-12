@@ -16,39 +16,50 @@
   >
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="gateway-page">
-  <div class="site-shell gateway-shell gateway-shell-simple">
-    <header class="topbar topbar-minimal">
+<body class="gateway-page-premium">
+  <div class="gateway-shell-premium">
+    <header class="gateway-topbar">
       <a class="brand brand-plain" href="/" aria-label="Aavgo home">Aavgo</a>
       <a class="button button-secondary" href="/auth/discord/login/">Log In</a>
     </header>
 
-    <main class="gateway-main gateway-main-centered">
-      <section class="login-stage reveal reveal-in">
+    <main class="gateway-main gateway-main-centered gateway-main-premium">
+      <section class="login-stage login-stage-premium reveal reveal-in">
         <div class="login-stage-copy">
-          <p class="eyebrow">Private access</p>
+          <p class="eyebrow eyebrow-light">Private access</p>
           <h1>Log in</h1>
           <p class="hero-text">
-            The full Aavgo website opens only after Discord confirms your role.
+            Discord opens the full Aavgo website only after your role is verified. One secure door, premium workspace inside.
           </p>
           <div class="hero-actions hero-actions-centered">
             <a class="button button-primary" href="/auth/discord/login/">Continue with Discord</a>
+            <a class="button button-secondary button-secondary-dark" href="/auth/discord/login/">Secure Sign-In</a>
           </div>
           <div class="role-band role-band-centered">
             <span>Trainees</span>
             <span>Agents</span>
             <span>Team Leaders</span>
             <span>Operations Managers</span>
+            <span>Developers</span>
           </div>
           <p class="locked-note">No Aavgo role, no entry.</p>
         </div>
 
-        <article class="panel-card panel-card-dark login-stage-panel reveal reveal-delay-1">
-          <p class="section-label">Aavgo</p>
-          <h2>Quiet, premium, and private by default.</h2>
-          <p>
-            This front door stays minimal on purpose. Sign in to unlock the full experience.
-          </p>
+        <article class="panel-card panel-card-dark login-stage-panel login-stage-panel-premium reveal reveal-delay-1">
+          <p class="section-label section-label-light">Access map</p>
+          <h2>Two private routes behind one cleaner front door.</h2>
+          <div class="login-route-stack">
+            <div class="login-route-card">
+              <span class="login-route-label">/user</span>
+              <strong>Trainees and Agents</strong>
+              <p>Calmer operations surface for shifts, training, and handovers.</p>
+            </div>
+            <div class="login-route-card">
+              <span class="login-route-label">/admin</span>
+              <strong>Team Leaders, Operations Managers, Developers</strong>
+              <p>Premium leadership board for decisions, approvals, and oversight.</p>
+            </div>
+          </div>
         </article>
       </section>
     </main>

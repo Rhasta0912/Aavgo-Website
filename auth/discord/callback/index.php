@@ -77,14 +77,14 @@ try {
 }
 
 $memberRoleIds = aavgo_member_role_ids($member);
-$accessLevel = aavgo_resolve_access_level($memberRoleIds);
+$accessLevel = aavgo_resolve_access_level($user, $memberRoleIds);
 
 if ($accessLevel === null) {
     aavgo_logout();
     http_response_code(403);
     aavgo_render_message_page(
         'Access denied.',
-        'Only Aavgo Trainees, Agents, Team Leaders, and Operations Managers can enter the private website.',
+        'Only Aavgo Trainees, Agents, Team Leaders, Operations Managers, and approved Developers can enter the private website.',
         'Back to Home',
         '/'
     );
