@@ -54,6 +54,10 @@ jobs:
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
+          pwd
+          cls -la
+          cls -la "$CPANEL_FTP_PATH"
           mirror -R --verbose deploy/ "$CPANEL_FTP_PATH"
+          cls -la "$CPANEL_FTP_PATH"
           bye
           EOF
