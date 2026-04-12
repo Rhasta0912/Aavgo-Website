@@ -91,7 +91,7 @@ a {
 }
 
 .site-shell {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1320px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 1.25rem 0 3rem;
 }
@@ -175,7 +175,7 @@ a {
 .gateway-hero,
 .workspace-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  grid-template-columns: minmax(0, 1.12fr) minmax(420px, 0.88fr);
   gap: 1rem;
   align-items: stretch;
 }
@@ -208,10 +208,14 @@ a {
   gap: 1rem;
 }
 
+.access-strip {
+  padding-top: 1rem;
+}
+
 .panel-card,
 .surface-card,
 .workspace-panel {
-  padding: 1.5rem;
+  padding: 1.65rem;
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
@@ -287,6 +291,19 @@ h2 {
   line-height: 1.75;
 }
 
+.panel-card-dark h2 {
+  max-width: 9ch;
+  font-size: clamp(2.15rem, 4vw, 3.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.panel-card-dark p {
+  max-width: 34rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -354,6 +371,25 @@ h2 {
 .metric-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 1.2rem;
+}
+
+.access-grid .surface-card {
+  min-height: 18rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.access-grid .surface-card h2 {
+  margin-bottom: 0.75rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.access-grid .surface-card p {
+  margin: 0;
+  max-width: 22ch;
+  font-size: 1.03rem;
+  line-height: 1.65;
 }
 
 .metric-card {
@@ -427,7 +463,7 @@ h2 {
 
 @media (max-width: 720px) {
   .site-shell {
-    width: min(100% - 1rem, 1180px);
+    width: min(100% - 1rem, 1320px);
   }
 
   .topbar {
@@ -458,6 +494,14 @@ h2 {
 
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .access-grid .surface-card {
+    min-height: auto;
+  }
+
+  .access-grid .surface-card p {
+    max-width: none;
   }
 
   .footer {
