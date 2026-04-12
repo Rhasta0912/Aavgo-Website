@@ -8,6 +8,45 @@ $user = aavgo_require_access('admin');
 $displayName = aavgo_display_name($user);
 $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A'), ENT_QUOTES, 'UTF-8');
+$hoursPayload = aavgo_fetch_hours_bridge_payload();
+$hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : null;
+$summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
+$teams = is_array($hoursData['teams'] ?? null) ? $hoursData['teams'] : [];
+$people = is_array($hoursData['people'] ?? null) ? $hoursData['people'] : [];
+$generatedAt = trim((string) ($hoursData['generatedAt'] ?? ''));
+$generatedAtLabel = 'Waiting for live sync';
+if ($generatedAt !== '') {
+    $timestamp = strtotime($generatedAt);
+    if ($timestamp !== false) {
+        $generatedAtLabel = gmdate('M j, Y g:i A', $timestamp) . ' UTC';
+    }
+}
+
+function aavgo_admin_hours_label(mixed $value): string
+{
+    $number = (float) $value;
+    if (!is_finite($number)) {
+        $number = 0.0;
+    }
+    $formatted = number_format($number, 1);
+    return preg_replace('/\.0$/', '', $formatted) ?: '0';
+}
+
+function aavgo_admin_cell(mixed $value): string
+{
+    return htmlspecialchars(aavgo_admin_hours_label($value), ENT_QUOTES, 'UTF-8') . 'h';
+}
+
+function aavgo_admin_text(mixed $value, string $fallback = 'Unavailable'): string
+{
+    $text = trim((string) $value);
+    return htmlspecialchars($text !== '' ? $text : $fallback, ENT_QUOTES, 'UTF-8');
+}
+
+$bootstrapJson = json_encode(
+    $hoursPayload,
+    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +68,7 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body class="workspace-page workspace-dashboard workspace-page-admin">
-  <div class="dashboard-shell">
+  <div class="dashboard-shell dashboard-shell-operations dashboard-shell-roomy">
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
 
@@ -43,214 +82,217 @@ $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A
 
       <div class="dashboard-sidebar-meta">
         <span class="dashboard-chip dashboard-chip-accent">Admin</span>
-        <span class="dashboard-chip">Discord verified</span>
+        <span class="dashboard-chip">Live board</span>
         <span class="dashboard-chip">Developers allowed</span>
       </div>
 
       <div class="dashboard-command-box">
-        <span class="dashboard-command-label">Leadership mode</span>
-        <strong>Escalations, approvals, and hotel pressure in one place.</strong>
+        <span class="dashboard-command-label">Control mode</span>
+        <strong>The left rail stays fixed so the hours board can breathe on the right.</strong>
       </div>
 
       <nav class="dashboard-nav" aria-label="Leadership navigation">
-        <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
-        <a class="dashboard-nav-link" href="#insight">Insight</a>
-        <a class="dashboard-nav-link" href="#actions">Action lane</a>
+        <a class="dashboard-nav-link is-active" href="/admin/">Hours board</a>
+        <a class="dashboard-nav-link" href="#live-board">Live staff hours</a>
+        <a class="dashboard-nav-link" href="#team-board">Team totals</a>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
         <a class="dashboard-nav-link" href="/">Front door</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
 
       <div class="dashboard-side-note">
-        <p class="dashboard-kicker">Tonight</p>
-        <h3>4 live pressure points</h3>
-        <p>Coverage review, handover follow-up, pending approvals, and team support are the current focus.</p>
+        <p class="dashboard-kicker">Current lane</p>
+        <h3>Cleaner command, less noise.</h3>
+        <p>The board now focuses on actual agent hours, active sessions, and team totals instead of decorative filler.</p>
       </div>
     </aside>
 
     <main class="dashboard-main">
       <header class="dashboard-header reveal reveal-in">
         <div>
-          <p class="dashboard-breadcrumb">Dashboard / Leadership</p>
-          <h1 class="dashboard-title">Operational command for <?php echo $safeDisplayName; ?></h1>
+          <p class="dashboard-breadcrumb">Dashboard / Leadership / Hours</p>
+          <h1 class="dashboard-title dashboard-title-wide">Real-time hours for the actual Aavgo team.</h1>
           <p class="dashboard-subtitle">
-            Team Leaders, Operations Managers, and approved Developers land here after Discord verifies the right access. This is the
-            premium oversight surface for service quality, staffing clarity, and leadership decisions.
+            This board pulls real data from the bot database. Active sessions rise live, weekly and monthly totals stay visible,
+            and the layout is organized around decisions instead of clutter.
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <a class="dashboard-toolbar-link" href="/user/">Open staff view</a>
-          <a class="dashboard-toolbar-link" href="/">Front door</a>
+          <a class="dashboard-toolbar-link" href="#live-board">Hours board</a>
+          <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
           <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
       </header>
 
-      <section class="dashboard-hero-card reveal reveal-delay-1" id="overview">
-        <div class="dashboard-hero-grid">
-          <div>
-            <p class="dashboard-kicker">Leadership suite</p>
-            <h2 class="dashboard-hero-title">A tighter control room for coverage, approvals, and live operational pressure.</h2>
-            <p class="dashboard-hero-copy">
-              The layout is built to feel private, trusted, and high-end before heavier reporting tools even arrive.
-              Leadership and developer workflows should step into a surface that already feels like command, not clutter.
-            </p>
-          </div>
-
-          <div class="dashboard-hero-aside">
-            <span class="dashboard-chip dashboard-chip-accent">Leadership tier</span>
-            <strong>Locked before render</strong>
-            <p>No public browsing, no mixed staff surface, and no access unless Discord confirms the role first.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="dashboard-stat-grid reveal reveal-delay-1">
+      <section class="dashboard-stat-grid dashboard-stat-grid-balanced reveal reveal-delay-1">
         <article class="dashboard-stat-card">
-          <p>Coverage health</p>
-          <strong>94%</strong>
-          <span>Across active hotel lanes</span>
+          <p>People tracked</p>
+          <strong id="hours-summary-total"><?php echo aavgo_admin_text($summary['totalPeople'] ?? '0'); ?></strong>
+          <span>All current staff rows from the live database</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Approvals waiting</p>
-          <strong>03</strong>
-          <span>Need leadership eyes tonight</span>
+          <p>Active right now</p>
+          <strong id="hours-summary-active"><?php echo aavgo_admin_text($summary['activeNow'] ?? '0'); ?></strong>
+          <span>Sessions currently open across the workspace</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Hotels monitored</p>
-          <strong>06</strong>
-          <span>Across the live operations board</span>
+          <p>Today total</p>
+          <strong id="hours-summary-today"><?php echo aavgo_admin_hours_label($summary['todayHours'] ?? 0); ?>h</strong>
+          <span>Combined tracked hours since the current PH day opened</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Escalations open</p>
-          <strong>01</strong>
-          <span>Contained but still active</span>
+          <p>Weekly total</p>
+          <strong id="hours-summary-weekly"><?php echo aavgo_admin_hours_label($summary['weeklyHours'] ?? 0); ?>h</strong>
+          <span>Combined tracked hours for the current PH week</span>
+        </article>
+        <article class="dashboard-stat-card">
+          <p>Monthly total</p>
+          <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?>h</strong>
+          <span>Combined tracked hours for the current PH month</span>
         </article>
       </section>
 
-      <section class="dashboard-content-grid reveal reveal-delay-2" id="insight">
-        <article class="dashboard-panel dashboard-panel-chart">
+      <section class="dashboard-content-grid dashboard-content-grid-ops reveal reveal-delay-2">
+        <article class="dashboard-panel dashboard-panel-board" id="live-board">
           <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Leadership pulse</p>
-              <h2>Weekly service pressure</h2>
+              <p class="dashboard-kicker">Live hours board</p>
+              <h2>Actual staff and actual hour totals</h2>
             </div>
-            <span class="dashboard-chip">Today</span>
+            <div class="dashboard-panel-meta">
+              <span class="dashboard-chip dashboard-chip-accent">Auto-refresh</span>
+              <span class="dashboard-chip" id="hours-sync-label"><?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
           </div>
 
-          <div class="dashboard-chart-surface">
-            <svg class="dashboard-line-chart" viewBox="0 0 520 220" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="adminLine" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#6171ff"></stop>
-                  <stop offset="55%" stop-color="#a38ae6"></stop>
-                  <stop offset="100%" stop-color="#d8b05f"></stop>
-                </linearGradient>
-              </defs>
-              <path d="M0 160 C40 156 68 150 100 154 S160 144 194 148 S262 136 302 142 S376 126 420 118 S474 92 520 86" fill="none" stroke="url(#adminLine)" stroke-width="3" stroke-linecap="round"></path>
-              <line x1="420" y1="20" x2="420" y2="190" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 6"></line>
-              <rect x="390" y="74" width="92" height="34" rx="17" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"></rect>
-              <text x="436" y="95" text-anchor="middle" fill="#f8f4ee" font-size="12">87% stable</text>
-            </svg>
+          <div id="hours-board-notice">
+            <?php if (!($hoursPayload['ok'] ?? false)): ?>
+              <div class="dashboard-inline-notice">
+                <strong>Live hours are not connected yet.</strong>
+                <p><?php echo aavgo_admin_text($hoursPayload['error'] ?? 'The admin hours bridge is not configured yet.'); ?></p>
+              </div>
+            <?php endif; ?>
           </div>
 
-          <div class="dashboard-axis">
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
-            <span>Sun</span>
+          <div class="dashboard-hours-table-wrap" id="hours-board-table">
+            <table class="dashboard-hours-table">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Role</th>
+                  <th>Team</th>
+                  <th>Hotel</th>
+                  <th>Active now</th>
+                  <th>Today</th>
+                  <th>Week</th>
+                  <th>Month</th>
+                  <th>All time</th>
+                </tr>
+              </thead>
+              <tbody id="hours-board-rows">
+                <?php if ($people === []): ?>
+                  <tr>
+                    <td colspan="9">
+                      <div class="dashboard-empty-state">
+                        <strong>No live hour rows yet.</strong>
+                        <p>Once the hours bridge responds, every actual staff row will appear here.</p>
+                      </div>
+                    </td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($people as $person): ?>
+                    <?php
+                    $activeNow = !empty($person['activeNow']);
+                    $activeSession = is_array($person['activeSession'] ?? null) ? $person['activeSession'] : null;
+                    $activeLabel = $activeNow && $activeSession !== null
+                        ? (($activeSession['kind'] ?? 'Live Shift') . ' - ' . aavgo_admin_hours_label($activeSession['elapsedHours'] ?? 0) . 'h')
+                        : 'Offline';
+                    ?>
+                    <tr class="<?php echo $activeNow ? 'is-live' : ''; ?>">
+                      <td>
+                        <div class="dashboard-staff-cell">
+                          <strong><?php echo aavgo_admin_text($person['displayName'] ?? 'Unknown'); ?></strong>
+                          <span><?php echo aavgo_admin_text($person['route'] ?? '/user'); ?></span>
+                        </div>
+                      </td>
+                      <td><?php echo aavgo_admin_text($person['role'] ?? 'Agent'); ?></td>
+                      <td><?php echo aavgo_admin_text($person['team'] ?? 'Unassigned'); ?></td>
+                      <td><?php echo aavgo_admin_text($person['linkedHotel'] ?? 'Unassigned'); ?></td>
+                      <td>
+                        <span class="dashboard-status-pill <?php echo $activeNow ? 'is-live' : 'is-idle'; ?>">
+                          <?php echo aavgo_admin_text($activeLabel, 'Offline'); ?>
+                        </span>
+                      </td>
+                      <td><?php echo aavgo_admin_cell($person['todayHours'] ?? 0); ?></td>
+                      <td><?php echo aavgo_admin_cell($person['weeklyHours'] ?? 0); ?></td>
+                      <td><?php echo aavgo_admin_cell($person['monthlyHours'] ?? 0); ?></td>
+                      <td><?php echo aavgo_admin_cell($person['allHours'] ?? 0); ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
           </div>
         </article>
 
-        <aside class="dashboard-stack">
+        <aside class="dashboard-stack" id="team-board">
           <article class="dashboard-panel">
             <div class="dashboard-panel-heading">
               <div>
-                <p class="dashboard-kicker">Complete today</p>
-                <h2>Leadership lane</h2>
+                <p class="dashboard-kicker">Team totals</p>
+                <h2>Organized by lane</h2>
               </div>
             </div>
-            <div class="dashboard-task-list">
-              <div class="dashboard-task-item">
-                <strong>Finalize handover review</strong>
-                <span>Needs final note before sign-off</span>
-              </div>
-              <div class="dashboard-task-item">
-                <strong>Approve hotel lane update</strong>
-                <span>Coverage change requested at 11:30 PM</span>
-              </div>
-              <div class="dashboard-task-item">
-                <strong>Close escalation report</strong>
-                <span>Waiting for final manager comment</span>
-              </div>
+            <div class="dashboard-mini-grid" id="hours-team-cards">
+              <?php if ($teams === []): ?>
+                <div class="dashboard-mini-card">
+                  <strong>Waiting for data</strong>
+                  <p>The team breakdown appears here as soon as the bridge returns live data.</p>
+                </div>
+              <?php else: ?>
+                <?php foreach ($teams as $team): ?>
+                  <div class="dashboard-mini-card">
+                    <strong><?php echo aavgo_admin_text($team['name'] ?? 'Unassigned'); ?></strong>
+                    <p><?php echo aavgo_admin_text($team['people'] ?? '0'); ?> people - <?php echo aavgo_admin_text($team['activeNow'] ?? '0'); ?> active</p>
+                    <span>Today: <?php echo aavgo_admin_cell($team['todayHours'] ?? 0); ?></span>
+                    <span>Week: <?php echo aavgo_admin_cell($team['weeklyHours'] ?? 0); ?></span>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </div>
           </article>
 
           <article class="dashboard-panel">
-            <p class="dashboard-kicker">Leadership note</p>
-            <h2>Keep the floor calm.</h2>
-            <p class="dashboard-panel-copy">
-              The premium feel matters here because leadership should arrive to clarity, not noise. A clean board helps the right decisions happen faster.
-            </p>
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Board rules</p>
+                <h2>Readable first, premium second.</h2>
+              </div>
+            </div>
+            <div class="dashboard-control-list">
+              <div class="dashboard-control-item">
+                <strong>Left rail stays anchored</strong>
+                <span>The navigation remains on the left so the hours board keeps its shape on desktop.</span>
+              </div>
+              <div class="dashboard-control-item">
+                <strong>Medium radius, calmer spacing</strong>
+                <span>Rounded corners stay, but they stop competing with the data.</span>
+              </div>
+              <div class="dashboard-control-item">
+                <strong>Live data only</strong>
+                <span>This route is now built around actual agent hours, not placeholder insight cards.</span>
+              </div>
+            </div>
           </article>
         </aside>
-      </section>
-
-      <section class="dashboard-content-grid dashboard-content-grid-bottom reveal reveal-delay-2" id="actions">
-        <article class="dashboard-panel dashboard-focus-panel">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Current focus</p>
-              <h2>Resolve tonight's handover pressure</h2>
-            </div>
-            <span class="dashboard-chip">83% complete</span>
-          </div>
-          <p class="dashboard-panel-copy">
-            Confirm staffing balance, close the review thread, and release a single clear update to the operations lane.
-          </p>
-          <div class="dashboard-progress">
-            <span style="width: 83%;"></span>
-          </div>
-          <div class="dashboard-action-row">
-            <span class="dashboard-action-pill">Mark complete</span>
-            <span class="dashboard-action-pill">Add note</span>
-            <span class="dashboard-action-pill">Pause lane</span>
-            <span class="dashboard-action-pill">Delegate</span>
-          </div>
-          <div class="dashboard-message-card">
-            <strong>Latest update</strong>
-            <p>Coverage is back in range. Final leadership sign-off should be the last move before midnight closeout.</p>
-          </div>
-        </article>
-
-        <article class="dashboard-panel">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Control surface</p>
-              <h2>Protected next steps</h2>
-            </div>
-          </div>
-          <div class="dashboard-control-list">
-            <div class="dashboard-control-item">
-              <strong>Approvals</strong>
-              <span>Route sensitive decisions through one protected lane.</span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Hotel review</strong>
-              <span>Keep leadership eyes on lane health, not scattered notes.</span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Escalation notes</strong>
-              <span>Build toward a trusted internal record of what changed and why.</span>
-            </div>
-          </div>
-        </article>
       </section>
     </main>
   </div>
 
+  <script id="admin-hours-bootstrap" type="application/json"><?php echo $bootstrapJson ?: '{}'; ?></script>
+  <script>
+    window.AAVGO_ADMIN_HOURS_ENDPOINT = '/api/admin-hours/';
+  </script>
   <script src="/script.js"></script>
 </body>
 </html>

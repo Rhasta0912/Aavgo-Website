@@ -6,6 +6,7 @@ const AAVGO_EXTERNAL_CONFIG = '/home/aavgodes/discord-auth-config.php';
 const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
 const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
+const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
@@ -108,6 +109,8 @@ function aavgo_load_config(): array
         'client_secret' => getenv('AAVGO_DISCORD_CLIENT_SECRET') ?: '',
         'guild_id' => getenv('AAVGO_DISCORD_GUILD_ID') ?: '',
         'base_url' => rtrim(getenv('AAVGO_BASE_URL') ?: AAVGO_DEFAULT_BASE_URL, '/'),
+        'website_api_url' => rtrim((string) (getenv('AAVGO_WEBSITE_API_URL') ?: ''), '/'),
+        'website_api_token' => trim((string) (getenv('AAVGO_WEBSITE_API_TOKEN') ?: '')),
         'role_ids' => $roleIds,
         'admin_user_ids' => $adminUserIds,
     ];
@@ -115,7 +118,7 @@ function aavgo_load_config(): array
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
         $fileConfig = require AAVGO_EXTERNAL_CONFIG;
         if (is_array($fileConfig)) {
-            foreach (['client_id', 'client_secret', 'guild_id', 'base_url'] as $key) {
+            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token'] as $key) {
                 if (array_key_exists($key, $fileConfig)) {
                     $config[$key] = (string) $fileConfig[$key];
                 }
@@ -134,6 +137,8 @@ function aavgo_load_config(): array
             $config['admin_user_ids'] = aavgo_parse_id_list($rawAdminUserIds);
 
             $config['base_url'] = rtrim((string) ($config['base_url'] ?: AAVGO_DEFAULT_BASE_URL), '/');
+            $config['website_api_url'] = rtrim((string) ($config['website_api_url'] ?? ''), '/');
+            $config['website_api_token'] = trim((string) ($config['website_api_token'] ?? ''));
         }
     }
 
@@ -166,6 +171,16 @@ function aavgo_get_callback_url(): string
     return aavgo_get_config_string('base_url') . '/auth/discord/callback/';
 }
 
+function aavgo_get_website_api_url(): string
+{
+    return aavgo_get_config_string('website_api_url');
+}
+
+function aavgo_get_website_api_token(): string
+{
+    return aavgo_get_config_string('website_api_token');
+}
+
 function aavgo_get_admin_user_ids(): array
 {
     return aavgo_parse_id_list(aavgo_get_config('admin_user_ids') ?? []);
@@ -188,6 +203,11 @@ function aavgo_has_role_mapping(): bool
 function aavgo_is_fully_configured(): bool
 {
     return aavgo_is_configured() && aavgo_has_role_mapping();
+}
+
+function aavgo_has_hours_bridge(): bool
+{
+    return aavgo_get_website_api_url() !== '' && aavgo_get_website_api_token() !== '';
 }
 
 function aavgo_redirect(string $location): void
@@ -479,7 +499,7 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body class="workspace-page workspace-dashboard workspace-page-access">
-  <div class="dashboard-shell dashboard-shell-message">
+  <div class="dashboard-shell dashboard-shell-message dashboard-shell-operations">
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       <section class="dashboard-profile-card">
@@ -528,6 +548,73 @@ function aavgo_render_message_page(string $title, string $message, string $actio
 </body>
 </html>
 HTML;
+}
+
+function aavgo_fetch_hours_bridge_payload(): array
+{
+    if (!aavgo_has_hours_bridge()) {
+        return [
+            'ok' => false,
+            'configured' => false,
+            'error' => 'The admin hours bridge is not configured yet.',
+        ];
+    }
+
+    if (!function_exists('curl_init')) {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'PHP cURL is required to load live admin hours.',
+        ];
+    }
+
+    $url = aavgo_get_website_api_url() . '/api/website/admin-hours';
+    $curl = curl_init($url);
+    curl_setopt_array($curl, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => AAVGO_WEBSITE_API_TIMEOUT,
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json',
+            'Authorization: Bearer ' . aavgo_get_website_api_token(),
+        ],
+    ]);
+
+    $response = curl_exec($curl);
+    $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($curl);
+    curl_close($curl);
+
+    if ($response === false || $curlError !== '') {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'The hours bridge could not be reached right now.',
+            'details' => $curlError,
+        ];
+    }
+
+    $decoded = json_decode($response, true);
+    if (!is_array($decoded)) {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'The hours bridge returned an invalid response.',
+        ];
+    }
+
+    if ($httpCode >= 400 || !($decoded['ok'] ?? false)) {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => (string) ($decoded['error'] ?? 'The hours bridge returned an error.'),
+        ];
+    }
+
+    return [
+        'ok' => true,
+        'configured' => true,
+        'data' => $decoded['data'] ?? null,
+    ];
 }
 
 aavgo_bootstrap_session();

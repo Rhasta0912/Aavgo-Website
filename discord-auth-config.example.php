@@ -5,6 +5,8 @@ return [
     'client_secret' => 'replace-with-your-rotated-discord-client-secret',
     'guild_id' => '1482220918355922974',
     'base_url' => 'https://www.aavgodesk.xyz',
+    'website_api_url' => 'https://your-bot-api-host.example.com',
+    'website_api_token' => 'replace-with-your-bot-hours-bridge-token',
     // Optional override if your server role IDs ever change.
     'role_ids' => [
         'admin' => [

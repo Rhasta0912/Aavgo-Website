@@ -30,7 +30,7 @@ $showAdminLink = aavgo_user_can_access($user, 'admin');
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body class="workspace-page workspace-dashboard workspace-page-user">
-  <div class="dashboard-shell">
+  <div class="dashboard-shell dashboard-shell-operations dashboard-shell-roomy">
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
 
@@ -106,7 +106,7 @@ $showAdminLink = aavgo_user_can_access($user, 'admin');
         </div>
       </section>
 
-      <section class="dashboard-stat-grid reveal reveal-delay-1">
+      <section class="dashboard-stat-grid dashboard-stat-grid-balanced reveal reveal-delay-1">
         <article class="dashboard-stat-card">
           <p>Shift readiness</p>
           <strong>91%</strong>
