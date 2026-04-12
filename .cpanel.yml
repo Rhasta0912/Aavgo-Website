@@ -3,6 +3,8 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/aavgodes/public_html/
     - /bin/mkdir -p $DEPLOYPATH
+    - /bin/mkdir -p $DEPLOYPATH/admin
     - /bin/cp -f index.html $DEPLOYPATH/index.html
     - /bin/cp -f styles.css $DEPLOYPATH/styles.css
     - /bin/cp -f script.js $DEPLOYPATH/script.js
+    - /bin/cp -f admin/index.html $DEPLOYPATH/admin/index.html
