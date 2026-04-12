@@ -1,0 +1,59 @@
+name: Deploy Website
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy bundle
+        run: |
+          mkdir -p deploy/admin
+          mkdir -p deploy/user
+          mkdir -p deploy/auth/discord/login
+          mkdir -p deploy/auth/discord/callback
+          mkdir -p deploy/auth/logout
+
+          cp index.html deploy/index.html
+          cp styles.css deploy/styles.css
+          cp script.js deploy/script.js
+          cp admin/index.php deploy/admin/index.php
+          cp user/index.php deploy/user/index.php
+          cp auth/bootstrap.php deploy/auth/bootstrap.php
+          cp auth/discord/login/index.php deploy/auth/discord/login/index.php
+          cp auth/discord/callback/index.php deploy/auth/discord/callback/index.php
+          cp auth/logout/index.php deploy/auth/logout/index.php
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Upload site to cPanel
+        env:
+          CPANEL_FTP_HOST: ${{ secrets.CPANEL_FTP_HOST }}
+          CPANEL_FTP_USERNAME: ${{ secrets.CPANEL_FTP_USERNAME }}
+          CPANEL_FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          CPANEL_FTP_PORT: ${{ secrets.CPANEL_FTP_PORT }}
+          CPANEL_FTP_PATH: ${{ secrets.CPANEL_FTP_PATH }}
+        run: |
+          test -n "$CPANEL_FTP_HOST"
+          test -n "$CPANEL_FTP_USERNAME"
+          test -n "$CPANEL_FTP_PASSWORD"
+          test -n "$CPANEL_FTP_PORT"
+          test -n "$CPANEL_FTP_PATH"
+
+          lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" <<EOF
+          set cmd:fail-exit yes
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          mirror -R --verbose deploy/ "$CPANEL_FTP_PATH"
+          bye
+          EOF
