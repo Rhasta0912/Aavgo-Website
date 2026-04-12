@@ -5,4 +5,15 @@ return [
     'client_secret' => 'replace-with-your-rotated-discord-client-secret',
     'guild_id' => '1482220918355922974',
     'base_url' => 'https://www.aavgodesk.xyz',
+    // Optional override if your server role IDs ever change.
+    'role_ids' => [
+        'admin' => [
+            '1482732583660818636', // Team Leader
+            '1482226842047090809', // Operations Manager
+        ],
+        'user' => [
+            '1484705126026449029', // Trainee
+            '1482227287159078964', // Agent
+        ],
+    ],
 ];

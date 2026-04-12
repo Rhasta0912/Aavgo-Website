@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 const AAVGO_EXTERNAL_CONFIG = '/home/aavgodes/discord-auth-config.php';
 const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
-const AAVGO_REQUIRED_SCOPES = 'identify guilds';
+const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
+const AAVGO_DEFAULT_ROLE_IDS = [
+    'admin' => [
+        '1482732583660818636', // Team Leader
+        '1482226842047090809', // Operations Manager
+    ],
+    'user' => [
+        '1484705126026449029', // Trainee
+        '1482227287159078964', // Agent
+    ],
+];
 
 function aavgo_bootstrap_session(): void
 {
@@ -24,6 +34,37 @@ function aavgo_bootstrap_session(): void
     session_start();
 }
 
+function aavgo_parse_id_list(mixed $value): array
+{
+    if (is_string($value)) {
+        $value = preg_split('/[\s,]+/', $value, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    }
+
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $ids = [];
+    foreach ($value as $item) {
+        $id = trim((string) $item);
+        if ($id === '') {
+            continue;
+        }
+
+        $ids[$id] = $id;
+    }
+
+    return array_values($ids);
+}
+
+function aavgo_normalize_role_ids(array $roleIds): array
+{
+    return [
+        'admin' => aavgo_parse_id_list($roleIds['admin'] ?? []),
+        'user' => aavgo_parse_id_list($roleIds['user'] ?? []),
+    ];
+}
+
 function aavgo_load_config(): array
 {
     static $config = null;
@@ -32,40 +73,92 @@ function aavgo_load_config(): array
         return $config;
     }
 
+    $roleIds = AAVGO_DEFAULT_ROLE_IDS;
+    $envAdminRoleIds = aavgo_parse_id_list(getenv('AAVGO_ADMIN_ROLE_IDS') ?: '');
+    $envUserRoleIds = aavgo_parse_id_list(getenv('AAVGO_USER_ROLE_IDS') ?: '');
+
+    if ($envAdminRoleIds !== []) {
+        $roleIds['admin'] = $envAdminRoleIds;
+    }
+
+    if ($envUserRoleIds !== []) {
+        $roleIds['user'] = $envUserRoleIds;
+    }
+
     $config = [
         'client_id' => getenv('AAVGO_DISCORD_CLIENT_ID') ?: '',
         'client_secret' => getenv('AAVGO_DISCORD_CLIENT_SECRET') ?: '',
         'guild_id' => getenv('AAVGO_DISCORD_GUILD_ID') ?: '',
         'base_url' => rtrim(getenv('AAVGO_BASE_URL') ?: AAVGO_DEFAULT_BASE_URL, '/'),
+        'role_ids' => $roleIds,
     ];
 
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
         $fileConfig = require AAVGO_EXTERNAL_CONFIG;
         if (is_array($fileConfig)) {
-            $config = array_merge($config, $fileConfig);
-            $config['base_url'] = rtrim((string) ($config['base_url'] ?? AAVGO_DEFAULT_BASE_URL), '/');
+            foreach (['client_id', 'client_secret', 'guild_id', 'base_url'] as $key) {
+                if (array_key_exists($key, $fileConfig)) {
+                    $config[$key] = (string) $fileConfig[$key];
+                }
+            }
+
+            $rawRoleIds = $fileConfig['role_ids'] ?? [
+                'admin' => $fileConfig['admin_role_ids'] ?? $config['role_ids']['admin'],
+                'user' => $fileConfig['user_role_ids'] ?? $config['role_ids']['user'],
+            ];
+
+            if (is_array($rawRoleIds)) {
+                $config['role_ids'] = aavgo_normalize_role_ids($rawRoleIds);
+            }
+
+            $config['base_url'] = rtrim((string) ($config['base_url'] ?: AAVGO_DEFAULT_BASE_URL), '/');
         }
     }
 
     return $config;
 }
 
-function aavgo_get_config(string $key): string
+function aavgo_get_config(string $key): mixed
 {
     $config = aavgo_load_config();
-    return trim((string) ($config[$key] ?? ''));
+    return $config[$key] ?? null;
+}
+
+function aavgo_get_config_string(string $key): string
+{
+    return trim((string) aavgo_get_config($key));
+}
+
+function aavgo_get_role_ids(string $bucket): array
+{
+    $roleIds = aavgo_get_config('role_ids');
+    if (!is_array($roleIds)) {
+        return [];
+    }
+
+    return aavgo_parse_id_list($roleIds[$bucket] ?? []);
 }
 
 function aavgo_get_callback_url(): string
 {
-    return aavgo_get_config('base_url') . '/auth/discord/callback/';
+    return aavgo_get_config_string('base_url') . '/auth/discord/callback/';
 }
 
 function aavgo_is_configured(): bool
 {
-    return aavgo_get_config('client_id') !== ''
-        && aavgo_get_config('client_secret') !== ''
-        && aavgo_get_config('guild_id') !== '';
+    return aavgo_get_config_string('client_id') !== ''
+        && aavgo_get_config_string('client_secret') !== ''
+        && aavgo_get_config_string('guild_id') !== '';
+}
+
+function aavgo_has_role_mapping(): bool
+{
+    return aavgo_get_role_ids('admin') !== [] || aavgo_get_role_ids('user') !== [];
+}
+
+function aavgo_is_fully_configured(): bool
+{
+    return aavgo_is_configured() && aavgo_has_role_mapping();
 }
 
 function aavgo_redirect(string $location): void
@@ -82,7 +175,7 @@ function aavgo_create_state(): string
 function aavgo_login_url(): string
 {
     $query = http_build_query([
-        'client_id' => aavgo_get_config('client_id'),
+        'client_id' => aavgo_get_config_string('client_id'),
         'redirect_uri' => aavgo_get_callback_url(),
         'response_type' => 'code',
         'scope' => AAVGO_REQUIRED_SCOPES,
@@ -111,7 +204,7 @@ function aavgo_api_request(string $method, string $endpoint, array $headers = []
         CURLOPT_TIMEOUT => 20,
     ]);
 
-    if (!empty($body)) {
+    if ($body !== []) {
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($body));
     }
 
@@ -131,7 +224,7 @@ function aavgo_api_request(string $method, string $endpoint, array $headers = []
 
     if ($httpCode >= 400) {
         $message = $decoded['error_description'] ?? $decoded['message'] ?? 'Unknown Discord error.';
-        throw new RuntimeException('Discord error: ' . $message);
+        throw new RuntimeException('Discord error: ' . $message, $httpCode);
     }
 
     return $decoded;
@@ -142,8 +235,8 @@ function aavgo_exchange_code(string $code): array
     return aavgo_api_request('POST', '/oauth2/token', [
         'Content-Type: application/x-www-form-urlencoded',
     ], [
-        'client_id' => aavgo_get_config('client_id'),
-        'client_secret' => aavgo_get_config('client_secret'),
+        'client_id' => aavgo_get_config_string('client_id'),
+        'client_secret' => aavgo_get_config_string('client_secret'),
         'grant_type' => 'authorization_code',
         'code' => $code,
         'redirect_uri' => aavgo_get_callback_url(),
@@ -157,41 +250,158 @@ function aavgo_fetch_user(string $accessToken): array
     ]);
 }
 
-function aavgo_fetch_user_guilds(string $accessToken): array
+function aavgo_fetch_current_member(string $accessToken): array
 {
-    return aavgo_api_request('GET', '/users/@me/guilds', [
+    $guildId = rawurlencode(aavgo_get_config_string('guild_id'));
+
+    return aavgo_api_request('GET', '/users/@me/guilds/' . $guildId . '/member', [
         'Authorization: Bearer ' . $accessToken,
     ]);
 }
 
-function aavgo_user_in_required_guild(array $guilds): bool
+function aavgo_member_role_ids(array $member): array
 {
-    $requiredGuildId = aavgo_get_config('guild_id');
+    return aavgo_parse_id_list($member['roles'] ?? []);
+}
 
-    foreach ($guilds as $guild) {
-        if (($guild['id'] ?? '') === $requiredGuildId) {
-            return true;
-        }
+function aavgo_resolve_access_level(array $memberRoleIds): ?string
+{
+    if (array_intersect($memberRoleIds, aavgo_get_role_ids('admin')) !== []) {
+        return 'admin';
     }
 
-    return false;
+    if (array_intersect($memberRoleIds, aavgo_get_role_ids('user')) !== []) {
+        return 'user';
+    }
+
+    return null;
+}
+
+function aavgo_default_path_for_access_level(string $accessLevel): string
+{
+    return $accessLevel === 'admin' ? '/admin/' : '/user/';
 }
 
 function aavgo_current_user(): ?array
 {
     $user = $_SESSION['aavgo_user'] ?? null;
-    return is_array($user) ? $user : null;
+    if (!is_array($user)) {
+        return null;
+    }
+
+    $accessLevel = (string) ($user['access_level'] ?? '');
+    if ($accessLevel !== 'admin' && $accessLevel !== 'user') {
+        return null;
+    }
+
+    return $user;
+}
+
+function aavgo_display_name(array $user): string
+{
+    $candidates = [
+        (string) ($user['nickname'] ?? ''),
+        (string) ($user['global_name'] ?? ''),
+        (string) ($user['username'] ?? ''),
+    ];
+
+    foreach ($candidates as $candidate) {
+        $candidate = trim($candidate);
+        if ($candidate !== '') {
+            return $candidate;
+        }
+    }
+
+    return 'Aavgo Member';
+}
+
+function aavgo_user_access_level(array $user): string
+{
+    return (string) ($user['access_level'] ?? 'user');
+}
+
+function aavgo_user_default_path(array $user): string
+{
+    return aavgo_default_path_for_access_level(aavgo_user_access_level($user));
+}
+
+function aavgo_user_can_access(array $user, string $route): bool
+{
+    $accessLevel = aavgo_user_access_level($user);
+
+    if ($accessLevel === 'admin') {
+        return $route === 'admin' || $route === 'user';
+    }
+
+    return $route === 'user';
+}
+
+function aavgo_route_group_from_path(string $path): ?string
+{
+    $cleanPath = (string) (parse_url($path, PHP_URL_PATH) ?? '');
+
+    if (str_starts_with($cleanPath, '/admin')) {
+        return 'admin';
+    }
+
+    if (str_starts_with($cleanPath, '/user')) {
+        return 'user';
+    }
+
+    return null;
+}
+
+function aavgo_resolve_after_login_path(array $user, string $requestedPath): string
+{
+    $defaultPath = aavgo_user_default_path($user);
+    if ($requestedPath === '') {
+        return $defaultPath;
+    }
+
+    $targetGroup = aavgo_route_group_from_path($requestedPath);
+    if ($targetGroup === null) {
+        return $defaultPath;
+    }
+
+    if (!aavgo_user_can_access($user, $targetGroup)) {
+        return $defaultPath;
+    }
+
+    return aavgo_default_path_for_access_level($targetGroup);
 }
 
 function aavgo_require_auth(): array
 {
     $user = aavgo_current_user();
     if ($user === null) {
-        $_SESSION['aavgo_after_login'] = $_SERVER['REQUEST_URI'] ?? '/admin/';
+        $_SESSION['aavgo_after_login'] = $_SERVER['REQUEST_URI'] ?? '/';
         aavgo_redirect('/auth/discord/login/');
     }
 
     return $user;
+}
+
+function aavgo_require_access(string $route): array
+{
+    $user = aavgo_require_auth();
+
+    if (aavgo_user_can_access($user, $route)) {
+        return $user;
+    }
+
+    $defaultPath = aavgo_user_default_path($user);
+    if ($defaultPath !== ($_SERVER['REQUEST_URI'] ?? '')) {
+        aavgo_redirect($defaultPath);
+    }
+
+    http_response_code(403);
+    aavgo_render_message_page(
+        'That area is not open to this role.',
+        'Aavgo verified your Discord access, but this route belongs to a different workspace.',
+        'Open My Workspace',
+        $defaultPath
+    );
+    exit;
 }
 
 function aavgo_logout(): void
@@ -200,7 +410,15 @@ function aavgo_logout(): void
 
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
     }
 
     session_destroy();
@@ -220,24 +438,32 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{$safeTitle}</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="admin-page">
-  <div class="site-shell admin-shell">
-    <section class="admin-hero reveal reveal-in">
-      <div class="admin-hero-copy">
-        <p class="eyebrow">Aavgo secure access</p>
-        <h1>{$safeTitle}</h1>
-        <p class="hero-text">{$safeMessage}</p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
-          <a class="button button-secondary" href="/">Back to Home</a>
+<body class="workspace-page workspace-page-admin">
+  <div class="site-shell">
+    <header class="topbar topbar-minimal">
+      <a class="brand brand-plain" href="/" aria-label="Aavgo home">Aavgo</a>
+      <a class="button button-secondary" href="/">Front Door</a>
+    </header>
+
+    <main class="workspace-main">
+      <section class="workspace-hero workspace-hero-message reveal reveal-in">
+        <div class="workspace-copy">
+          <p class="eyebrow">Private access status</p>
+          <h1>{$safeTitle}</h1>
+          <p class="hero-text">{$safeMessage}</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
+            <a class="button button-secondary" href="/">Back Home</a>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
   </div>
 </body>
 </html>

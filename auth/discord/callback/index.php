@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/bootstrap.php';
 
-if (!aavgo_is_configured()) {
+if (!aavgo_is_fully_configured()) {
     http_response_code(500);
     aavgo_render_message_page(
         'Discord login is not configured yet.',
-        'The website is missing its private Discord auth configuration on the server. Add the server-only config file, then try again.',
+        'The website is missing its private Discord auth setup or allowed role mapping on the server. Update the server-only config, then try again.',
         'Back to Home',
         '/'
     );
@@ -46,25 +46,45 @@ if ($code === '') {
 try {
     $tokenData = aavgo_exchange_code((string) $code);
     $accessToken = (string) ($tokenData['access_token'] ?? '');
+
+    if ($accessToken === '') {
+        throw new RuntimeException('Discord did not return an access token.');
+    }
+
     $user = aavgo_fetch_user($accessToken);
-    $guilds = aavgo_fetch_user_guilds($accessToken);
+    $member = aavgo_fetch_current_member($accessToken);
 } catch (Throwable $exception) {
+    if ((int) $exception->getCode() === 404) {
+        aavgo_logout();
+        http_response_code(403);
+        aavgo_render_message_page(
+            'Access denied.',
+            'Your Discord account is not an active member of the Aavgo server, so the private website stays closed.',
+            'Back to Home',
+            '/'
+        );
+        exit;
+    }
+
     http_response_code(502);
     aavgo_render_message_page(
         'Discord login failed.',
-        $exception->getMessage(),
+        'Discord could not finish the secure role check for this website. Confirm the redirect URL and private auth config, then try again.',
         'Try Again',
         '/auth/discord/login/'
     );
     exit;
 }
 
-if ($accessToken === '' || !aavgo_user_in_required_guild($guilds)) {
+$memberRoleIds = aavgo_member_role_ids($member);
+$accessLevel = aavgo_resolve_access_level($memberRoleIds);
+
+if ($accessLevel === null) {
     aavgo_logout();
     http_response_code(403);
     aavgo_render_message_page(
         'Access denied.',
-        'Your Discord account is not an active member of the Aavgo server, so this area stays locked.',
+        'Only Aavgo Trainees, Agents, Team Leaders, and Operations Managers can enter the private website.',
         'Back to Home',
         '/'
     );
@@ -78,9 +98,12 @@ $_SESSION['aavgo_user'] = [
     'username' => (string) ($user['username'] ?? 'Unknown User'),
     'avatar' => (string) ($user['avatar'] ?? ''),
     'global_name' => (string) ($user['global_name'] ?? ''),
+    'nickname' => (string) ($member['nick'] ?? ''),
+    'role_ids' => $memberRoleIds,
+    'access_level' => $accessLevel,
 ];
 
-$afterLogin = $_SESSION['aavgo_after_login'] ?? '/admin/';
+$afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
 unset($_SESSION['aavgo_after_login']);
 
-aavgo_redirect((string) $afterLogin);
+aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
