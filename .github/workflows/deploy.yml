@@ -50,7 +50,12 @@ jobs:
           test -n "$CPANEL_FTP_PORT"
           test -n "$CPANEL_FTP_PATH"
 
-          DEPLOY_ROOT="${CPANEL_FTP_PATH%/}"
+          DEPLOY_ROOT="$CPANEL_FTP_PATH"
+          DEPLOY_ROOT="${DEPLOY_ROOT#\"}"
+          DEPLOY_ROOT="${DEPLOY_ROOT%\"}"
+          DEPLOY_ROOT="${DEPLOY_ROOT#\'}"
+          DEPLOY_ROOT="${DEPLOY_ROOT%\'}"
+          DEPLOY_ROOT="${DEPLOY_ROOT%/}"
           if [ -z "$DEPLOY_ROOT" ]; then
             DEPLOY_ROOT="/"
           fi
