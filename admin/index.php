@@ -1,3 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../auth/bootstrap.php';
+
+$user = aavgo_require_auth();
+$displayName = trim((string) ($user['global_name'] ?? '')) !== ''
+    ? (string) $user['global_name']
+    : (string) ($user['username'] ?? 'Aavgo User');
+$safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,16 +27,19 @@
     href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body class="admin-page">
   <div class="site-shell admin-shell">
     <header class="topbar">
-      <a class="brand" href="../index.html" aria-label="Aavgo home">
+      <a class="brand" href="/" aria-label="Aavgo home">
         <span class="brand-mark">A</span>
         <span class="brand-text">Aavgo Admin</span>
       </a>
-      <a class="button button-ghost" href="../index.html">Back to Site</a>
+      <div class="hero-actions">
+        <a class="button button-secondary" href="/">Back to Site</a>
+        <a class="button button-ghost" href="/auth/logout/">Log Out</a>
+      </div>
     </header>
 
     <main>
@@ -32,17 +47,17 @@
         <div class="admin-hero-copy">
           <p class="eyebrow">Protected administrator area</p>
           <h1>
-            Internal access for
-            <span class="accent-script">operations control</span>
+            Welcome back,
+            <span class="accent-script"><?php echo $safeDisplayName; ?></span>
           </h1>
           <p class="hero-text">
-            This space is prepared for authenticated management workflows, internal reporting, and
-            future Discord-connected administration tools.
+            Your Discord account has been verified against the Aavgo server, so this admin route is now
+            available for internal operations work and future management tools.
           </p>
         </div>
         <div class="admin-hero-badge">
-          <span class="pill pill-ready">Secured Route</span>
-          <p>Lock this folder with cPanel Directory Privacy so only approved staff can enter.</p>
+          <span class="pill pill-live">Verified</span>
+          <p>Access is granted through Discord sign-in and a server membership check before this page loads.</p>
         </div>
       </section>
 
@@ -52,16 +67,16 @@
           <h2>Admin dashboard expansion</h2>
           <p>
             We can build this into a proper control surface for approvals, logs, staffing visibility,
-            and Discord-connected actions once the protected route is live.
+            and Discord-connected actions once you are ready for the next layer.
           </p>
         </article>
 
         <article class="admin-card reveal reveal-in">
-          <p class="aside-label">Security note</p>
-          <h2>Server-side protection only</h2>
+          <p class="aside-label">Security layer</p>
+          <h2>Discord-first access</h2>
           <p>
-            Credentials are intentionally not embedded in the website code. Keep access locked at the
-            server level so usernames and passwords are never exposed in public files.
+            This route now uses Discord OAuth on the server side, keeps the secret off the public website,
+            and blocks non-members before the page is served.
           </p>
         </article>
 
@@ -79,6 +94,6 @@
     </main>
   </div>
 
-  <script src="../script.js"></script>
+  <script src="/script.js"></script>
 </body>
 </html>

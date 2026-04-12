@@ -4,7 +4,16 @@ deployment:
     - export DEPLOYPATH=/home/aavgodes/public_html/
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/mkdir -p $DEPLOYPATH/admin
+    - /bin/mkdir -p $DEPLOYPATH/auth
+    - /bin/mkdir -p $DEPLOYPATH/auth/discord
+    - /bin/mkdir -p $DEPLOYPATH/auth/discord/login
+    - /bin/mkdir -p $DEPLOYPATH/auth/discord/callback
+    - /bin/mkdir -p $DEPLOYPATH/auth/logout
     - /bin/cp -f index.html $DEPLOYPATH/index.html
     - /bin/cp -f styles.css $DEPLOYPATH/styles.css
     - /bin/cp -f script.js $DEPLOYPATH/script.js
-    - /bin/cp -f admin/index.html $DEPLOYPATH/admin/index.html
+    - /bin/cp -f admin/index.php $DEPLOYPATH/admin/index.php
+    - /bin/cp -f auth/bootstrap.php $DEPLOYPATH/auth/bootstrap.php
+    - /bin/cp -f auth/discord/login/index.php $DEPLOYPATH/auth/discord/login/index.php
+    - /bin/cp -f auth/discord/callback/index.php $DEPLOYPATH/auth/discord/callback/index.php
+    - /bin/cp -f auth/logout/index.php $DEPLOYPATH/auth/logout/index.php
