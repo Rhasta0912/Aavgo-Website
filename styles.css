@@ -164,6 +164,19 @@ a {
   padding-bottom: 2rem;
 }
 
+.gateway-shell-simple {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gateway-main-centered {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .gateway-hero,
 .workspace-hero,
 .surface-card,
@@ -206,6 +219,82 @@ a {
 .gateway-panel {
   display: grid;
   gap: 1rem;
+}
+
+.login-stage {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.72fr);
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+.login-stage-copy {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  min-height: 34rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2.2rem, 5vw, 4.5rem);
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, rgba(255, 251, 244, 0.96) 0%, rgba(246, 235, 220, 0.92) 100%);
+  box-shadow: var(--shadow);
+}
+
+.login-stage-copy::before {
+  content: "";
+  position: absolute;
+  inset: auto auto -5rem -4rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(31, 122, 105, 0.18) 0%, rgba(31, 122, 105, 0) 72%);
+}
+
+.login-stage-copy::after {
+  content: "";
+  position: absolute;
+  top: -4rem;
+  right: -3rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191, 90, 50, 0.2) 0%, rgba(191, 90, 50, 0) 70%);
+}
+
+.login-stage-copy > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-stage-copy h1 {
+  max-width: none;
+  font-size: clamp(4.2rem, 11vw, 7.5rem);
+}
+
+.login-stage-copy .hero-text {
+  max-width: 30rem;
+  margin-top: 1rem;
+}
+
+.login-stage-panel {
+  display: flex;
+  min-height: 34rem;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(1.8rem, 4vw, 2.5rem);
+}
+
+.login-stage-panel h2 {
+  max-width: 11ch;
+}
+
+.login-stage-panel p {
+  max-width: 22rem;
 }
 
 .access-strip {
@@ -311,11 +400,20 @@ h2 {
   margin-top: 2rem;
 }
 
+.hero-actions-centered {
+  justify-content: center;
+}
+
 .role-band {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.7rem;
+}
+
+.role-band-centered {
+  justify-content: center;
+  max-width: 40rem;
 }
 
 .role-band-compact {
@@ -446,6 +544,7 @@ h2 {
 @media (max-width: 1024px) {
   .gateway-hero,
   .workspace-hero,
+  .login-stage,
   .access-grid,
   .workspace-grid {
     grid-template-columns: 1fr;
@@ -456,8 +555,15 @@ h2 {
   }
 
   .gateway-copy,
-  .workspace-copy {
+  .workspace-copy,
+  .login-stage-copy,
+  .login-stage-panel {
     padding: 2rem;
+  }
+
+  .login-stage-copy,
+  .login-stage-panel {
+    min-height: auto;
   }
 }
 
@@ -478,14 +584,23 @@ h2 {
 
   .gateway-copy,
   .workspace-copy,
+  .login-stage-copy,
   .surface-card,
   .panel-card,
   .workspace-panel {
     padding: 1.35rem;
   }
 
+  .login-stage-panel {
+    padding: 1.35rem;
+  }
+
   h1 {
     font-size: clamp(2.7rem, 14vw, 4.5rem);
+  }
+
+  .login-stage-copy h1 {
+    font-size: clamp(3.2rem, 18vw, 4.8rem);
   }
 
   h2 {

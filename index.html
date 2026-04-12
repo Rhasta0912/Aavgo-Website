@@ -17,28 +17,24 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="gateway-page">
-  <div class="site-shell gateway-shell">
+  <div class="site-shell gateway-shell gateway-shell-simple">
     <header class="topbar topbar-minimal">
       <a class="brand brand-plain" href="/" aria-label="Aavgo home">Aavgo</a>
       <a class="button button-secondary" href="/auth/discord/login/">Log In</a>
     </header>
 
-    <main class="gateway-main">
-      <section class="gateway-hero reveal reveal-in">
-        <div class="gateway-copy">
-          <p class="eyebrow">Private hospitality operations platform</p>
-          <h1>
-            Log in in order to see
-            <span class="accent-script">the full website.</span>
-          </h1>
+    <main class="gateway-main gateway-main-centered">
+      <section class="login-stage reveal reveal-in">
+        <div class="login-stage-copy">
+          <p class="eyebrow">Private access</p>
+          <h1>Log in</h1>
           <p class="hero-text">
-            Aavgo is role-locked by design. Discord must confirm that you are an active Trainee, Agent,
-            Team Leader, or Operations Manager before the private experience opens.
+            The full Aavgo website opens only after Discord confirms your role.
           </p>
-          <div class="hero-actions">
+          <div class="hero-actions hero-actions-centered">
             <a class="button button-primary" href="/auth/discord/login/">Continue with Discord</a>
           </div>
-          <div class="role-band">
+          <div class="role-band role-band-centered">
             <span>Trainees</span>
             <span>Agents</span>
             <span>Team Leaders</span>
@@ -47,36 +43,13 @@
           <p class="locked-note">No Aavgo role, no entry.</p>
         </div>
 
-        <div class="gateway-panel">
-          <article class="panel-card panel-card-dark reveal reveal-delay-1">
-            <p class="section-label">Role-locked access</p>
-            <h2>Two private destinations, one premium front door.</h2>
-            <p>
-              Leadership lands in <strong>/admin</strong>. Trainees and Agents land in <strong>/user</strong>.
-              Everyone else stops here before the rest of the site is ever shown.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="access-strip">
-        <div class="access-grid">
-          <article class="surface-card reveal reveal-delay-1">
-            <p class="section-label">User route</p>
-            <h2>/user</h2>
-            <p>For Trainees and Agents who need a calmer, cleaner, more premium operational surface.</p>
-          </article>
-          <article class="surface-card reveal reveal-delay-2">
-            <p class="section-label">Admin route</p>
-            <h2>/admin</h2>
-            <p>For Team Leaders and Operations Managers who need a protected leadership and oversight space.</p>
-          </article>
-          <article class="surface-card reveal reveal-delay-2">
-            <p class="section-label">Verification</p>
-            <h2>Discord first</h2>
-            <p>The server checks the member role before it opens the full Aavgo website, so public visitors never enter the private layer.</p>
-          </article>
-        </div>
+        <article class="panel-card panel-card-dark login-stage-panel reveal reveal-delay-1">
+          <p class="section-label">Aavgo</p>
+          <h2>Quiet, premium, and private by default.</h2>
+          <p>
+            This front door stays minimal on purpose. Sign in to unlock the full experience.
+          </p>
+        </article>
       </section>
     </main>
 
