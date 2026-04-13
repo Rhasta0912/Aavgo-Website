@@ -128,69 +128,12 @@ if (is_array($fallbackSessionUser)) {
     aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
 }
 
-try {
-    $member = aavgo_fetch_current_member($accessToken);
-} catch (Throwable $exception) {
-    aavgo_log_auth_failure('fetch_current_member', $exception, [
-        'user_id' => (string) ($user['id'] ?? ''),
-        'username' => (string) ($user['username'] ?? ''),
-        'request_host' => aavgo_get_request_host(),
-        'in_configured_guild' => $inConfiguredGuild,
-    ]);
-
-    if ((int) $exception->getCode() === 404 || $inConfiguredGuild === false) {
-        aavgo_logout();
-        http_response_code(403);
-        aavgo_render_message_page(
-            'Access denied.',
-            'Your Discord account is not an active member of the Aavgo server, so the private website stays closed.',
-            'Back to Home',
-            '/'
-        );
-        exit;
-    }
-
-    http_response_code(502);
-    aavgo_render_message_page(
-        'Discord login failed.',
-        'Discord could not finish the secure role check for this website. If the Discord app opened separately, start the sign-in again from the website so the handoff stays in one lane.',
-        'Try Again',
-        '/auth/discord/login/'
-    );
-    exit;
-}
-
-$memberRoleIds = aavgo_member_role_ids($member);
-$accessLevel = aavgo_resolve_access_level($user, $memberRoleIds);
-
-if ($accessLevel === null) {
-    aavgo_logout();
-    http_response_code(403);
-    aavgo_render_message_page(
-        'Access denied.',
-        'Only Aavgo Trainees, Agents, Team Leaders, Operations Managers, and approved Developers can enter the private website.',
-        'Back to Home',
-        '/'
-    );
-    exit;
-}
-
-session_regenerate_id(true);
-
-$_SESSION['aavgo_user'] = [
-    'id' => (string) ($user['id'] ?? ''),
-    'username' => (string) ($user['username'] ?? 'Unknown User'),
-    'avatar' => (string) ($user['avatar'] ?? ''),
-    'global_name' => (string) ($user['global_name'] ?? ''),
-    'nickname' => (string) ($member['nick'] ?? ''),
-    'role_ids' => $memberRoleIds,
-    'access_level' => $accessLevel,
-];
-
-$afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
-if ($afterLogin === '' && is_array($validatedState)) {
-    $afterLogin = (string) ($validatedState['after_login'] ?? '');
-}
-unset($_SESSION['aavgo_after_login']);
-
-aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
+aavgo_logout();
+http_response_code(403);
+aavgo_render_message_page(
+    'Access denied.',
+    'Only Aavgo Trainees, Agents, Team Leaders, Operations Managers, and approved Developers can enter the private website.',
+    'Back to Home',
+    '/'
+);
+exit;

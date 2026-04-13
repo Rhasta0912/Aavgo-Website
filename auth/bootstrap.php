@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 const AAVGO_EXTERNAL_CONFIG = '/home/aavgodes/discord-auth-config.php';
 const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
-const AAVGO_REQUIRED_SCOPES = 'identify guilds guilds.members.read';
+const AAVGO_REQUIRED_SCOPES = 'identify guilds';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
 const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
@@ -1206,20 +1206,6 @@ function aavgo_user_is_in_configured_guild(array $guilds): bool
     }
 
     return false;
-}
-
-function aavgo_fetch_current_member(string $accessToken): array
-{
-    $guildId = rawurlencode(aavgo_get_config_string('guild_id'));
-
-    return aavgo_api_request('GET', '/users/@me/guilds/' . $guildId . '/member', [
-        'Authorization: Bearer ' . $accessToken,
-    ]);
-}
-
-function aavgo_member_role_ids(array $member): array
-{
-    return aavgo_parse_id_list($member['roles'] ?? []);
 }
 
 function aavgo_resolve_access_level(array $discordUser, array $memberRoleIds): ?string
