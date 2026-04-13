@@ -77,6 +77,12 @@ try {
         aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $handoffAfterLogin));
     }
 
+    aavgo_store_auth_handoff_failure((string) $state, 'token_exchange', $exception->getMessage(), [
+        'discord_status' => (string) $exception->getCode(),
+        'host' => aavgo_get_request_host(),
+        'callback' => $preferredCallbackUrl,
+    ]);
+
     aavgo_log_auth_failure('token_exchange', $exception, [
         'has_code' => true,
         'request_host' => aavgo_get_request_host(),
@@ -108,6 +114,11 @@ try {
 try {
     $user = aavgo_fetch_user($accessToken);
 } catch (Throwable $exception) {
+    aavgo_store_auth_handoff_failure((string) $state, 'fetch_user', $exception->getMessage(), [
+        'discord_status' => (string) $exception->getCode(),
+        'host' => aavgo_get_request_host(),
+    ]);
+
     aavgo_log_auth_failure('fetch_user', $exception, [
         'request_host' => aavgo_get_request_host(),
     ]);

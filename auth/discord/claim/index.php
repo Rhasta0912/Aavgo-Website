@@ -19,7 +19,7 @@ if ($state === '' || $validatedState === null) {
 }
 
 $handoff = aavgo_take_auth_handoff($state);
-if (!is_array($handoff) || !is_array($handoff['user'] ?? null)) {
+if (!is_array($handoff) || trim((string) ($handoff['kind'] ?? 'success')) !== 'success' || !is_array($handoff['user'] ?? null)) {
     http_response_code(409);
     aavgo_render_message_page(
         'Still waiting on Discord.',

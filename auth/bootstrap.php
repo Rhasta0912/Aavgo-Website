@@ -562,7 +562,11 @@ function aavgo_read_auth_handoffs(): array
         }
 
         $expiresAt = (int) ($entry['expiresAt'] ?? 0);
-        if ($expiresAt > $now && is_array($entry['user'] ?? null)) {
+        $kind = trim((string) ($entry['kind'] ?? 'success'));
+        $hasPayload = ($kind === 'success' && is_array($entry['user'] ?? null))
+            || ($kind === 'failure' && trim((string) ($entry['stage'] ?? '')) !== '');
+
+        if ($expiresAt > $now && $hasPayload) {
             $filtered[$key] = $entry;
         }
     }
@@ -592,8 +596,44 @@ function aavgo_store_auth_handoff(string $state, array $user, string $afterLogin
 
     $store = aavgo_read_auth_handoffs();
     $store['entries'][aavgo_auth_handoff_key($state)] = [
+        'kind' => 'success',
         'user' => $user,
         'afterLogin' => aavgo_normalize_after_login_path($afterLogin),
+        'createdAt' => gmdate('c'),
+        'expiresAt' => time() + 180,
+    ];
+    aavgo_write_auth_handoffs($store);
+}
+
+function aavgo_store_auth_handoff_failure(string $state, string $stage, string $detail, array $context = []): void
+{
+    $state = trim($state);
+    $stage = trim($stage);
+    if ($state === '' || $stage === '') {
+        return;
+    }
+
+    $sanitizedContext = [];
+    foreach ($context as $key => $value) {
+        $label = trim((string) $key);
+        if ($label === '') {
+            continue;
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            continue;
+        }
+
+        $sanitizedContext[$label] = mb_substr($text, 0, 240);
+    }
+
+    $store = aavgo_read_auth_handoffs();
+    $store['entries'][aavgo_auth_handoff_key($state)] = [
+        'kind' => 'failure',
+        'stage' => $stage,
+        'detail' => mb_substr(trim($detail), 0, 240),
+        'context' => $sanitizedContext,
         'createdAt' => gmdate('c'),
         'expiresAt' => time() + 180,
     ];

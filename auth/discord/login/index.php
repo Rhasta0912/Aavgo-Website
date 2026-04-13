@@ -77,6 +77,8 @@ echo <<<HTML
           <ul class="workspace-message-diagnostics-list">
             <li><span>State</span><strong id="aavgo-auth-state">{$safeState}</strong></li>
             <li><span>Status</span><strong id="aavgo-auth-status">Opening Discord...</strong></li>
+            <li id="aavgo-auth-stage-row" hidden><span>Stage</span><strong id="aavgo-auth-stage"></strong></li>
+            <li id="aavgo-auth-detail-row" hidden><span>Detail</span><strong id="aavgo-auth-detail"></strong></li>
           </ul>
         </section>
       </div>
@@ -94,9 +96,25 @@ echo <<<HTML
       const pollUrl = {$jsPollUrl};
       const claimUrl = {$jsClaimUrl};
       const statusNode = document.getElementById('aavgo-auth-status');
+      const stageRow = document.getElementById('aavgo-auth-stage-row');
+      const stageNode = document.getElementById('aavgo-auth-stage');
+      const detailRow = document.getElementById('aavgo-auth-detail-row');
+      const detailNode = document.getElementById('aavgo-auth-detail');
 
       const setStatus = message => {
         if (statusNode) statusNode.textContent = message;
+      };
+
+      const setFailure = (stage, detail) => {
+        setStatus('Discord handoff failed.');
+        if (stageRow && stageNode) {
+          stageNode.textContent = stage || 'unknown';
+          stageRow.hidden = false;
+        }
+        if (detailRow && detailNode) {
+          detailNode.textContent = detail || 'No extra details returned.';
+          detailRow.hidden = false;
+        }
       };
 
       try {
@@ -117,6 +135,10 @@ echo <<<HTML
           if (payload && payload.ready) {
             setStatus('Approved. Finishing sign-in...');
             window.location.replace(claimUrl);
+            return;
+          }
+          if (payload && payload.failed) {
+            setFailure(payload.stage, payload.detail);
             return;
           }
         } catch (_) {

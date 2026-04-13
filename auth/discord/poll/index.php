@@ -22,7 +22,17 @@ if ($state === '' || $validatedState === null) {
 
 $handoff = aavgo_peek_auth_handoff($state);
 
+$ready = is_array($handoff) && trim((string) ($handoff['kind'] ?? 'success')) === 'success';
+$failed = is_array($handoff) && trim((string) ($handoff['kind'] ?? '')) === 'failure';
+$stage = $failed ? trim((string) ($handoff['stage'] ?? '')) : '';
+$detail = $failed ? trim((string) ($handoff['detail'] ?? '')) : '';
+$context = $failed && is_array($handoff['context'] ?? null) ? $handoff['context'] : [];
+
 echo json_encode([
     'ok' => true,
-    'ready' => is_array($handoff),
+    'ready' => $ready,
+    'failed' => $failed,
+    'stage' => $stage,
+    'detail' => $detail,
+    'context' => $context,
 ], JSON_UNESCAPED_SLASHES);
