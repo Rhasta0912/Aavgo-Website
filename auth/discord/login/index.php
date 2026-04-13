@@ -24,8 +24,10 @@ if (!aavgo_is_fully_configured()) {
 }
 
 $afterLogin = aavgo_normalize_after_login_path((string) ($_SESSION['aavgo_after_login'] ?? ''));
-$state = aavgo_create_oauth_state($afterLogin);
+$callbackUrl = aavgo_get_callback_url();
+$state = aavgo_create_oauth_state($afterLogin, $callbackUrl);
 $_SESSION['discord_oauth_state'] = $state;
 aavgo_store_oauth_state_cookie($state);
 
-aavgo_redirect(aavgo_login_url());
+$preferBrowser = !isset($_GET['direct']) || (string) $_GET['direct'] !== '1';
+aavgo_redirect(aavgo_login_url($preferBrowser, $callbackUrl));

@@ -48,8 +48,12 @@ if ($code === '') {
     exit;
 }
 
+$preferredCallbackUrl = is_array($validatedState)
+    ? aavgo_normalize_callback_url((string) ($validatedState['callback_url'] ?? ''))
+    : '';
+
 try {
-    $tokenData = aavgo_exchange_code((string) $code);
+    $tokenData = aavgo_exchange_code((string) $code, $preferredCallbackUrl);
     $accessToken = (string) ($tokenData['access_token'] ?? '');
 
     if ($accessToken === '') {
@@ -59,6 +63,7 @@ try {
     aavgo_log_auth_failure('token_exchange', $exception, [
         'has_code' => true,
         'request_host' => aavgo_get_request_host(),
+        'preferred_callback' => $preferredCallbackUrl ?? '',
         'callback_candidates' => aavgo_get_callback_url_candidates(),
     ]);
 

@@ -845,12 +845,29 @@ function aavgo_normalize_after_login_path(string $path): string
     return $normalizedPath . $query;
 }
 
-function aavgo_create_oauth_state(string $afterLogin = ''): string
+function aavgo_normalize_callback_url(string $callbackUrl): string
+{
+    $callbackUrl = trim($callbackUrl);
+    if ($callbackUrl === '') {
+        return '';
+    }
+
+    foreach (aavgo_get_callback_url_candidates() as $candidate) {
+        if (hash_equals($candidate, $callbackUrl)) {
+            return $candidate;
+        }
+    }
+
+    return '';
+}
+
+function aavgo_create_oauth_state(string $afterLogin = '', string $callbackUrl = ''): string
 {
     $payload = [
         'nonce' => aavgo_create_state(),
         'iat' => time(),
         'after_login' => aavgo_normalize_after_login_path($afterLogin),
+        'callback_url' => aavgo_normalize_callback_url($callbackUrl),
     ];
 
     $encodedPayload = aavgo_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES) ?: '{}');
@@ -888,6 +905,7 @@ function aavgo_validate_oauth_state(string $state): ?array
     }
 
     $payload['after_login'] = aavgo_normalize_after_login_path((string) ($payload['after_login'] ?? ''));
+    $payload['callback_url'] = aavgo_normalize_callback_url((string) ($payload['callback_url'] ?? ''));
     return $payload;
 }
 
@@ -1090,17 +1108,41 @@ function aavgo_log_auth_failure(string $stage, Throwable $exception, array $cont
     @file_put_contents($path, $encoded . PHP_EOL, FILE_APPEND | LOCK_EX);
 }
 
-function aavgo_login_url(): string
+function aavgo_direct_login_url(?string $callbackUrl = null): string
 {
+    $callbackUrl = aavgo_normalize_callback_url((string) ($callbackUrl ?? ''));
+    if ($callbackUrl === '') {
+        $callbackUrl = aavgo_get_callback_url();
+    }
+
     $query = http_build_query([
         'client_id' => aavgo_get_config_string('client_id'),
-        'redirect_uri' => aavgo_get_callback_url(),
+        'redirect_uri' => $callbackUrl,
         'response_type' => 'code',
         'scope' => AAVGO_REQUIRED_SCOPES,
         'state' => $_SESSION['discord_oauth_state'] ?? '',
     ]);
 
     return 'https://discord.com/oauth2/authorize?' . $query;
+}
+
+function aavgo_login_url(bool $preferBrowser = true, ?string $callbackUrl = null): string
+{
+    $authorizeUrl = aavgo_direct_login_url($callbackUrl);
+    if (!$preferBrowser) {
+        return $authorizeUrl;
+    }
+
+    $parts = parse_url($authorizeUrl);
+    if (!is_array($parts)) {
+        return $authorizeUrl;
+    }
+
+    $path = (string) ($parts['path'] ?? '/oauth2/authorize');
+    $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+    $redirectTo = $path . $query;
+
+    return 'https://discord.com/login?redirect_to=' . rawurlencode($redirectTo);
 }
 
 function aavgo_api_request(string $method, string $endpoint, array $headers = [], array $body = []): array
@@ -1147,8 +1189,21 @@ function aavgo_api_request(string $method, string $endpoint, array $headers = []
     return $decoded;
 }
 
-function aavgo_exchange_code(string $code): array
+function aavgo_exchange_code(string $code, ?string $preferredCallbackUrl = null): array
 {
+    $preferredCallbackUrl = aavgo_normalize_callback_url((string) ($preferredCallbackUrl ?? ''));
+    if ($preferredCallbackUrl !== '') {
+        return aavgo_api_request('POST', '/oauth2/token', [
+            'Content-Type: application/x-www-form-urlencoded',
+        ], [
+            'client_id' => aavgo_get_config_string('client_id'),
+            'client_secret' => aavgo_get_config_string('client_secret'),
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => $preferredCallbackUrl,
+        ]);
+    }
+
     $lastException = null;
 
     foreach (aavgo_get_callback_url_candidates() as $callbackUrl) {
