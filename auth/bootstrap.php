@@ -8,6 +8,8 @@ const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
 const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
+const AAVGO_DEFAULT_COMMAND_QUEUE_PATH = '/home/aavgodes/admin-command-queue.json';
+const AAVGO_DEFAULT_AUDIT_LOG_PATH = '/home/aavgodes/admin-audit-log.json';
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_OPERATIONS_MANAGER_ROLE_ID = '1482226842047090809';
 const AAVGO_TEAM_LEADER_ROLE_ID = '1482732583660818636';
@@ -15,6 +17,7 @@ const AAVGO_SME_ROLE_ID = '1482382342621233153';
 const AAVGO_AGENT_ROLE_ID = '1482227287159078964';
 const AAVGO_TRAINEE_ROLE_ID = '1484705126026449029';
 const AAVGO_OAUTH_STATE_TTL = 900;
+const AAVGO_OAUTH_STATE_COOKIE = 'aavgo_discord_state';
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
         AAVGO_DEVELOPER_ROLE_ID, // Developer
@@ -119,6 +122,8 @@ function aavgo_load_config(): array
         'website_api_url' => rtrim((string) (getenv('AAVGO_WEBSITE_API_URL') ?: ''), '/'),
         'website_api_token' => trim((string) (getenv('AAVGO_WEBSITE_API_TOKEN') ?: '')),
         'hours_snapshot_path' => trim((string) (getenv('AAVGO_HOURS_SNAPSHOT_PATH') ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH)),
+        'command_queue_path' => trim((string) (getenv('AAVGO_COMMAND_QUEUE_PATH') ?: AAVGO_DEFAULT_COMMAND_QUEUE_PATH)),
+        'audit_log_path' => trim((string) (getenv('AAVGO_AUDIT_LOG_PATH') ?: AAVGO_DEFAULT_AUDIT_LOG_PATH)),
         'role_ids' => $roleIds,
         'admin_user_ids' => $adminUserIds,
     ];
@@ -126,7 +131,7 @@ function aavgo_load_config(): array
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
         $fileConfig = require AAVGO_EXTERNAL_CONFIG;
         if (is_array($fileConfig)) {
-            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token', 'hours_snapshot_path'] as $key) {
+            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token', 'hours_snapshot_path', 'command_queue_path', 'audit_log_path'] as $key) {
                 if (array_key_exists($key, $fileConfig)) {
                     $config[$key] = (string) $fileConfig[$key];
                 }
@@ -148,6 +153,8 @@ function aavgo_load_config(): array
             $config['website_api_url'] = rtrim((string) ($config['website_api_url'] ?? ''), '/');
             $config['website_api_token'] = trim((string) ($config['website_api_token'] ?? ''));
             $config['hours_snapshot_path'] = trim((string) ($config['hours_snapshot_path'] ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH));
+            $config['command_queue_path'] = trim((string) ($config['command_queue_path'] ?: AAVGO_DEFAULT_COMMAND_QUEUE_PATH));
+            $config['audit_log_path'] = trim((string) ($config['audit_log_path'] ?: AAVGO_DEFAULT_AUDIT_LOG_PATH));
         }
     }
 
@@ -196,6 +203,18 @@ function aavgo_get_hours_snapshot_path(): string
     return $path !== '' ? $path : AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH;
 }
 
+function aavgo_get_command_queue_path(): string
+{
+    $path = trim((string) aavgo_get_config('command_queue_path'));
+    return $path !== '' ? $path : AAVGO_DEFAULT_COMMAND_QUEUE_PATH;
+}
+
+function aavgo_get_audit_log_path(): string
+{
+    $path = trim((string) aavgo_get_config('audit_log_path'));
+    return $path !== '' ? $path : AAVGO_DEFAULT_AUDIT_LOG_PATH;
+}
+
 function aavgo_get_admin_user_ids(): array
 {
     return aavgo_parse_id_list(aavgo_get_config('admin_user_ids') ?? []);
@@ -228,6 +247,423 @@ function aavgo_has_hours_bridge(): bool
 function aavgo_has_hours_sync_token(): bool
 {
     return aavgo_get_website_api_token() !== '';
+}
+
+function aavgo_json_response(array $payload, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+}
+
+function aavgo_read_json_file(string $path, array $fallback): array
+{
+    if ($path === '' || !is_file($path)) {
+        return $fallback;
+    }
+
+    $raw = @file_get_contents($path);
+    if ($raw === false || trim($raw) === '') {
+        return $fallback;
+    }
+
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : $fallback;
+}
+
+function aavgo_write_json_file(string $path, array $payload): bool
+{
+    if ($path === '') {
+        return false;
+    }
+
+    $directory = dirname($path);
+    if ($directory !== '' && !is_dir($directory)) {
+        @mkdir($directory, 0775, true);
+    }
+
+    $encoded = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if (!is_string($encoded)) {
+        return false;
+    }
+
+    $tempPath = $path . '.tmp';
+    $written = @file_put_contents($tempPath, $encoded . PHP_EOL, LOCK_EX);
+    if ($written === false) {
+        @unlink($tempPath);
+        return false;
+    }
+
+    if (!@rename($tempPath, $path)) {
+        @unlink($tempPath);
+        return false;
+    }
+
+    return true;
+}
+
+function aavgo_create_identifier(string $prefix): string
+{
+    return $prefix . '_' . bin2hex(random_bytes(6));
+}
+
+function aavgo_user_role_ids_array(array $user): array
+{
+    return aavgo_parse_id_list($user['role_ids'] ?? []);
+}
+
+function aavgo_user_has_role_id(array $user, string $roleId): bool
+{
+    return in_array($roleId, aavgo_user_role_ids_array($user), true);
+}
+
+function aavgo_user_is_developer(array $user): bool
+{
+    $userId = trim((string) ($user['id'] ?? ''));
+    return aavgo_user_has_role_id($user, AAVGO_DEVELOPER_ROLE_ID)
+        || ($userId !== '' && in_array($userId, aavgo_get_admin_user_ids(), true));
+}
+
+function aavgo_request_header(string $name): string
+{
+    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+    $candidates = [
+        $_SERVER[$serverKey] ?? '',
+        $_SERVER['REDIRECT_' . $serverKey] ?? '',
+    ];
+
+    foreach ($candidates as $candidate) {
+        $value = trim((string) $candidate);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        if (is_array($headers)) {
+            foreach ($headers as $headerName => $value) {
+                if (strcasecmp((string) $headerName, $name) === 0) {
+                    $normalizedValue = trim((string) $value);
+                    if ($normalizedValue !== '') {
+                        return $normalizedValue;
+                    }
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
+function aavgo_decode_json_body(): array
+{
+    $rawBody = file_get_contents('php://input');
+    $decoded = json_decode($rawBody ?: '', true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function aavgo_extract_sync_token(array $decodedPayload): string
+{
+    $authorization = aavgo_request_header('Authorization');
+    if (
+        $authorization !== ''
+        && preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches) === 1
+    ) {
+        $bearerToken = trim((string) ($matches[1] ?? ''));
+        if ($bearerToken !== '') {
+            return $bearerToken;
+        }
+    }
+
+    foreach (['X-Aavgo-Token', 'X-Aavgo-Website-Token'] as $headerName) {
+        $headerValue = aavgo_request_header($headerName);
+        if ($headerValue !== '') {
+            return $headerValue;
+        }
+    }
+
+    return trim((string) ($decodedPayload['token'] ?? ''));
+}
+
+function aavgo_command_queue_template(): array
+{
+    return [
+        'updatedAt' => gmdate('c'),
+        'commands' => [],
+    ];
+}
+
+function aavgo_audit_log_template(): array
+{
+    return [
+        'updatedAt' => gmdate('c'),
+        'entries' => [],
+    ];
+}
+
+function aavgo_sort_descending_by_created_at(array $items): array
+{
+    usort($items, static function (array $left, array $right): int {
+        return strcmp(
+            (string) ($right['createdAt'] ?? ''),
+            (string) ($left['createdAt'] ?? '')
+        );
+    });
+
+    return $items;
+}
+
+function aavgo_read_command_queue(): array
+{
+    $queue = aavgo_read_json_file(aavgo_get_command_queue_path(), aavgo_command_queue_template());
+    $commands = is_array($queue['commands'] ?? null) ? $queue['commands'] : [];
+    $queue['commands'] = array_values(array_filter($commands, 'is_array'));
+    $queue['updatedAt'] = trim((string) ($queue['updatedAt'] ?? '')) ?: gmdate('c');
+    return $queue;
+}
+
+function aavgo_trim_command_history(array $commands): array
+{
+    $pending = [];
+    $completed = [];
+
+    foreach ($commands as $command) {
+        $status = trim((string) ($command['status'] ?? 'pending'));
+        if ($status === 'pending' || $status === 'processing') {
+            $pending[] = $command;
+            continue;
+        }
+
+        $completed[] = $command;
+    }
+
+    $completed = aavgo_sort_descending_by_created_at($completed);
+    $completed = array_slice($completed, 0, 140);
+
+    return array_merge($pending, $completed);
+}
+
+function aavgo_write_command_queue(array $queue): bool
+{
+    $queue['commands'] = aavgo_trim_command_history(is_array($queue['commands'] ?? null) ? $queue['commands'] : []);
+    $queue['updatedAt'] = gmdate('c');
+    return aavgo_write_json_file(aavgo_get_command_queue_path(), $queue);
+}
+
+function aavgo_read_audit_log(): array
+{
+    $log = aavgo_read_json_file(aavgo_get_audit_log_path(), aavgo_audit_log_template());
+    $entries = is_array($log['entries'] ?? null) ? $log['entries'] : [];
+    $log['entries'] = aavgo_sort_descending_by_created_at(array_values(array_filter($entries, 'is_array')));
+    $log['updatedAt'] = trim((string) ($log['updatedAt'] ?? '')) ?: gmdate('c');
+    return $log;
+}
+
+function aavgo_write_audit_log(array $log): bool
+{
+    $entries = is_array($log['entries'] ?? null) ? $log['entries'] : [];
+    $log['entries'] = array_slice(aavgo_sort_descending_by_created_at(array_values(array_filter($entries, 'is_array'))), 0, 180);
+    $log['updatedAt'] = gmdate('c');
+    return aavgo_write_json_file(aavgo_get_audit_log_path(), $log);
+}
+
+function aavgo_command_action_label(string $action): string
+{
+    return match ($action) {
+        'update_team' => 'Team reassignment',
+        'update_hotel' => 'Hotel reassignment',
+        'force_logout_agent' => 'Force logout (staff)',
+        'force_logout_hotel' => 'Force logout (hotel)',
+        'sync_all_roles' => 'Discord role resync',
+        'push_snapshot' => 'Snapshot refresh',
+        default => 'Leadership action',
+    };
+}
+
+function aavgo_command_target_label(array $command): string
+{
+    $payload = is_array($command['payload'] ?? null) ? $command['payload'] : [];
+    $displayName = trim((string) ($payload['displayName'] ?? ''));
+    $team = trim((string) ($payload['team'] ?? ''));
+    $hotelLabel = trim((string) ($payload['hotelLabel'] ?? $payload['hotelId'] ?? ''));
+
+    return match ((string) ($command['action'] ?? '')) {
+        'update_team' => trim($displayName . ($team !== '' ? ' -> ' . $team : '')),
+        'update_hotel' => trim($displayName . ($hotelLabel !== '' ? ' -> ' . $hotelLabel : '')),
+        'force_logout_agent' => $displayName,
+        'force_logout_hotel' => $hotelLabel,
+        default => $displayName !== '' ? $displayName : $hotelLabel,
+    };
+}
+
+function aavgo_append_audit_entry(array $entry): void
+{
+    $log = aavgo_read_audit_log();
+    $log['entries'][] = $entry + [
+        'id' => aavgo_create_identifier('audit'),
+        'createdAt' => gmdate('c'),
+    ];
+    aavgo_write_audit_log($log);
+}
+
+function aavgo_enqueue_admin_command(string $action, array $payload, array $actor): array
+{
+    $command = [
+        'id' => aavgo_create_identifier('cmd'),
+        'action' => $action,
+        'status' => 'pending',
+        'payload' => $payload,
+        'actor' => [
+            'discordId' => trim((string) ($actor['discordId'] ?? '')),
+            'name' => trim((string) ($actor['name'] ?? 'Aavgo Leadership')),
+            'roleSummary' => trim((string) ($actor['roleSummary'] ?? '')),
+        ],
+        'createdAt' => gmdate('c'),
+        'completedAt' => null,
+        'message' => 'Queued for bot sync.',
+    ];
+
+    $queue = aavgo_read_command_queue();
+    $queue['commands'][] = $command;
+    aavgo_write_command_queue($queue);
+
+    aavgo_append_audit_entry([
+        'id' => aavgo_create_identifier('audit'),
+        'action' => $action,
+        'label' => aavgo_command_action_label($action),
+        'target' => aavgo_command_target_label($command),
+        'status' => 'queued',
+        'message' => 'Queued for secure bot sync.',
+        'createdAt' => gmdate('c'),
+        'actor' => $command['actor'],
+    ]);
+
+    return $command;
+}
+
+function aavgo_get_pending_admin_commands(int $limit = 25): array
+{
+    $queue = aavgo_read_command_queue();
+    $pending = array_values(array_filter($queue['commands'], static function (array $command): bool {
+        $status = trim((string) ($command['status'] ?? 'pending'));
+        return $status === 'pending';
+    }));
+
+    usort($pending, static function (array $left, array $right): int {
+        return strcmp((string) ($left['createdAt'] ?? ''), (string) ($right['createdAt'] ?? ''));
+    });
+
+    return array_slice($pending, 0, max(1, $limit));
+}
+
+function aavgo_apply_command_results(array $results): array
+{
+    $queue = aavgo_read_command_queue();
+    $commands = is_array($queue['commands'] ?? null) ? $queue['commands'] : [];
+    $indexedResults = [];
+
+    foreach ($results as $result) {
+        if (!is_array($result)) {
+            continue;
+        }
+
+        $id = trim((string) ($result['id'] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+
+        $indexedResults[$id] = $result;
+    }
+
+    $updated = [];
+    foreach ($commands as &$command) {
+        if (!is_array($command)) {
+            continue;
+        }
+
+        $id = trim((string) ($command['id'] ?? ''));
+        if ($id === '' || !isset($indexedResults[$id])) {
+            continue;
+        }
+
+        $result = $indexedResults[$id];
+        $status = trim((string) ($result['status'] ?? 'completed'));
+        if (!in_array($status, ['completed', 'failed', 'processing'], true)) {
+            $status = 'completed';
+        }
+
+        $command['status'] = $status;
+        $command['message'] = trim((string) ($result['message'] ?? 'Completed.'));
+        $command['completedAt'] = trim((string) ($result['completedAt'] ?? gmdate('c')));
+        $updated[] = $command;
+    }
+    unset($command);
+
+    $queue['commands'] = $commands;
+    aavgo_write_command_queue($queue);
+
+    foreach ($updated as $command) {
+        aavgo_append_audit_entry([
+            'id' => aavgo_create_identifier('audit'),
+            'action' => (string) ($command['action'] ?? ''),
+            'label' => aavgo_command_action_label((string) ($command['action'] ?? '')),
+            'target' => aavgo_command_target_label($command),
+            'status' => (string) ($command['status'] ?? 'completed'),
+            'message' => trim((string) ($command['message'] ?? 'Completed.')),
+            'createdAt' => trim((string) ($command['completedAt'] ?? gmdate('c'))),
+            'actor' => is_array($command['actor'] ?? null) ? $command['actor'] : [],
+        ]);
+    }
+
+    return $updated;
+}
+
+function aavgo_build_management_payload(array $user, ?array $hoursPayload = null): array
+{
+    $queue = aavgo_read_command_queue();
+    $audit = aavgo_read_audit_log();
+    $hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : [];
+    $meta = is_array($hoursData['meta'] ?? null) ? $hoursData['meta'] : [];
+
+    $pending = array_values(array_filter($queue['commands'], static function (array $command): bool {
+        return in_array((string) ($command['status'] ?? 'pending'), ['pending', 'processing'], true);
+    }));
+    $recent = aavgo_sort_descending_by_created_at($queue['commands']);
+
+    return [
+        'viewer' => [
+            'displayName' => aavgo_display_name($user),
+            'roleSummary' => aavgo_user_role_summary($user),
+            'isDeveloper' => aavgo_user_is_developer($user),
+        ],
+        'actions' => [
+            'canReassign' => true,
+            'canForceLogout' => true,
+            'canSyncAllRoles' => aavgo_user_is_developer($user),
+            'canPushSnapshot' => aavgo_user_is_developer($user),
+        ],
+        'meta' => [
+            'teams' => array_values(array_filter($meta['teams'] ?? [], 'is_string')),
+            'hotels' => is_array($meta['hotels'] ?? null) ? $meta['hotels'] : [],
+        ],
+        'queue' => [
+            'pendingCount' => count($pending),
+            'pending' => array_slice($pending, 0, 12),
+            'recent' => array_slice($recent, 0, 24),
+        ],
+        'audit' => [
+            'entries' => array_slice(is_array($audit['entries'] ?? null) ? $audit['entries'] : [], 0, 24),
+        ],
+    ];
+}
+
+function aavgo_build_admin_board_payload(array $user): array
+{
+    $hoursPayload = aavgo_fetch_hours_bridge_payload();
+    $hoursPayload['management'] = aavgo_build_management_payload($user, $hoursPayload);
+    return $hoursPayload;
 }
 
 function aavgo_read_pushed_hours_snapshot_payload(): ?array
@@ -298,6 +734,28 @@ function aavgo_oauth_state_secret(): string
     }
 
     return 'aavgo-private-front-door';
+}
+
+function aavgo_store_oauth_state_cookie(string $state): void
+{
+    setcookie(AAVGO_OAUTH_STATE_COOKIE, $state, [
+        'expires' => time() + AAVGO_OAUTH_STATE_TTL,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function aavgo_clear_oauth_state_cookie(): void
+{
+    setcookie(AAVGO_OAUTH_STATE_COOKIE, '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
 }
 
 function aavgo_normalize_after_login_path(string $path): string
@@ -433,7 +891,6 @@ function aavgo_login_url(): string
         'response_type' => 'code',
         'scope' => AAVGO_REQUIRED_SCOPES,
         'state' => $_SESSION['discord_oauth_state'] ?? '',
-        'prompt' => 'consent',
     ]);
 
     return 'https://discord.com/oauth2/authorize?' . $query;
@@ -702,52 +1159,27 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="workspace-page workspace-dashboard workspace-page-access">
-  <div class="dashboard-shell dashboard-shell-message dashboard-shell-operations">
-    <aside class="dashboard-sidebar reveal reveal-in">
-      <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
-      <section class="dashboard-profile-card dashboard-profile-card-plain">
-        <div class="dashboard-profile-copy">
-          <strong>Private front door</strong>
-          <p>Discord-secured website surface</p>
-        </div>
-      </section>
-      <div class="dashboard-sidebar-meta">
-        <span class="dashboard-chip dashboard-chip-accent">Access gate</span>
-        <span class="dashboard-chip">No public browse</span>
-      </div>
-      <div class="dashboard-command-box">
-        <span class="dashboard-command-label">Access mode</span>
-        <strong>The website stays private until the right Discord role opens the route.</strong>
-      </div>
-      <div class="dashboard-side-note">
-        <p class="dashboard-kicker">Status</p>
-        <h3>{$safeTitle}</h3>
-        <p>{$safeMessage}</p>
-      </div>
-    </aside>
-
-    <main class="dashboard-main">
-      <section class="dashboard-hero-card dashboard-message-hero reveal reveal-in">
-        <div class="dashboard-hero-grid">
-          <div>
-            <p class="dashboard-kicker">Private access status</p>
-            <h1 class="dashboard-title dashboard-title-message">{$safeTitle}</h1>
-            <p class="dashboard-subtitle">{$safeMessage}</p>
-          </div>
-          <div class="dashboard-hero-aside">
-            <span class="dashboard-chip dashboard-chip-accent">Next step</span>
-            <strong>Return through the secure front door.</strong>
-            <p>Move back into the correct workspace lane without dropping out of the premium private surface.</p>
-          </div>
-        </div>
-        <div class="dashboard-action-row dashboard-action-row-message">
+<body class="workspace-page workspace-page-access">
+  <main class="workspace-message-shell">
+    <section class="workspace-message-card reveal reveal-in">
+      <div class="workspace-message-main">
+        <p class="dashboard-kicker">Private access status</p>
+        <h1 class="workspace-message-title">{$safeTitle}</h1>
+        <p class="workspace-message-copy">{$safeMessage}</p>
+        <div class="workspace-message-actions">
           <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
           <a class="button button-secondary" href="/">Back Home</a>
         </div>
-      </section>
-    </main>
-  </div>
+      </div>
+      <aside class="workspace-message-aside reveal reveal-delay-1 reveal-in">
+        <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+        <span class="dashboard-chip dashboard-chip-accent">Private front door</span>
+        <strong>Discord-secured access only.</strong>
+        <p>The route stays hidden until the correct role opens it. If Discord completed in another window or the app, use the secure retry button and the handoff will restart cleanly.</p>
+      </aside>
+    </section>
+  </main>
+  <script src="/script.js"></script>
 </body>
 </html>
 HTML;

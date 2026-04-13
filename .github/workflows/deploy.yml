@@ -20,6 +20,8 @@ jobs:
           mkdir -p deploy/user
           mkdir -p deploy/api/admin-hours
           mkdir -p deploy/api/admin-hours-sync
+          mkdir -p deploy/api/admin-command
+          mkdir -p deploy/api/admin-command-sync
           mkdir -p deploy/auth/discord/login
           mkdir -p deploy/auth/discord/callback
           mkdir -p deploy/auth/logout
@@ -31,6 +33,8 @@ jobs:
           cp user/index.php deploy/user/index.php
           cp api/admin-hours/index.php deploy/api/admin-hours/index.php
           cp api/admin-hours-sync/index.php deploy/api/admin-hours-sync/index.php
+          cp api/admin-command/index.php deploy/api/admin-command/index.php
+          cp api/admin-command-sync/index.php deploy/api/admin-command-sync/index.php
           cp auth/bootstrap.php deploy/auth/bootstrap.php
           cp auth/discord/login/index.php deploy/auth/discord/login/index.php
           cp auth/discord/callback/index.php deploy/auth/discord/callback/index.php

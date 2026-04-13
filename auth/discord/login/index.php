@@ -24,6 +24,8 @@ if (!aavgo_is_fully_configured()) {
 }
 
 $afterLogin = aavgo_normalize_after_login_path((string) ($_SESSION['aavgo_after_login'] ?? ''));
-$_SESSION['discord_oauth_state'] = aavgo_create_oauth_state($afterLogin);
+$state = aavgo_create_oauth_state($afterLogin);
+$_SESSION['discord_oauth_state'] = $state;
+aavgo_store_oauth_state_cookie($state);
 
 aavgo_redirect(aavgo_login_url());

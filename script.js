@@ -35,11 +35,15 @@ function normalizeForSearch(value) {
   return String(value ?? "").trim().toLowerCase();
 }
 
-function formatHours(value) {
+function formatHoursValue(value) {
   const number = Number(value ?? 0);
-  if (!Number.isFinite(number)) return "0h";
-  const oneDecimal = Math.round(number * 10) / 10;
-  return `${String(oneDecimal).replace(/\.0$/, "")}h`;
+  if (!Number.isFinite(number)) return "0";
+  const rounded = Math.round(number * 10) / 10;
+  return String(rounded).replace(/\.0$/, "");
+}
+
+function formatHours(value) {
+  return `${formatHoursValue(value)}h`;
 }
 
 function formatSyncLabel(value) {
@@ -56,77 +60,127 @@ function formatSyncLabel(value) {
   })}`;
 }
 
+function formatAuditLabel(value) {
+  if (!value) return "Just now";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Just now";
+  return `${date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric"
+  })} ${date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit"
+  })}`;
+}
+
 function setText(id, value) {
   const node = document.getElementById(id);
-  if (node) node.textContent = value;
+  if (node) {
+    node.textContent = value;
+  }
 }
 
-function renderHoursNotice(payload) {
-  const notice = document.getElementById("hours-board-notice");
-  if (!notice) return;
-
-  if (payload?.ok) {
-    notice.innerHTML = "";
-    return;
+function setHtml(id, html) {
+  const node = document.getElementById(id);
+  if (node) {
+    node.innerHTML = html;
   }
-
-  const message = escapeHtml(payload?.error || "The live hours bridge is unavailable right now.");
-  notice.innerHTML = `
-    <div class="dashboard-inline-notice">
-      <strong>Live hours are not connected yet.</strong>
-      <p>${message}</p>
-    </div>
-  `;
 }
 
-function renderHoursRows(people) {
-  const tableBody = document.getElementById("hours-board-rows");
-  if (!tableBody) return;
+function parseJsonScript(id) {
+  const node = document.getElementById(id);
+  if (!node) return null;
 
-  if (!Array.isArray(people) || people.length === 0) {
-    tableBody.innerHTML = `
-      <tr>
-        <td colspan="9">
-          <div class="dashboard-empty-state">
-            <strong>No live hour rows yet.</strong>
-            <p>Once the hours bridge responds, every actual staff row will appear here.</p>
-          </div>
-        </td>
-      </tr>
-    `;
-    return;
+  try {
+    return JSON.parse(node.textContent || "{}");
+  } catch (_) {
+    return null;
   }
+}
 
-  tableBody.innerHTML = people.map(person => {
-    const activeNow = Boolean(person?.activeNow);
-    const activeSession = person?.activeSession || null;
-    const activeLabel = activeNow && activeSession
-      ? `${escapeHtml(activeSession.kind || "Live Shift")} - ${formatHours(activeSession.elapsedHours)}`
-      : "Offline";
+function getPrimaryHotelId(person) {
+  return String(person?.linkedHotelId || "").trim();
+}
 
-    return `
-      <tr class="${activeNow ? "is-live" : ""}">
-        <td>
-          <div class="dashboard-staff-cell">
-            <strong>${escapeHtml(person?.displayName || "Unknown")}</strong>
-            <span>${escapeHtml(person?.route || "/user")}</span>
-          </div>
-        </td>
-        <td>${escapeHtml(person?.role || "Agent")}</td>
-        <td>${escapeHtml(person?.team || "Unassigned")}</td>
-        <td>${escapeHtml(person?.linkedHotel || "Unassigned")}</td>
-        <td>
-          <span class="dashboard-status-pill ${activeNow ? "is-live" : "is-idle"}">
-            ${activeLabel}
-          </span>
-        </td>
-        <td>${formatHours(person?.todayHours)}</td>
-        <td>${formatHours(person?.weeklyHours)}</td>
-        <td>${formatHours(person?.monthlyHours)}</td>
-        <td>${formatHours(person?.allHours)}</td>
-      </tr>
-    `;
-  }).join("");
+function getPrimaryHotelLabel(person) {
+  return String(person?.linkedHotel || "").trim() || "Unassigned";
+}
+
+function getRoleSummary(person) {
+  const labels = Array.isArray(person?.roleLabels) ? person.roleLabels.filter(Boolean) : [];
+  if (labels.length > 0) {
+    return labels.join(" / ");
+  }
+  return String(person?.roleSummary || person?.role || "Agent");
+}
+
+function getStatusSummary(person) {
+  if (person?.activeNow) {
+    return `${String(person?.activeSession?.kind || "Live shift")} - ${formatHours(person?.activeSession?.elapsedHours)}`;
+  }
+  return String(person?.agentStatus || "Offline");
+}
+
+function getSearchHaystack(person) {
+  return [
+    person?.displayName,
+    person?.username,
+    person?.role,
+    getRoleSummary(person),
+    person?.team,
+    person?.linkedHotel,
+    person?.linkedHotelId,
+    person?.agentStatus,
+    person?.route,
+    person?.activeNow ? "active" : "offline",
+    person?.activeSession?.kind
+  ]
+    .map(normalizeForSearch)
+    .join(" ");
+}
+
+function selectOptionsMarkup(options, placeholder, currentValue = "") {
+  const items = Array.isArray(options) ? options : [];
+  return [
+    `<option value="">${escapeHtml(placeholder)}</option>`,
+    ...items.map(option => {
+      const value = typeof option === "string" ? option : option?.id;
+      const label = typeof option === "string" ? option : option?.name ?? option?.label ?? option?.id;
+      const selected = String(value ?? "") === String(currentValue ?? "") ? " selected" : "";
+      return `<option value="${escapeHtml(value ?? "")}"${selected}>${escapeHtml(label ?? "")}</option>`;
+    })
+  ].join("");
+}
+
+function syncSelectOptions(selectId, options, placeholder, currentValue = "") {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.innerHTML = selectOptionsMarkup(options, placeholder, currentValue);
+}
+
+function deriveTeamCards(people) {
+  const buckets = new Map();
+
+  (Array.isArray(people) ? people : []).forEach(person => {
+    const teamName = String(person?.team || "Unassigned");
+    const current = buckets.get(teamName) || {
+      name: teamName,
+      people: 0,
+      activeNow: 0,
+      todayHours: 0,
+      weeklyHours: 0,
+      monthlyHours: 0
+    };
+
+    current.people += 1;
+    current.activeNow += person?.activeNow ? 1 : 0;
+    current.todayHours += Number(person?.todayHours || 0);
+    current.weeklyHours += Number(person?.weeklyHours || 0);
+    current.monthlyHours += Number(person?.monthlyHours || 0);
+    buckets.set(teamName, current);
+  });
+
+  return [...buckets.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
 function aggregateHoursSummary(people) {
@@ -146,74 +200,36 @@ function aggregateHoursSummary(people) {
   });
 }
 
-function deriveTeamCards(people) {
-  const buckets = new Map();
-
-  (Array.isArray(people) ? people : []).forEach(person => {
-    const teamName = String(person?.team || "Unassigned");
-    const current = buckets.get(teamName) || {
-      name: teamName,
-      people: 0,
-      activeNow: 0,
-      todayHours: 0,
-      weeklyHours: 0
-    };
-
-    current.people += 1;
-    current.activeNow += person?.activeNow ? 1 : 0;
-    current.todayHours += Number(person?.todayHours || 0);
-    current.weeklyHours += Number(person?.weeklyHours || 0);
-    buckets.set(teamName, current);
-  });
-
-  return [...buckets.values()].sort((left, right) => left.name.localeCompare(right.name));
+function getAdminBoardBootstrap() {
+  return window.__AAVGO_ADMIN_BOARD__ || parseJsonScript("admin-board-bootstrap") || null;
 }
 
-function renderTeamCards(teams) {
-  const container = document.getElementById("hours-team-cards");
-  if (!container) return;
+const adminBoardState = {
+  payload: getAdminBoardBootstrap(),
+  selectedDiscordId: "",
+  refreshTimer: null,
+  actionInFlight: false
+};
 
-  if (!Array.isArray(teams) || teams.length === 0) {
-    container.innerHTML = `
-      <div class="dashboard-mini-card">
-        <strong>Waiting for data</strong>
-        <p>The team breakdown appears here as soon as the bridge returns live data.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = teams.map(team => `
-    <div class="dashboard-mini-card">
-      <strong>${escapeHtml(team?.name || "Unassigned")}</strong>
-      <p>${escapeHtml(team?.people ?? 0)} people - ${escapeHtml(team?.activeNow ?? 0)} active</p>
-      <span>Today: ${formatHours(team?.todayHours)}</span>
-      <span>Week: ${formatHours(team?.weeklyHours)}</span>
-    </div>
-  `).join("");
+function getAdminPeople() {
+  return Array.isArray(adminBoardState?.payload?.data?.people) ? adminBoardState.payload.data.people : [];
 }
 
-function syncHoursFilterOptions(selectId, values, placeholder) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-
-  const previousValue = select.value;
-  const normalizedValues = [...new Set((Array.isArray(values) ? values : [])
-    .map(value => String(value ?? "").trim())
-    .filter(Boolean))]
-    .sort((left, right) => left.localeCompare(right));
-
-  select.innerHTML = [
-    `<option value="">${escapeHtml(placeholder)}</option>`,
-    ...normalizedValues.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
-  ].join("");
-
-  if (previousValue && normalizedValues.includes(previousValue)) {
-    select.value = previousValue;
-  }
+function getAdminManagement() {
+  return adminBoardState?.payload?.management || {};
 }
 
-function getHoursFilters() {
+function getAdminMeta() {
+  const management = getAdminManagement();
+  const managementMeta = management?.meta || {};
+  const payloadMeta = adminBoardState?.payload?.data?.meta || {};
+  return {
+    hotels: Array.isArray(managementMeta.hotels) ? managementMeta.hotels : (Array.isArray(payloadMeta.hotels) ? payloadMeta.hotels : []),
+    teams: Array.isArray(managementMeta.teams) ? managementMeta.teams : (Array.isArray(payloadMeta.teams) ? payloadMeta.teams : [])
+  };
+}
+
+function getAdminFilters() {
   return {
     search: normalizeForSearch(document.getElementById("hours-filter-search")?.value || ""),
     role: String(document.getElementById("hours-filter-role")?.value || "").trim(),
@@ -223,161 +239,573 @@ function getHoursFilters() {
   };
 }
 
-function filterHoursPeople(people) {
-  const filters = getHoursFilters();
+function filterAdminPeople(people) {
+  const filters = getAdminFilters();
 
   return (Array.isArray(people) ? people : []).filter(person => {
-    const displayName = normalizeForSearch(person?.displayName || person?.username || "");
-    const route = normalizeForSearch(person?.route || "");
-    const role = String(person?.role || "").trim();
-    const team = String(person?.team || "").trim();
-    const hotel = String(person?.linkedHotel || "").trim();
-    const status = person?.activeNow ? "active" : "offline";
-
-    if (filters.search && !displayName.includes(filters.search) && !route.includes(filters.search)) {
+    if (filters.search && !getSearchHaystack(person).includes(filters.search)) {
       return false;
     }
 
-    if (filters.role && role !== filters.role) {
+    if (filters.role && String(person?.role || "") !== filters.role) {
       return false;
     }
 
-    if (filters.team && team !== filters.team) {
+    if (filters.team && String(person?.team || "") !== filters.team) {
       return false;
     }
 
-    if (filters.hotel && hotel !== filters.hotel) {
-      return false;
+    if (filters.hotel) {
+      const personHotelId = getPrimaryHotelId(person);
+      const personHotelLabel = getPrimaryHotelLabel(person);
+      if (filters.hotel !== personHotelId && filters.hotel !== personHotelLabel) {
+        return false;
+      }
     }
 
-    if (filters.status && status !== filters.status) {
-      return false;
+    if (filters.status) {
+      const status = person?.activeNow ? "active" : "offline";
+      if (status !== filters.status) {
+        return false;
+      }
     }
 
     return true;
   });
 }
 
-function applyAdminHoursPayload(payload) {
-  renderHoursNotice(payload);
+function getSelectedStaff(allPeople, visiblePeople) {
+  const selectedVisible = visiblePeople.find(
+    person => String(person?.discordId || "") === String(adminBoardState.selectedDiscordId || "")
+  );
+  if (selectedVisible) {
+    return selectedVisible;
+  }
 
-  if (!payload?.ok || !payload?.data) {
-    setText("hours-summary-total", "0");
-    setText("hours-summary-active", "0");
-    setText("hours-summary-today", "0h");
-    setText("hours-summary-weekly", "0h");
-    setText("hours-summary-monthly", "0h");
-    setText("hours-sync-label", "Waiting for live sync");
-    renderHoursRows([]);
-    renderTeamCards([]);
+  const selectedAny = allPeople.find(
+    person => String(person?.discordId || "") === String(adminBoardState.selectedDiscordId || "")
+  );
+  if (selectedAny && visiblePeople.length === 0) {
+    return selectedAny;
+  }
+
+  const nextStaff = visiblePeople[0] || allPeople[0] || null;
+  adminBoardState.selectedDiscordId = String(nextStaff?.discordId || "");
+  return nextStaff;
+}
+
+function setActionFeedback(message, isError = false) {
+  const node = document.getElementById("hours-action-feedback");
+  if (!node) return;
+  node.textContent = message;
+  node.classList.toggle("is-error", Boolean(isError));
+  node.classList.toggle("is-success", !isError && message !== "");
+}
+
+function setActionControlsDisabled(disabled) {
+  [
+    "hours-action-team-select",
+    "hours-action-team-submit",
+    "hours-action-hotel-select",
+    "hours-action-hotel-submit",
+    "hours-action-logout-submit",
+    "hours-hotel-force-select",
+    "hours-hotel-force-submit",
+    "developer-sync-all",
+    "developer-push-snapshot"
+  ].forEach(id => {
+    const node = document.getElementById(id);
+    if (node) {
+      node.disabled = disabled;
+    }
+  });
+}
+
+function renderHoursNotice(payload) {
+  const notice = document.getElementById("hours-board-notice");
+  if (!notice) return;
+
+  if (payload?.ok || Array.isArray(payload?.data?.people)) {
+    notice.innerHTML = "";
     return;
   }
 
-  const allPeople = Array.isArray(payload.data.people) ? payload.data.people : [];
-  syncHoursFilterOptions("hours-filter-role", allPeople.map(person => person?.role), "All roles");
-  syncHoursFilterOptions("hours-filter-team", allPeople.map(person => person?.team), "All teams");
-  syncHoursFilterOptions("hours-filter-hotel", allPeople.map(person => person?.linkedHotel), "All hotels");
+  const message = escapeHtml(payload?.error || "The live hours bridge is unavailable right now.");
+  notice.innerHTML = `
+    <div class="dashboard-inline-notice">
+      <strong>Live hours are not connected yet.</strong>
+      <p>${message}</p>
+    </div>
+  `;
+}
 
-  const people = filterHoursPeople(allPeople);
-  const summary = aggregateHoursSummary(people);
-  const teams = deriveTeamCards(people);
+function renderHoursRows(people, selectedDiscordId) {
+  const tableBody = document.getElementById("hours-board-rows");
+  if (!tableBody) return;
 
-  setText("hours-summary-total", String(summary.totalPeople ?? 0));
-  setText("hours-summary-active", String(summary.activeNow ?? 0));
+  if (!Array.isArray(people) || people.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="9">
+          <div class="dashboard-empty-state">
+            <strong>No rows match the current lane.</strong>
+            <p>Widen the filters or wait for the next bot snapshot.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = people.map(person => {
+    const activeNow = Boolean(person?.activeNow);
+    const activeSession = person?.activeSession || null;
+    const activeLabel = activeNow && activeSession
+      ? `${escapeHtml(activeSession.kind || "Live Shift")} - ${formatHours(activeSession.elapsedHours)}`
+      : escapeHtml(person?.agentStatus || "Offline");
+    const isSelected = String(person?.discordId || "") === String(selectedDiscordId || "");
+    const roleSummary = getRoleSummary(person);
+    const roleSecondary = roleSummary !== String(person?.role || "") ? roleSummary : "";
+
+    return `
+      <tr class="${activeNow ? "is-live" : ""} ${isSelected ? "is-selected" : ""}" data-discord-id="${escapeHtml(person?.discordId || "")}">
+        <td>
+          <div class="dashboard-staff-cell">
+            <strong>${escapeHtml(person?.displayName || "Unknown")}</strong>
+            <span>${escapeHtml(person?.username || "")}</span>
+          </div>
+        </td>
+        <td>
+          <div class="dashboard-inline-stack">
+            <strong>${escapeHtml(person?.role || "Agent")}</strong>
+            ${roleSecondary ? `<span>${escapeHtml(roleSecondary)}</span>` : ""}
+          </div>
+        </td>
+        <td>${escapeHtml(person?.team || "Unassigned")}</td>
+        <td>${escapeHtml(getPrimaryHotelLabel(person))}</td>
+        <td>${activeLabel}</td>
+        <td>${formatHours(person?.todayHours)}</td>
+        <td>${formatHours(person?.weeklyHours)}</td>
+        <td>${formatHours(person?.monthlyHours)}</td>
+        <td>${formatHours(person?.allHours)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderTeamCards(teams) {
+  const container = document.getElementById("hours-team-cards");
+  if (!container) return;
+
+  if (!Array.isArray(teams) || teams.length === 0) {
+    container.innerHTML = `
+      <div class="dashboard-empty-state">
+        <strong>Waiting for filtered totals.</strong>
+        <p>Once rows are visible in the lane, grouped totals will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = teams.map(team => `
+    <article class="dashboard-mini-card">
+      <div class="dashboard-mini-card-top">
+        <strong>${escapeHtml(team?.name || "Unassigned")}</strong>
+        <span>${escapeHtml(String(team?.people ?? 0))} tracked</span>
+      </div>
+      <p>${escapeHtml(String(team?.activeNow ?? 0))} active now</p>
+      <div class="dashboard-mini-metrics">
+        <span>Today <strong>${formatHours(team?.todayHours)}</strong></span>
+        <span>Week <strong>${formatHours(team?.weeklyHours)}</strong></span>
+        <span>Month <strong>${formatHours(team?.monthlyHours)}</strong></span>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderAuditLog(entries) {
+  const container = document.getElementById("hours-audit-log");
+  if (!container) return;
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    container.innerHTML = `
+      <div class="dashboard-empty-state">
+        <strong>No audit entries yet.</strong>
+        <p>Queued and completed leadership actions will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = entries.map(entry => {
+    const status = String(entry?.status || "queued");
+    const actorName = entry?.actor?.name ? ` by ${entry.actor.name}` : "";
+    return `
+      <article class="dashboard-audit-item">
+        <div class="dashboard-audit-topline">
+          <span class="dashboard-chip ${status === "failed" ? "dashboard-chip-muted" : "dashboard-chip-accent"}">${escapeHtml(status)}</span>
+          <span>${escapeHtml(formatAuditLabel(entry?.createdAt))}</span>
+        </div>
+        <strong>${escapeHtml(entry?.label || "Leadership action")}</strong>
+        <p>${escapeHtml((entry?.target || "General workspace action") + actorName)}</p>
+        <span>${escapeHtml(entry?.message || "Queued.")}</span>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderPeriodDays(days) {
+  const items = (Array.isArray(days) ? days : [])
+    .filter(day => Number(day?.totalHours || 0) > 0)
+    .slice(0, 4);
+
+  if (items.length === 0) {
+    return '<p class="dashboard-period-copy">No tracked days yet in this cut.</p>';
+  }
+
+  return `
+    <ul class="dashboard-inline-list">
+      ${items.map(day => `
+        <li>
+          <span>Day ${escapeHtml(day?.day ?? "-")}</span>
+          <strong>${formatHours(day?.totalHours)}</strong>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+function renderSelectedPeriods(person) {
+  const container = document.getElementById("hours-selected-periods");
+  if (!container) return;
+
+  const firstHalf = person?.payPeriods?.firstHalf || { label: "1st - 15th", totalHours: 0, days: [] };
+  const secondHalf = person?.payPeriods?.secondHalf || { label: "16th - month end", totalHours: 0, days: [] };
+
+  container.innerHTML = `
+    <article class="dashboard-period-card">
+      <span class="dashboard-chip">${escapeHtml(firstHalf?.label || "1st - 15th")}</span>
+      <strong>${formatHours(firstHalf?.totalHours)}</strong>
+      <p>First payroll cut for the selected staff member.</p>
+      ${renderPeriodDays(firstHalf?.days)}
+    </article>
+    <article class="dashboard-period-card">
+      <span class="dashboard-chip">${escapeHtml(secondHalf?.label || "16th - month end")}</span>
+      <strong>${formatHours(secondHalf?.totalHours)}</strong>
+      <p>Second payroll cut through the end of the month.</p>
+      ${renderPeriodDays(secondHalf?.days)}
+    </article>
+  `;
+}
+
+function renderSelectedHistory(person) {
+  const container = document.getElementById("hours-selected-history");
+  if (!container) return;
+
+  if (!person) {
+    container.innerHTML = `
+      <strong>Hour history</strong>
+      <p>Select a staff row to load current-month activity and recent month totals.</p>
+    `;
+    return;
+  }
+
+  const monthDays = (Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days : [])
+    .filter(day => Number(day?.totalHours || 0) > 0)
+    .slice(-6)
+    .reverse();
+  const recentMonths = Array.isArray(person?.recentMonths) ? person.recentMonths : [];
+
+  container.innerHTML = `
+    <div class="dashboard-history-head">
+      <div>
+        <strong>${escapeHtml(person?.currentMonth?.label || "Current month")}</strong>
+        <p>Recent tracked days for ${escapeHtml(person?.displayName || "the selected staff member")}.</p>
+      </div>
+      <span class="dashboard-chip dashboard-chip-accent">${formatHours(person?.monthlyHours)}</span>
+    </div>
+    ${
+      monthDays.length > 0
+        ? `<ul class="dashboard-inline-list">
+            ${monthDays.map(day => `
+              <li>
+                <span>Day ${escapeHtml(day?.day ?? "-")}</span>
+                <strong>${formatHours(day?.totalHours)}</strong>
+              </li>
+            `).join("")}
+          </ul>`
+        : '<p class="dashboard-period-copy">No current-month day entries yet.</p>'
+    }
+    <div class="dashboard-history-month-grid">
+      ${recentMonths.map(month => `
+        <article class="dashboard-history-month-card">
+          <span>${escapeHtml(month?.label || "Recent month")}</span>
+          <strong>${formatHours(month?.totalHours)}</strong>
+          <p>Shift ${formatHours(month?.shiftHours)} / Training ${formatHours(month?.trainingHours)}</p>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderSelectedStaff(person) {
+  setText("hours-selected-name", person?.displayName || "Pick a staff row");
+  setText("hours-selected-route", person?.route || "/user");
+  setText("hours-selected-role-summary", person ? getRoleSummary(person) : "No staff selected yet");
+  setText("hours-selected-hotel", person ? getPrimaryHotelLabel(person) : "Unavailable");
+  setText("hours-selected-team", person?.team || "Unavailable");
+  setText("hours-selected-status", person ? getStatusSummary(person) : "Unavailable");
+
+  renderSelectedPeriods(person);
+  renderSelectedHistory(person);
+
+  if (!person) {
+    setActionControlsDisabled(true);
+    setActionFeedback("Select a staff member to unlock reassignment and logout controls.", false);
+    return;
+  }
+
+  setActionControlsDisabled(adminBoardState.actionInFlight);
+  setActionFeedback(`${person.displayName || person.username || "Staff member"} is ready for reassignment, forced logout, or hotel-level review.`, false);
+
+  const meta = getAdminMeta();
+  syncSelectOptions("hours-action-team-select", meta.teams || [], "Choose a team", person?.team || "");
+  syncSelectOptions("hours-action-hotel-select", meta.hotels || [], "Choose a hotel", getPrimaryHotelId(person));
+}
+
+function normalizeAdminPayload(payload) {
+  const nextPayload = payload && typeof payload === "object" ? payload : {};
+  const nextData = nextPayload.data && typeof nextPayload.data === "object" ? nextPayload.data : {};
+  const nextManagement = nextPayload.management && typeof nextPayload.management === "object" ? nextPayload.management : {};
+
+  return {
+    ok: Boolean(nextPayload.ok || Array.isArray(nextData.people)),
+    configured: Boolean(nextPayload.configured),
+    error: String(nextPayload.error || ""),
+    data: {
+      summary: nextData.summary || {},
+      people: Array.isArray(nextData.people) ? nextData.people : [],
+      teams: Array.isArray(nextData.teams) ? nextData.teams : [],
+      meta: nextData.meta || {},
+      generatedAt: nextData.generatedAt || ""
+    },
+    management: {
+      viewer: nextManagement.viewer || {},
+      actions: nextManagement.actions || {},
+      meta: nextManagement.meta || {},
+      queue: nextManagement.queue || { pendingCount: 0, recent: [] },
+      audit: nextManagement.audit || { entries: [] }
+    }
+  };
+}
+
+function applyAdminBoardPayload(payload) {
+  adminBoardState.payload = normalizeAdminPayload(payload);
+  window.__AAVGO_ADMIN_BOARD__ = adminBoardState.payload;
+
+  const allPeople = getAdminPeople();
+  const meta = getAdminMeta();
+  const roleOptions = [...new Set(allPeople.map(person => String(person?.role || "").trim()).filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right));
+
+  syncSelectOptions("hours-filter-role", roleOptions, "All roles", document.getElementById("hours-filter-role")?.value || "");
+  syncSelectOptions("hours-filter-team", meta.teams || [], "All teams", document.getElementById("hours-filter-team")?.value || "");
+  syncSelectOptions("hours-filter-hotel", meta.hotels || [], "All hotels", document.getElementById("hours-filter-hotel")?.value || "");
+  syncSelectOptions("hours-hotel-force-select", meta.hotels || [], "Choose a hotel", document.getElementById("hours-hotel-force-select")?.value || "");
+
+  const visiblePeople = filterAdminPeople(allPeople);
+  const selectedStaff = getSelectedStaff(allPeople, visiblePeople);
+  const summary = aggregateHoursSummary(visiblePeople);
+
+  setText("hours-summary-total", String(summary.totalPeople));
+  setText("hours-summary-active", String(summary.activeNow));
   setText("hours-summary-today", formatHours(summary.todayHours));
   setText("hours-summary-weekly", formatHours(summary.weeklyHours));
   setText("hours-summary-monthly", formatHours(summary.monthlyHours));
-  setText("hours-sync-label", formatSyncLabel(payload.data.generatedAt));
+  setText("hours-filter-result-count", `${visiblePeople.length} visible`);
+  setText("hours-sync-label", formatSyncLabel(adminBoardState.payload?.data?.generatedAt));
+  setText("hours-queue-count", String(getAdminManagement()?.queue?.pendingCount || 0));
 
-  renderHoursRows(people);
-  renderTeamCards(teams);
+  renderHoursNotice(adminBoardState.payload);
+  renderHoursRows(visiblePeople, selectedStaff?.discordId || "");
+  renderTeamCards(deriveTeamCards(visiblePeople));
+  renderAuditLog(getAdminManagement()?.audit?.entries || []);
+  renderSelectedStaff(selectedStaff);
 }
 
-function getAdminBootstrapPayload() {
-  const node = document.getElementById("admin-hours-bootstrap");
-  if (!node) return null;
-
-  try {
-    return JSON.parse(node.textContent || "{}");
-  } catch (_) {
-    return null;
-  }
+function findSelectedStaff() {
+  return getAdminPeople().find(
+    person => String(person?.discordId || "") === String(adminBoardState.selectedDiscordId || "")
+  ) || null;
 }
 
-let currentAdminHoursPayload = getAdminBootstrapPayload();
-
-function reapplyCurrentAdminHoursPayload() {
-  applyAdminHoursPayload(currentAdminHoursPayload);
-}
-
-async function refreshAdminHoursBoard() {
+async function refreshAdminBoard() {
   if (!window.AAVGO_ADMIN_HOURS_ENDPOINT) return;
 
   try {
     const response = await fetch(window.AAVGO_ADMIN_HOURS_ENDPOINT, {
       credentials: "same-origin",
-      headers: {
-        Accept: "application/json"
-      }
+      headers: { Accept: "application/json" }
     });
 
     const payload = await response.json().catch(() => ({
       ok: false,
-      error: "The live hours board returned an unreadable response."
+      error: "The leadership board returned an unreadable response."
     }));
 
-    if (payload?.ok && payload?.data) {
-      currentAdminHoursPayload = payload;
-      applyAdminHoursPayload(currentAdminHoursPayload);
-      return;
-    }
-
-    if (currentAdminHoursPayload?.ok) {
-      renderHoursNotice(payload);
-      return;
-    }
-
-    currentAdminHoursPayload = payload;
-    applyAdminHoursPayload(currentAdminHoursPayload);
+    applyAdminBoardPayload(payload);
   } catch (_) {
-    const payload = {
+    applyAdminBoardPayload({
+      ...adminBoardState.payload,
       ok: false,
-      error: "The live hours board could not refresh right now."
-    };
-
-    if (currentAdminHoursPayload?.ok) {
-      renderHoursNotice(payload);
-      return;
-    }
-
-    currentAdminHoursPayload = payload;
-    applyAdminHoursPayload(currentAdminHoursPayload);
+      error: "The leadership board could not refresh right now."
+    });
   }
 }
 
-if (document.getElementById("hours-board-rows")) {
-  reapplyCurrentAdminHoursPayload();
-  window.setInterval(refreshAdminHoursBoard, 30000);
+async function sendAdminCommand(action, payload = {}) {
+  if (!window.AAVGO_ADMIN_COMMAND_ENDPOINT || adminBoardState.actionInFlight) return;
+
+  adminBoardState.actionInFlight = true;
+  setActionControlsDisabled(true);
+
+  try {
+    const response = await fetch(window.AAVGO_ADMIN_COMMAND_ENDPOINT, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, payload })
+    });
+
+    const data = await response.json().catch(() => ({
+      ok: false,
+      error: "The leadership action returned an unreadable response."
+    }));
+
+    if (!response.ok || !data?.ok) {
+      setActionFeedback(data?.error || "The leadership action failed.", true);
+      return;
+    }
+
+    if (data.management) {
+      adminBoardState.payload = normalizeAdminPayload({
+        ...adminBoardState.payload,
+        management: data.management
+      });
+    }
+
+    applyAdminBoardPayload(adminBoardState.payload);
+    setActionFeedback(data?.message || "Leadership action queued for bot sync.", false);
+    window.setTimeout(refreshAdminBoard, 2200);
+  } catch (_) {
+    setActionFeedback("The leadership action could not be sent right now.", true);
+  } finally {
+    adminBoardState.actionInFlight = false;
+    setActionControlsDisabled(false);
+  }
+}
+
+function initializeAdminBoard() {
+  if (!document.getElementById("hours-board-rows")) return;
+
+  applyAdminBoardPayload(adminBoardState.payload || {
+    ok: false,
+    error: "The leadership board has not loaded yet.",
+    data: { people: [], meta: {} },
+    management: { queue: { pendingCount: 0 }, audit: { entries: [] }, meta: { teams: [], hotels: [] } }
+  });
+
+  document.getElementById("hours-board-rows")?.addEventListener("click", event => {
+    const row = event.target.closest("tr[data-discord-id]");
+    if (!row) return;
+    adminBoardState.selectedDiscordId = String(row.getAttribute("data-discord-id") || "");
+    applyAdminBoardPayload(adminBoardState.payload);
+  });
 
   ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
     .forEach(filterId => {
       const node = document.getElementById(filterId);
       if (!node) return;
-
-      node.addEventListener("input", reapplyCurrentAdminHoursPayload);
-      node.addEventListener("change", reapplyCurrentAdminHoursPayload);
+      node.addEventListener("input", () => applyAdminBoardPayload(adminBoardState.payload));
+      node.addEventListener("change", () => applyAdminBoardPayload(adminBoardState.payload));
     });
 
-  const resetButton = document.getElementById("hours-filter-reset");
-  if (resetButton) {
-    resetButton.addEventListener("click", () => {
-      ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
-        .forEach(filterId => {
-          const node = document.getElementById(filterId);
-          if (!node) return;
-          node.value = "";
-        });
-      reapplyCurrentAdminHoursPayload();
-    });
-  }
+  document.getElementById("hours-filter-reset")?.addEventListener("click", () => {
+    ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
+      .forEach(filterId => {
+        const node = document.getElementById(filterId);
+        if (node) node.value = "";
+      });
+    applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("hours-action-team-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const team = String(document.getElementById("hours-action-team-select")?.value || "").trim();
+
+    if (!person) {
+      setActionFeedback("Pick a staff row before changing the team.", true);
+      return;
+    }
+
+    if (!team) {
+      setActionFeedback("Choose a target team first.", true);
+      return;
+    }
+
+    sendAdminCommand("update_team", { discordId: person.discordId, team });
+  });
+
+  document.getElementById("hours-action-hotel-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const hotelId = String(document.getElementById("hours-action-hotel-select")?.value || "").trim();
+
+    if (!person) {
+      setActionFeedback("Pick a staff row before changing the hotel.", true);
+      return;
+    }
+
+    if (!hotelId) {
+      setActionFeedback("Choose a target hotel first.", true);
+      return;
+    }
+
+    sendAdminCommand("update_hotel", { discordId: person.discordId, hotelId });
+  });
+
+  document.getElementById("hours-action-logout-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+
+    if (!person) {
+      setActionFeedback("Pick a staff row before forcing a logout.", true);
+      return;
+    }
+
+    sendAdminCommand("force_logout_agent", { discordId: person.discordId });
+  });
+
+  document.getElementById("hours-hotel-force-submit")?.addEventListener("click", () => {
+    const hotelId = String(document.getElementById("hours-hotel-force-select")?.value || "").trim();
+    if (!hotelId) {
+      setActionFeedback("Choose a hotel before forcing a hotel-wide logout.", true);
+      return;
+    }
+
+    sendAdminCommand("force_logout_hotel", { hotelId });
+  });
+
+  document.getElementById("developer-sync-all")?.addEventListener("click", () => {
+    sendAdminCommand("sync_all_roles");
+  });
+
+  document.getElementById("developer-push-snapshot")?.addEventListener("click", () => {
+    sendAdminCommand("push_snapshot");
+  });
+
+  adminBoardState.refreshTimer = window.setInterval(refreshAdminBoard, 30000);
 }
+
+initializeAdminBoard();

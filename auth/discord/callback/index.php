@@ -17,13 +17,16 @@ if (!aavgo_is_fully_configured()) {
 
 $state = $_GET['state'] ?? '';
 $expectedState = $_SESSION['discord_oauth_state'] ?? '';
+$cookieState = $_COOKIE[AAVGO_OAUTH_STATE_COOKIE] ?? '';
 $code = $_GET['code'] ?? '';
 $validatedState = $state !== '' ? aavgo_validate_oauth_state((string) $state) : null;
 $sessionStateMatches = $state !== '' && $expectedState !== '' && hash_equals((string) $expectedState, (string) $state);
+$cookieStateMatches = $state !== '' && $cookieState !== '' && hash_equals((string) $cookieState, (string) $state);
 
 unset($_SESSION['discord_oauth_state']);
+aavgo_clear_oauth_state_cookie();
 
-if ($state === '' || (!$sessionStateMatches && $validatedState === null)) {
+if ($state === '' || (!$sessionStateMatches && !$cookieStateMatches && $validatedState === null)) {
     http_response_code(403);
     aavgo_render_message_page(
         'Sign-in could not be verified.',

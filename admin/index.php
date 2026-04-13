@@ -10,15 +10,11 @@ $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $roleLabels = aavgo_user_role_labels($user);
 $roleSummary = aavgo_user_role_summary($user);
 $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
-$hoursPayload = aavgo_fetch_hours_bridge_payload();
-$hoursSyncUrl = rtrim(aavgo_get_config_string('base_url'), '/') . '/api/admin-hours-sync/';
-$safeHoursSyncUrl = htmlspecialchars($hoursSyncUrl, ENT_QUOTES, 'UTF-8');
-$safeSnapshotPath = htmlspecialchars(aavgo_get_hours_snapshot_path(), ENT_QUOTES, 'UTF-8');
-$safeExternalConfigPath = htmlspecialchars(AAVGO_EXTERNAL_CONFIG, ENT_QUOTES, 'UTF-8');
-$hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : null;
+$boardPayload = aavgo_build_admin_board_payload($user);
+$hoursData = is_array($boardPayload['data'] ?? null) ? $boardPayload['data'] : [];
 $summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
-$teams = is_array($hoursData['teams'] ?? null) ? $hoursData['teams'] : [];
-$people = is_array($hoursData['people'] ?? null) ? $hoursData['people'] : [];
+$management = is_array($boardPayload['management'] ?? null) ? $boardPayload['management'] : [];
+$isDeveloper = (bool) (($management['actions']['canSyncAllRoles'] ?? false) || ($management['viewer']['isDeveloper'] ?? false));
 $generatedAt = trim((string) ($hoursData['generatedAt'] ?? ''));
 $generatedAtLabel = 'Waiting for live sync';
 if ($generatedAt !== '') {
@@ -39,44 +35,8 @@ function aavgo_admin_hours_label(mixed $value): string
     return preg_replace('/\.0$/', '', $formatted) ?: '0';
 }
 
-function aavgo_admin_cell(mixed $value): string
-{
-    return htmlspecialchars(aavgo_admin_hours_label($value), ENT_QUOTES, 'UTF-8') . 'h';
-}
-
-function aavgo_admin_text(mixed $value, string $fallback = 'Unavailable'): string
-{
-    $text = trim((string) $value);
-    return htmlspecialchars($text !== '' ? $text : $fallback, ENT_QUOTES, 'UTF-8');
-}
-
-function aavgo_admin_unique_values(array $people, string $key): array
-{
-    $values = [];
-    foreach ($people as $person) {
-        if (!is_array($person)) {
-            continue;
-        }
-
-        $value = trim((string) ($person[$key] ?? ''));
-        if ($value === '') {
-            continue;
-        }
-
-        $values[$value] = $value;
-    }
-
-    $items = array_values($values);
-    natcasesort($items);
-    return array_values($items);
-}
-
-$roleOptions = aavgo_admin_unique_values($people, 'role');
-$teamOptions = aavgo_admin_unique_values($people, 'team');
-$hotelOptions = aavgo_admin_unique_values($people, 'linkedHotel');
-
 $bootstrapJson = json_encode(
-    $hoursPayload,
+    $boardPayload,
     JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 );
 ?>
@@ -100,8 +60,9 @@ $bootstrapJson = json_encode(
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body class="workspace-page workspace-dashboard workspace-page-admin">
-  <div class="dashboard-shell dashboard-shell-operations dashboard-shell-roomy">
-    <aside class="dashboard-sidebar reveal reveal-in">
+  <div class="dashboard-shell dashboard-shell-admin">
+    <aside class="dashboard-sidebar dashboard-sidebar-admin reveal reveal-in">
+      <div class="dashboard-sidebar-glow"></div>
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
 
       <section class="dashboard-profile-card dashboard-profile-card-plain">
@@ -119,147 +80,136 @@ $bootstrapJson = json_encode(
         <?php endforeach; ?>
       </div>
 
-      <nav class="dashboard-nav" aria-label="Leadership navigation">
-        <a class="dashboard-nav-link is-active" href="/admin/">Hours board</a>
-        <a class="dashboard-nav-link" href="#hours-filters">Filters</a>
-        <a class="dashboard-nav-link" href="#live-board">Live staff hours</a>
-        <a class="dashboard-nav-link" href="#team-board">Team totals</a>
+      <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
+        <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
+        <a class="dashboard-nav-link" href="#leadership-filters">Filters</a>
+        <a class="dashboard-nav-link" href="#leadership-hours">Live hours</a>
+        <a class="dashboard-nav-link" href="#leadership-actions">Staff controls</a>
+        <a class="dashboard-nav-link" href="#leadership-audit">Audit log</a>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
-        <a class="dashboard-nav-link" href="/">Front door</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
+
+      <section class="dashboard-side-section">
+        <p class="dashboard-kicker">Control mode</p>
+        <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
+        <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
+      </section>
     </aside>
 
-    <main class="dashboard-main">
-      <header class="dashboard-header reveal reveal-in">
+    <main class="dashboard-main dashboard-main-admin">
+      <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
-          <p class="dashboard-breadcrumb">Dashboard / Leadership / Hours</p>
-          <h1 class="dashboard-title dashboard-title-wide">Live hours with cleaner control.</h1>
+          <p class="dashboard-breadcrumb">Dashboard / Leadership / Operations</p>
+          <h1 class="dashboard-title dashboard-title-wide">Leadership board for live hours, clean reassignment, and safer control.</h1>
           <p class="dashboard-subtitle">
-            The leadership board is now focused on real people, real hours, and the quickest path to finding the right lane.
+            The clutter is stripped back. This is now about actual staff, actual hotel/team decisions, and a visible audit trail for every action.
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <a class="dashboard-toolbar-link" href="#hours-filters">Filter board</a>
+          <a class="dashboard-toolbar-link" href="#leadership-actions">Open controls</a>
           <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
           <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
       </header>
 
-      <section class="dashboard-stat-grid dashboard-stat-grid-balanced reveal reveal-delay-1">
+      <section class="dashboard-stat-grid dashboard-stat-grid-admin reveal reveal-delay-1">
         <article class="dashboard-stat-card">
-          <p>People tracked</p>
-          <strong id="hours-summary-total"><?php echo aavgo_admin_text($summary['totalPeople'] ?? '0'); ?></strong>
-          <span>Visible in the current board view</span>
+          <p>Staff tracked</p>
+          <strong id="hours-summary-total"><?php echo htmlspecialchars((string) ($summary['totalPeople'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></strong>
+          <span>Visible inside the current board view</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Active right now</p>
-          <strong id="hours-summary-active"><?php echo aavgo_admin_text($summary['activeNow'] ?? '0'); ?></strong>
-          <span>Sessions currently open across the filtered lane</span>
+          <p>Active now</p>
+          <strong id="hours-summary-active"><?php echo htmlspecialchars((string) ($summary['activeNow'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></strong>
+          <span>Current live sessions in the filtered lane</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Today total</p>
+          <p>Today</p>
           <strong id="hours-summary-today"><?php echo aavgo_admin_hours_label($summary['todayHours'] ?? 0); ?>h</strong>
-          <span>Combined tracked hours since the current PH day opened</span>
+          <span>Tracked since the current PH day opened</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Weekly total</p>
+          <p>This week</p>
           <strong id="hours-summary-weekly"><?php echo aavgo_admin_hours_label($summary['weeklyHours'] ?? 0); ?>h</strong>
-          <span>Combined tracked hours for the current PH week</span>
+          <span>Combined tracked hours for the live week</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Monthly total</p>
+          <p>This month</p>
           <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?>h</strong>
-          <span>Combined tracked hours for the current PH month</span>
+          <span>Combined tracked hours for the live month</span>
         </article>
       </section>
 
-      <section class="dashboard-filter-bar reveal reveal-delay-1" id="hours-filters">
-        <label class="dashboard-filter-control dashboard-filter-search">
-          <span>Search</span>
-          <input id="hours-filter-search" type="search" placeholder="Search staff name">
-        </label>
-        <label class="dashboard-filter-control">
-          <span>Role</span>
-          <select id="hours-filter-role">
-            <option value="">All roles</option>
-            <?php foreach ($roleOptions as $roleOption): ?>
-              <option value="<?php echo htmlspecialchars($roleOption, ENT_QUOTES, 'UTF-8'); ?>">
-                <?php echo htmlspecialchars($roleOption, ENT_QUOTES, 'UTF-8'); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="dashboard-filter-control">
-          <span>Team</span>
-          <select id="hours-filter-team">
-            <option value="">All teams</option>
-            <?php foreach ($teamOptions as $teamOption): ?>
-              <option value="<?php echo htmlspecialchars($teamOption, ENT_QUOTES, 'UTF-8'); ?>">
-                <?php echo htmlspecialchars($teamOption, ENT_QUOTES, 'UTF-8'); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="dashboard-filter-control">
-          <span>Hotel</span>
-          <select id="hours-filter-hotel">
-            <option value="">All hotels</option>
-            <?php foreach ($hotelOptions as $hotelOption): ?>
-              <option value="<?php echo htmlspecialchars($hotelOption, ENT_QUOTES, 'UTF-8'); ?>">
-                <?php echo htmlspecialchars($hotelOption, ENT_QUOTES, 'UTF-8'); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="dashboard-filter-control">
-          <span>Status</span>
-          <select id="hours-filter-status">
-            <option value="">All staff</option>
-            <option value="active">Active now</option>
-            <option value="offline">Offline</option>
-          </select>
-        </label>
-        <button class="dashboard-filter-reset" id="hours-filter-reset" type="button">Clear filters</button>
+      <section class="dashboard-filter-shell reveal reveal-delay-1" id="leadership-filters">
+        <div class="dashboard-filter-shell-head">
+          <div>
+            <p class="dashboard-kicker">Filter lane</p>
+            <h2>Search people fast, then narrow by role, team, hotel, or live status.</h2>
+          </div>
+          <div class="dashboard-filter-shell-meta">
+            <span class="dashboard-chip dashboard-chip-accent" id="hours-sync-label"><?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="dashboard-chip" id="hours-filter-result-count">0 visible</span>
+          </div>
+        </div>
+        <div class="dashboard-filter-grid">
+          <label class="dashboard-filter-field dashboard-filter-field-search">
+            <span>Search</span>
+            <input id="hours-filter-search" type="search" placeholder="Search name, role, hotel, team, status">
+          </label>
+          <label class="dashboard-filter-field">
+            <span>Role</span>
+            <select id="hours-filter-role">
+              <option value="">All roles</option>
+            </select>
+          </label>
+          <label class="dashboard-filter-field">
+            <span>Team</span>
+            <select id="hours-filter-team">
+              <option value="">All teams</option>
+            </select>
+          </label>
+          <label class="dashboard-filter-field">
+            <span>Hotel</span>
+            <select id="hours-filter-hotel">
+              <option value="">All hotels</option>
+            </select>
+          </label>
+          <label class="dashboard-filter-field">
+            <span>Status</span>
+            <select id="hours-filter-status">
+              <option value="">All staff</option>
+              <option value="active">Active now</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          <button class="dashboard-filter-reset" id="hours-filter-reset" type="button">Reset lane</button>
+        </div>
       </section>
 
-      <section class="dashboard-content-grid dashboard-content-grid-ops reveal reveal-delay-2">
-        <article class="dashboard-panel dashboard-panel-board" id="live-board">
+      <section class="dashboard-admin-grid reveal reveal-delay-2">
+        <article class="dashboard-panel dashboard-panel-board" id="leadership-hours">
           <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Live hours board</p>
-              <h2>Actual staff and actual hour totals</h2>
+              <p class="dashboard-kicker">Live staff board</p>
+              <h2>Every real staff row stays visible, but the controls live off to the right.</h2>
             </div>
             <div class="dashboard-panel-meta">
+              <span class="dashboard-chip">Queue <span id="hours-queue-count">0</span></span>
               <span class="dashboard-chip dashboard-chip-accent">Auto-refresh</span>
-              <span class="dashboard-chip" id="hours-sync-label"><?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             </div>
           </div>
 
           <div id="hours-board-notice">
-            <?php if (!($hoursPayload['ok'] ?? false)): ?>
+            <?php if (!($boardPayload['ok'] ?? false)): ?>
               <div class="dashboard-inline-notice">
                 <strong>Live hours are not connected yet.</strong>
-                <p><?php echo aavgo_admin_text($hoursPayload['error'] ?? 'The admin hours bridge is not configured yet.'); ?></p>
-                <div class="dashboard-setup-list">
-                  <div class="dashboard-setup-item">
-                    <strong>1. Bot host</strong>
-                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> and <code>AAVGO_WEBSITE_SYNC_URL=<?php echo $safeHoursSyncUrl; ?></code> on the bot host, then restart the bot.</p>
-                  </div>
-                  <div class="dashboard-setup-item">
-                    <strong>2. Website config</strong>
-                    <p>Open <code><?php echo $safeExternalConfigPath; ?></code> and keep the same shared value in <code>website_api_token</code>. The website will accept secure bot uploads with that token.</p>
-                  </div>
-                  <div class="dashboard-setup-item">
-                    <strong>3. Local snapshot</strong>
-                    <p>The pushed snapshot is stored on the website at <code><?php echo $safeSnapshotPath; ?></code>. Once the bot posts the first sync, this board will read from that local file automatically.</p>
-                  </div>
-                </div>
+                <p><?php echo htmlspecialchars((string) ($boardPayload['error'] ?? 'The live hours bridge is not configured yet.'), ENT_QUOTES, 'UTF-8'); ?></p>
               </div>
             <?php endif; ?>
           </div>
 
-          <div class="dashboard-hours-table-wrap" id="hours-board-table">
+          <div class="dashboard-hours-table-wrap">
             <table class="dashboard-hours-table">
               <thead>
                 <tr>
@@ -275,75 +225,145 @@ $bootstrapJson = json_encode(
                 </tr>
               </thead>
               <tbody id="hours-board-rows">
-                <?php if ($people === []): ?>
-                  <tr>
-                    <td colspan="9">
-                      <div class="dashboard-empty-state">
-                        <strong>No live hour rows yet.</strong>
-                        <p>Once the hours bridge responds, every actual staff row will appear here.</p>
-                      </div>
-                    </td>
-                  </tr>
-                <?php else: ?>
-                  <?php foreach ($people as $person): ?>
-                    <?php
-                    $activeNow = !empty($person['activeNow']);
-                    $activeSession = is_array($person['activeSession'] ?? null) ? $person['activeSession'] : null;
-                    $activeLabel = $activeNow && $activeSession !== null
-                        ? (($activeSession['kind'] ?? 'Live Shift') . ' - ' . aavgo_admin_hours_label($activeSession['elapsedHours'] ?? 0) . 'h')
-                        : 'Offline';
-                    ?>
-                    <tr class="<?php echo $activeNow ? 'is-live' : ''; ?>">
-                      <td>
-                        <div class="dashboard-staff-cell">
-                          <strong><?php echo aavgo_admin_text($person['displayName'] ?? 'Unknown'); ?></strong>
-                          <span><?php echo aavgo_admin_text($person['route'] ?? '/user'); ?></span>
-                        </div>
-                      </td>
-                      <td><?php echo aavgo_admin_text($person['role'] ?? 'Agent'); ?></td>
-                      <td><?php echo aavgo_admin_text($person['team'] ?? 'Unassigned'); ?></td>
-                      <td><?php echo aavgo_admin_text($person['linkedHotel'] ?? 'Unassigned'); ?></td>
-                      <td>
-                        <span class="dashboard-status-pill <?php echo $activeNow ? 'is-live' : 'is-idle'; ?>">
-                          <?php echo aavgo_admin_text($activeLabel, 'Offline'); ?>
-                        </span>
-                      </td>
-                      <td><?php echo aavgo_admin_cell($person['todayHours'] ?? 0); ?></td>
-                      <td><?php echo aavgo_admin_cell($person['weeklyHours'] ?? 0); ?></td>
-                      <td><?php echo aavgo_admin_cell($person['monthlyHours'] ?? 0); ?></td>
-                      <td><?php echo aavgo_admin_cell($person['allHours'] ?? 0); ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
+                <tr>
+                  <td colspan="9">
+                    <div class="dashboard-empty-state">
+                      <strong>Loading live staff rows.</strong>
+                      <p>The board will fill from the latest pushed snapshot.</p>
+                    </div>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </article>
 
-        <aside class="dashboard-stack" id="team-board">
+        <aside class="dashboard-stack dashboard-stack-admin" id="leadership-actions">
+          <article class="dashboard-panel">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Selected staff</p>
+                <h2 id="hours-selected-name">Pick a staff row</h2>
+              </div>
+              <span class="dashboard-chip" id="hours-selected-route">/user</span>
+            </div>
+
+            <div class="dashboard-selected-summary">
+              <div class="dashboard-selected-pill" id="hours-selected-role-summary">No staff selected yet</div>
+              <div class="dashboard-selected-meta">
+                <div>
+                  <span>Hotel</span>
+                  <strong id="hours-selected-hotel">Unavailable</strong>
+                </div>
+                <div>
+                  <span>Team</span>
+                  <strong id="hours-selected-team">Unavailable</strong>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong id="hours-selected-status">Unavailable</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-period-grid" id="hours-selected-periods">
+              <article class="dashboard-period-card">
+                <span class="dashboard-chip">1st - 15th</span>
+                <strong>0h</strong>
+                <p>Pick a staff row to load this payroll cut.</p>
+              </article>
+              <article class="dashboard-period-card">
+                <span class="dashboard-chip">16th - month end</span>
+                <strong>0h</strong>
+                <p>The second payroll cut appears here.</p>
+              </article>
+            </div>
+
+            <div class="dashboard-mini-history" id="hours-selected-history">
+              <strong>Hour history</strong>
+              <p>Once a staff row is selected, recent month totals and current-month activity will appear here.</p>
+            </div>
+
+            <div class="dashboard-control-stack">
+              <label class="dashboard-control-field">
+                <span>Reassign team</span>
+                <select id="hours-action-team-select">
+                  <option value="">Choose a team</option>
+                </select>
+              </label>
+              <button class="button button-secondary dashboard-inline-button" id="hours-action-team-submit" type="button">Update team</button>
+
+              <label class="dashboard-control-field">
+                <span>Reassign hotel</span>
+                <select id="hours-action-hotel-select">
+                  <option value="">Choose a hotel</option>
+                </select>
+              </label>
+              <button class="button button-secondary dashboard-inline-button" id="hours-action-hotel-submit" type="button">Update hotel</button>
+
+              <button class="button button-primary dashboard-inline-button" id="hours-action-logout-submit" type="button">Force logout staff member</button>
+            </div>
+            <p class="dashboard-panel-copy" id="hours-action-feedback">Select a staff member to unlock reassignment and logout controls.</p>
+          </article>
+
+          <article class="dashboard-panel">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Hotel-wide controls</p>
+                <h2>Force logout by hotel</h2>
+              </div>
+            </div>
+            <label class="dashboard-control-field">
+              <span>Hotel</span>
+              <select id="hours-hotel-force-select">
+                <option value="">Choose a hotel</option>
+              </select>
+            </label>
+            <button class="button button-secondary dashboard-inline-button" id="hours-hotel-force-submit" type="button">Force logout hotel</button>
+            <p class="dashboard-panel-copy">This closes active sessions for the selected hotel and lets the bot clean up Discord status on the same pass.</p>
+          </article>
+
+          <article class="dashboard-panel" id="developer-tool-panel" <?php echo $isDeveloper ? '' : 'hidden'; ?>>
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Developer tools</p>
+                <h2>Role-sync and snapshot utilities</h2>
+              </div>
+            </div>
+            <div class="dashboard-control-stack">
+              <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
+              <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+            </div>
+            <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
+          </article>
+
+          <article class="dashboard-panel" id="leadership-audit">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Audit log</p>
+                <h2>Every leadership action leaves a trail.</h2>
+              </div>
+            </div>
+            <div class="dashboard-audit-list" id="hours-audit-log">
+              <div class="dashboard-empty-state">
+                <strong>Waiting for audit events.</strong>
+                <p>Queued and completed actions will appear here.</p>
+              </div>
+            </div>
+          </article>
+
           <article class="dashboard-panel">
             <div class="dashboard-panel-heading">
               <div>
                 <p class="dashboard-kicker">Team totals</p>
-                <h2>Organized by lane</h2>
+                <h2>Current filtered lane totals</h2>
               </div>
             </div>
             <div class="dashboard-mini-grid" id="hours-team-cards">
-              <?php if ($teams === []): ?>
-                <div class="dashboard-mini-card">
-                  <strong>Waiting for data</strong>
-                  <p>The team breakdown appears here as soon as the bridge returns live data.</p>
-                </div>
-              <?php else: ?>
-                <?php foreach ($teams as $team): ?>
-                  <div class="dashboard-mini-card">
-                    <strong><?php echo aavgo_admin_text($team['name'] ?? 'Unassigned'); ?></strong>
-                    <p><?php echo aavgo_admin_text($team['people'] ?? '0'); ?> people - <?php echo aavgo_admin_text($team['activeNow'] ?? '0'); ?> active</p>
-                    <span>Today: <?php echo aavgo_admin_cell($team['todayHours'] ?? 0); ?></span>
-                    <span>Week: <?php echo aavgo_admin_cell($team['weeklyHours'] ?? 0); ?></span>
-                  </div>
-                <?php endforeach; ?>
-              <?php endif; ?>
+              <div class="dashboard-mini-card">
+                <strong>Waiting for data</strong>
+                <p>Filtered team totals will appear here.</p>
+              </div>
             </div>
           </article>
         </aside>
@@ -351,9 +371,10 @@ $bootstrapJson = json_encode(
     </main>
   </div>
 
-  <script id="admin-hours-bootstrap" type="application/json"><?php echo $bootstrapJson ?: '{}'; ?></script>
+  <script id="admin-board-bootstrap" type="application/json"><?php echo $bootstrapJson ?: '{}'; ?></script>
   <script>
     window.AAVGO_ADMIN_HOURS_ENDPOINT = '/api/admin-hours/';
+    window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
   </script>
   <script src="/script.js"></script>
 </body>
