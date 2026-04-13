@@ -62,8 +62,9 @@ jobs:
             DEPLOY_ROOT="/"
           fi
 
+          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           TARGETS="$DEPLOY_ROOT"
-          for EXTRA in public_html /public_html aavgodesk.xyz /aavgodesk.xyz public_html/aavgodesk.xyz /public_html/aavgodesk.xyz; do
+          for EXTRA in public_html /public_html aavgodesk.xyz /aavgodesk.xyz public_html/aavgodesk.xyz /public_html/aavgodesk.xyz www.aavgodesk.xyz /www.aavgodesk.xyz public_html/www.aavgodesk.xyz /public_html/www.aavgodesk.xyz; do
             case " $TARGETS " in
               *" $EXTRA "*) ;;
               *) TARGETS="$TARGETS $EXTRA" ;;
@@ -91,12 +92,20 @@ jobs:
             fi
 
             if [ "$EXISTS" = "true" ]; then
+              TARGET_SLUG="$(printf '%s' "$TARGET" | sed 's#[^A-Za-z0-9._-]#_#g')"
+              if [ -z "$TARGET_SLUG" ] || [ "$TARGET_SLUG" = "_" ]; then
+                TARGET_SLUG="root"
+              fi
+              printf "sha=%s\nbuilt_at=%s\ntarget=%s\n" "$GITHUB_SHA" "$BUILT_AT" "$TARGET" > deploy/_aavgo_target.txt
+
               lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
               set cmd:fail-exit yes
               set ftp:ssl-force true
               set ftp:ssl-protect-data true
               set ssl:verify-certificate no
               mirror -R --verbose deploy/ \"$TARGET\"
+              put -O \"$TARGET\" -o _aavgo_target_${TARGET_SLUG}.txt deploy/_aavgo_target.txt
+              put -O \"$TARGET\" -o _aavgo_target.txt deploy/_aavgo_target.txt
               bye
               "
               DEPLOYED_ANY="true"
