@@ -836,8 +836,13 @@ function aavgo_command_action_label(string $action): string
     return match ($action) {
         'update_team' => 'Team reassignment',
         'update_hotel' => 'Hotel reassignment',
+        'bulk_update_team' => 'Bulk team reassignment',
+        'bulk_update_hotel' => 'Bulk hotel reassignment',
         'force_logout_agent' => 'Force logout (staff)',
         'force_logout_hotel' => 'Force logout (hotel)',
+        'bulk_force_logout_agents' => 'Bulk force logout',
+        'add_manual_hours' => 'Manual hours added',
+        'remove_manual_hours' => 'Manual hours removed',
         'sync_all_roles' => 'Discord role resync',
         'push_snapshot' => 'Snapshot refresh',
         default => 'Leadership action',
@@ -848,14 +853,21 @@ function aavgo_command_target_label(array $command): string
 {
     $payload = is_array($command['payload'] ?? null) ? $command['payload'] : [];
     $displayName = trim((string) ($payload['displayName'] ?? ''));
+    $displayNames = is_array($payload['displayNames'] ?? null) ? $payload['displayNames'] : [];
     $team = trim((string) ($payload['team'] ?? ''));
     $hotelLabel = trim((string) ($payload['hotelLabel'] ?? $payload['hotelId'] ?? ''));
+    $shiftDate = trim((string) ($payload['shiftDate'] ?? ''));
 
     return match ((string) ($command['action'] ?? '')) {
         'update_team' => trim($displayName . ($team !== '' ? ' -> ' . $team : '')),
         'update_hotel' => trim($displayName . ($hotelLabel !== '' ? ' -> ' . $hotelLabel : '')),
+        'bulk_update_team' => trim(count($displayNames) . ' staff' . ($team !== '' ? ' -> ' . $team : '')),
+        'bulk_update_hotel' => trim(count($displayNames) . ' staff' . ($hotelLabel !== '' ? ' -> ' . $hotelLabel : '')),
         'force_logout_agent' => $displayName,
         'force_logout_hotel' => $hotelLabel,
+        'bulk_force_logout_agents' => count($displayNames) . ' staff selected',
+        'add_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' · ' . $shiftDate : '')),
+        'remove_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' · ' . $shiftDate : '')),
         default => $displayName !== '' ? $displayName : $hotelLabel,
     };
 }
@@ -1006,12 +1018,15 @@ function aavgo_build_management_payload(array $user, ?array $hoursPayload = null
             'canReassign' => true,
             'canForceLogout' => true,
             'canBroadcast' => true,
+            'canBulkManage' => true,
+            'canEditHours' => true,
             'canSyncAllRoles' => aavgo_user_is_developer($user),
             'canPushSnapshot' => aavgo_user_is_developer($user),
         ],
         'meta' => [
             'teams' => array_values(array_filter($meta['teams'] ?? [], 'is_string')),
             'hotels' => is_array($meta['hotels'] ?? null) ? $meta['hotels'] : [],
+            'roles' => array_values(array_filter($meta['roles'] ?? [], 'is_string')),
         ],
         'queue' => [
             'pendingCount' => count($pending),

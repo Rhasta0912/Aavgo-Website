@@ -404,6 +404,53 @@ function deriveTeamCards(people) {
   return [...buckets.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
+function deriveHotelLaneCards(people) {
+  const buckets = new Map();
+
+  (Array.isArray(people) ? people : []).forEach(person => {
+    const hotelId = getPrimaryHotelId(person) || "UNASSIGNED";
+    const hotelLabel = getPrimaryHotelLabel(person);
+    const current = buckets.get(hotelId) || {
+      id: hotelId,
+      label: hotelLabel,
+      people: 0,
+      activeNow: 0,
+      todayHours: 0,
+      weeklyHours: 0,
+      monthlyHours: 0,
+      staff: []
+    };
+
+    current.people += 1;
+    current.activeNow += person?.activeNow ? 1 : 0;
+    current.todayHours += Number(person?.todayHours || 0);
+    current.weeklyHours += Number(person?.weeklyHours || 0);
+    current.monthlyHours += Number(person?.monthlyHours || 0);
+    current.staff.push(person);
+    buckets.set(hotelId, current);
+  });
+
+  return [...buckets.values()]
+    .map(lane => ({
+      ...lane,
+      todayHours: Number(lane.todayHours || 0),
+      weeklyHours: Number(lane.weeklyHours || 0),
+      monthlyHours: Number(lane.monthlyHours || 0),
+      staff: lane.staff.sort((left, right) => String(left?.displayName || "").localeCompare(String(right?.displayName || "")))
+    }))
+    .sort((left, right) => String(left.label || "").localeCompare(String(right.label || "")));
+}
+
+function getDayNumbersForFullHours(people) {
+  const maxDay = Math.max(
+    0,
+    ...(Array.isArray(people) ? people : []).map(person => Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days.length : 0)
+  );
+
+  const count = Math.max(31, maxDay);
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
 function aggregateHoursSummary(people) {
   return (Array.isArray(people) ? people : []).reduce((acc, person) => {
     acc.totalPeople += 1;
@@ -428,6 +475,8 @@ function getAdminBoardBootstrap() {
 const adminBoardState = {
   payload: getAdminBoardBootstrap(),
   selectedDiscordId: "",
+  selectedDiscordIds: [],
+  view: "board",
   refreshTimer: null,
   actionInFlight: false
 };
@@ -446,7 +495,8 @@ function getAdminMeta() {
   const payloadMeta = adminBoardState?.payload?.data?.meta || {};
   return {
     hotels: Array.isArray(managementMeta.hotels) ? managementMeta.hotels : (Array.isArray(payloadMeta.hotels) ? payloadMeta.hotels : []),
-    teams: Array.isArray(managementMeta.teams) ? managementMeta.teams : (Array.isArray(payloadMeta.teams) ? payloadMeta.teams : [])
+    teams: Array.isArray(managementMeta.teams) ? managementMeta.teams : (Array.isArray(payloadMeta.teams) ? payloadMeta.teams : []),
+    roles: Array.isArray(managementMeta.roles) ? managementMeta.roles : (Array.isArray(payloadMeta.roles) ? payloadMeta.roles : [])
   };
 }
 
@@ -460,6 +510,63 @@ function getAdminFilters() {
   };
 }
 
+function getSelectedBulkDiscordIds() {
+  return Array.isArray(adminBoardState.selectedDiscordIds)
+    ? [...new Set(adminBoardState.selectedDiscordIds.map(value => String(value || "").trim()).filter(Boolean))]
+    : [];
+}
+
+function setSelectedBulkDiscordIds(values) {
+  adminBoardState.selectedDiscordIds = [...new Set(
+    (Array.isArray(values) ? values : [values])
+      .map(value => String(value || "").trim())
+      .filter(Boolean)
+  )];
+}
+
+function toggleSelectedBulkDiscordId(discordId, checked) {
+  const current = new Set(getSelectedBulkDiscordIds());
+  if (checked) {
+    current.add(String(discordId || "").trim());
+  } else {
+    current.delete(String(discordId || "").trim());
+  }
+  setSelectedBulkDiscordIds([...current]);
+}
+
+function getSelectedBulkStaff(allPeople) {
+  const selectedIds = new Set(getSelectedBulkDiscordIds());
+  return (Array.isArray(allPeople) ? allPeople : []).filter(person => selectedIds.has(String(person?.discordId || "")));
+}
+
+function setBulkFeedback(message, isError = false) {
+  const node = document.getElementById("hours-bulk-feedback");
+  if (!node) return;
+  node.textContent = message;
+  node.classList.toggle("is-error", Boolean(isError));
+  node.classList.toggle("is-success", !isError && message !== "");
+}
+
+function setEditorFeedback(message, isError = false) {
+  const node = document.getElementById("hours-editor-feedback");
+  if (!node) return;
+  node.textContent = message;
+  node.classList.toggle("is-error", Boolean(isError));
+  node.classList.toggle("is-success", !isError && message !== "");
+}
+
+function setAdminView(nextView) {
+  adminBoardState.view = nextView === "full-hours" ? "full-hours" : "board";
+  document.querySelectorAll("[data-hours-view]").forEach(node => {
+    node.classList.toggle("is-active", node.getAttribute("data-hours-view") === adminBoardState.view);
+  });
+  document.querySelectorAll("[data-hours-view-panel]").forEach(node => {
+    const isActive = node.getAttribute("data-hours-view-panel") === adminBoardState.view;
+    node.classList.toggle("is-active", isActive);
+    node.hidden = !isActive;
+  });
+}
+
 function filterAdminPeople(people) {
   const filters = getAdminFilters();
 
@@ -468,8 +575,15 @@ function filterAdminPeople(people) {
       return false;
     }
 
-    if (filters.role && String(person?.role || "") !== filters.role) {
-      return false;
+    if (filters.role) {
+      const roleValues = new Set(
+        [person?.role, ...(Array.isArray(person?.roleLabels) ? person.roleLabels : [])]
+          .map(value => String(value || "").trim())
+          .filter(Boolean)
+      );
+      if (!roleValues.has(filters.role)) {
+        return false;
+      }
     }
 
     if (filters.team && String(person?.team || "") !== filters.team) {
@@ -536,6 +650,25 @@ function setActionControlsDisabled(disabled) {
     "hours-action-logout-submit",
     "hours-hotel-force-select",
     "hours-hotel-force-submit",
+    "hours-bulk-team-select",
+    "hours-bulk-team-submit",
+    "hours-bulk-hotel-select",
+    "hours-bulk-hotel-submit",
+    "hours-bulk-logout-submit",
+    "hours-bulk-select-visible",
+    "hours-bulk-clear",
+    "hours-editor-date",
+    "hours-editor-mode",
+    "hours-editor-login",
+    "hours-editor-logout",
+    "hours-editor-hotel",
+    "hours-editor-reason",
+    "hours-editor-add-submit",
+    "hours-remove-date",
+    "hours-remove-hours",
+    "hours-remove-mode",
+    "hours-remove-reason",
+    "hours-remove-submit",
     "developer-sync-all",
     "developer-push-snapshot"
   ].forEach(id => {
@@ -675,6 +808,127 @@ function renderHoursRows(people, selectedDiscordId) {
       </tr>
     `;
   }).join("");
+}
+
+function renderFullHoursRows(people) {
+  const head = document.getElementById("hours-full-board-head");
+  const body = document.getElementById("hours-full-board-rows");
+  if (!head || !body) return;
+
+  const dayNumbers = getDayNumbersForFullHours(people);
+  head.innerHTML = `
+    <tr>
+      <th>Select</th>
+      <th>Staff</th>
+      <th>Role</th>
+      <th>Team</th>
+      <th>Hotel</th>
+      ${dayNumbers.map(day => `<th>D${day}</th>`).join("")}
+      <th>1st - 15th</th>
+      <th>16th - end</th>
+      <th>Month</th>
+      <th>All time</th>
+    </tr>
+  `;
+
+  if (!Array.isArray(people) || people.length === 0) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="${dayNumbers.length + 9}">
+          <div class="dashboard-empty-state">
+            <strong>No staff rows match this lane.</strong>
+            <p>Widen the filters or wait for the next snapshot to fill the full-hours sheet.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const selectedIds = new Set(getSelectedBulkDiscordIds());
+  body.innerHTML = people.map(person => {
+    const dayMap = new Map(
+      (Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days : [])
+        .map(day => [Number(day?.day || 0), Number(day?.totalHours || 0)])
+    );
+    const isSelected = selectedIds.has(String(person?.discordId || ""));
+
+    return `
+      <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
+        <td>
+          <label class="dashboard-checkbox">
+            <input type="checkbox" data-full-hours-select="${escapeHtml(person?.discordId || "")}" ${isSelected ? "checked" : ""}>
+            <span></span>
+          </label>
+        </td>
+        <td>
+          <div class="dashboard-staff-cell">
+            <strong>${escapeHtml(person?.displayName || "Unknown")}</strong>
+            <span>${escapeHtml(person?.username || "")}</span>
+          </div>
+        </td>
+        <td>${escapeHtml(getRoleSummary(person))}</td>
+        <td>${escapeHtml(person?.team || "Unassigned")}</td>
+        <td>${escapeHtml(getPrimaryHotelLabel(person))}</td>
+        ${dayNumbers.map(day => {
+          const hours = Number(dayMap.get(day) || 0);
+          const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
+          return `<td class="${className}">${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}</td>`;
+        }).join("")}
+        <td>${formatHours(person?.payPeriods?.firstHalf?.totalHours)}</td>
+        <td>${formatHours(person?.payPeriods?.secondHalf?.totalHours)}</td>
+        <td>${formatHours(person?.monthlyHours)}</td>
+        <td>${formatHours(person?.allHours)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderHotelLaneCards(lanes) {
+  const container = document.getElementById("hours-hotel-lanes");
+  if (!container) return;
+
+  if (!Array.isArray(lanes) || lanes.length === 0) {
+    container.innerHTML = `
+      <div class="dashboard-empty-state">
+        <strong>No hotel command lanes available.</strong>
+        <p>Hotel summaries appear here once people are visible in the current lane.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = lanes.map(lane => `
+    <article class="dashboard-hotel-lane-card">
+      <div class="dashboard-hotel-lane-head">
+        <div>
+          <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
+          <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
+        </div>
+        <button
+          class="button button-secondary dashboard-inline-button"
+          type="button"
+          data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
+          ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
+        >
+          Force logout
+        </button>
+      </div>
+      <div class="dashboard-mini-metrics">
+        <span>Active <strong>${escapeHtml(String(lane?.activeNow ?? 0))}</strong></span>
+        <span>Today <strong>${formatHours(lane?.todayHours)}</strong></span>
+        <span>Week <strong>${formatHours(lane?.weeklyHours)}</strong></span>
+      </div>
+      <ul class="dashboard-inline-list dashboard-inline-list-staff">
+        ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 6) : []).map(person => `
+          <li>
+            <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+            <strong>${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+          </li>
+        `).join("")}
+      </ul>
+    </article>
+  `).join("");
 }
 
 function renderTeamCards(teams) {
@@ -832,6 +1086,74 @@ function renderSelectedHistory(person) {
   `;
 }
 
+function renderAdjustmentLog(person) {
+  const container = document.getElementById("hours-adjustment-log");
+  if (!container) return;
+
+  if (!person) {
+    container.innerHTML = `
+      <div class="dashboard-empty-state">
+        <strong>Waiting for a staff selection.</strong>
+        <p>Recent manual hour adjustments for the selected staff member will show here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const adjustments = Array.isArray(person?.recentAdjustments) ? person.recentAdjustments : [];
+  if (adjustments.length === 0) {
+    container.innerHTML = `
+      <div class="dashboard-empty-state">
+        <strong>No recent manual adjustments.</strong>
+        <p>${escapeHtml(person?.displayName || "This staff member")} has no recent manual hour entries yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = adjustments.map(entry => `
+    <article class="dashboard-adjustment-item">
+      <div class="dashboard-adjustment-top">
+        <span class="dashboard-chip">${escapeHtml(entry?.mode === "training" ? "Training" : "Live shift")}</span>
+        <strong>${escapeHtml(entry?.shiftDate || "")}</strong>
+      </div>
+      <p>${escapeHtml(entry?.hotelLabel || "N/A")} · ${escapeHtml(entry?.loginTime || "--:--")} - ${escapeHtml(entry?.logoutTime || "--:--")} · ${formatHours(entry?.hours)}</p>
+      <span>${escapeHtml(entry?.reason || "Manual adjustment")}</span>
+    </article>
+  `).join("");
+}
+
+function syncHoursEditorState(person) {
+  setText("hours-editor-selected", person?.displayName
+    ? `${person.displayName} · ${getRoleSummary(person)}`
+    : "Pick a staff row to edit hours.");
+
+  renderAdjustmentLog(person);
+
+  if (!person) {
+    return;
+  }
+
+  const editorHotel = document.getElementById("hours-editor-hotel");
+  if (editorHotel && !editorHotel.value) {
+    editorHotel.value = getPrimaryHotelId(person);
+  }
+
+  const editorDate = document.getElementById("hours-editor-date");
+  if (editorDate && !editorDate.value) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    editorDate.value = `${year}-${month}-${day}`;
+  }
+
+  const removeDate = document.getElementById("hours-remove-date");
+  if (removeDate && !removeDate.value && editorDate?.value) {
+    removeDate.value = editorDate.value;
+  }
+}
+
 function renderSelectedStaff(person) {
   setText("hours-selected-name", person?.displayName || "Pick a staff row");
   setText("hours-selected-route", person?.route || "/user");
@@ -842,10 +1164,12 @@ function renderSelectedStaff(person) {
 
   renderSelectedPeriods(person);
   renderSelectedHistory(person);
+  syncHoursEditorState(person);
 
   if (!person) {
     setActionControlsDisabled(true);
     setActionFeedback("Select a staff member to unlock reassignment and logout controls.", false);
+    setEditorFeedback("Select a staff row in the full hours table, then add or remove hours with a clear reason.", false);
     return;
   }
 
@@ -855,6 +1179,7 @@ function renderSelectedStaff(person) {
   const meta = getAdminMeta();
   syncSelectOptions("hours-action-team-select", meta.teams || [], "Choose a team", person?.team || "");
   syncSelectOptions("hours-action-hotel-select", meta.hotels || [], "Choose a hotel", getPrimaryHotelId(person));
+  syncSelectOptions("hours-editor-hotel", meta.hotels || [], "Use linked hotel", getPrimaryHotelId(person));
 }
 
 function normalizeAdminPayload(payload) {
@@ -870,6 +1195,7 @@ function normalizeAdminPayload(payload) {
       summary: nextData.summary || {},
       people: Array.isArray(nextData.people) ? nextData.people : [],
       teams: Array.isArray(nextData.teams) ? nextData.teams : [],
+      hotelLanes: Array.isArray(nextData.hotelLanes) ? nextData.hotelLanes : [],
       meta: nextData.meta || {},
       generatedAt: nextData.generatedAt || ""
     },
@@ -890,16 +1216,28 @@ function applyAdminBoardPayload(payload) {
 
   const allPeople = getAdminPeople();
   const meta = getAdminMeta();
-  const roleOptions = [...new Set(allPeople.map(person => String(person?.role || "").trim()).filter(Boolean))]
+  const roleOptions = [...new Set(
+    [
+      ...(Array.isArray(meta.roles) ? meta.roles : []),
+      ...allPeople.flatMap(person => Array.isArray(person?.roleLabels) ? person.roleLabels : [person?.role])
+    ].map(value => String(value || "").trim()).filter(Boolean)
+  )]
     .sort((left, right) => left.localeCompare(right));
+
+  const validIds = new Set(allPeople.map(person => String(person?.discordId || "")));
+  setSelectedBulkDiscordIds(getSelectedBulkDiscordIds().filter(discordId => validIds.has(discordId)));
 
   syncSelectOptions("hours-filter-role", roleOptions, "All roles", document.getElementById("hours-filter-role")?.value || "");
   syncSelectOptions("hours-filter-team", meta.teams || [], "All teams", document.getElementById("hours-filter-team")?.value || "");
   syncSelectOptions("hours-filter-hotel", meta.hotels || [], "All hotels", document.getElementById("hours-filter-hotel")?.value || "");
   syncSelectOptions("hours-hotel-force-select", meta.hotels || [], "Choose a hotel", document.getElementById("hours-hotel-force-select")?.value || "");
+  syncSelectOptions("hours-bulk-team-select", meta.teams || [], "Choose a team", document.getElementById("hours-bulk-team-select")?.value || "");
+  syncSelectOptions("hours-bulk-hotel-select", meta.hotels || [], "Choose a hotel", document.getElementById("hours-bulk-hotel-select")?.value || "");
+  syncSelectOptions("hours-editor-hotel", meta.hotels || [], "Use linked hotel", document.getElementById("hours-editor-hotel")?.value || "");
 
   const visiblePeople = filterAdminPeople(allPeople);
   const selectedStaff = getSelectedStaff(allPeople, visiblePeople);
+  const selectedBulkPeople = getSelectedBulkStaff(visiblePeople);
   const summary = aggregateHoursSummary(visiblePeople);
 
   setText("hours-summary-total", String(summary.totalPeople));
@@ -910,10 +1248,13 @@ function applyAdminBoardPayload(payload) {
   setText("hours-filter-result-count", `${visiblePeople.length} visible`);
   setText("hours-sync-label", formatSyncLabel(adminBoardState.payload?.data?.generatedAt));
   setText("hours-queue-count", String(getAdminManagement()?.queue?.pendingCount || 0));
+  setText("hours-bulk-selected-count", `${selectedBulkPeople.length} selected`);
 
   renderHoursNotice(adminBoardState.payload);
   renderHoursRows(visiblePeople, selectedStaff?.discordId || "");
+  renderFullHoursRows(visiblePeople);
   renderTeamCards(deriveTeamCards(visiblePeople));
+  renderHotelLaneCards(deriveHotelLaneCards(visiblePeople));
   renderAuditLog(getAdminManagement()?.audit?.entries || []);
   renderBroadcastComposer(getAdminManagement()?.signals?.announcement || null);
   renderSelectedStaff(selectedStaff);
@@ -949,10 +1290,23 @@ async function refreshAdminBoard() {
   }
 }
 
-async function sendAdminCommand(action, payload = {}) {
+async function sendAdminCommand(action, payload = {}, options = {}) {
   if (!window.AAVGO_ADMIN_COMMAND_ENDPOINT || adminBoardState.actionInFlight) return;
 
   const isBroadcastAction = action === "broadcast_announcement" || action === "clear_announcement";
+  const feedbackChannel = String(options.feedback || "action");
+  const setFeedback = (message, isError = false) => {
+    if (feedbackChannel === "bulk") {
+      setBulkFeedback(message, isError);
+      return;
+    }
+    if (feedbackChannel === "editor") {
+      setEditorFeedback(message, isError);
+      return;
+    }
+    setActionFeedback(message, isError);
+  };
+
   adminBoardState.actionInFlight = true;
   setActionControlsDisabled(true);
 
@@ -976,9 +1330,9 @@ async function sendAdminCommand(action, payload = {}) {
       if (isBroadcastAction) {
         setBroadcastFeedback(data?.error || "The leadership broadcast failed.", true);
       } else {
-        setActionFeedback(data?.error || "The leadership action failed.", true);
+        setFeedback(data?.error || "The leadership action failed.", true);
       }
-      return;
+      return false;
     }
 
     if (data.management) {
@@ -996,15 +1350,17 @@ async function sendAdminCommand(action, payload = {}) {
         broadcastInput.value = "";
       }
     } else {
-      setActionFeedback(data?.message || "Leadership action queued for bot sync.", false);
+      setFeedback(data?.message || "Leadership action queued for bot sync.", false);
     }
     window.setTimeout(refreshAdminBoard, 2200);
+    return true;
   } catch (_) {
     if (isBroadcastAction) {
       setBroadcastFeedback("The leadership broadcast could not be sent right now.", true);
     } else {
-      setActionFeedback("The leadership action could not be sent right now.", true);
+      setFeedback("The leadership action could not be sent right now.", true);
     }
+    return false;
   } finally {
     adminBoardState.actionInFlight = false;
     setActionControlsDisabled(false);
@@ -1020,11 +1376,38 @@ function initializeAdminBoard() {
     data: { people: [], meta: {} },
     management: { queue: { pendingCount: 0 }, audit: { entries: [] }, meta: { teams: [], hotels: [] } }
   });
+  setAdminView(adminBoardState.view);
+
+  document.querySelectorAll("[data-hours-view]").forEach(node => {
+    node.addEventListener("click", () => {
+      setAdminView(node.getAttribute("data-hours-view") || "board");
+    });
+  });
 
   document.getElementById("hours-board-rows")?.addEventListener("click", event => {
     const row = event.target.closest("tr[data-discord-id]");
     if (!row) return;
     adminBoardState.selectedDiscordId = String(row.getAttribute("data-discord-id") || "");
+    applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("hours-full-board-rows")?.addEventListener("click", event => {
+    const checkbox = event.target.closest("input[data-full-hours-select]");
+    if (checkbox) {
+      const discordId = checkbox.getAttribute("data-full-hours-select") || "";
+      toggleSelectedBulkDiscordId(discordId, checkbox.checked);
+      if (checkbox.checked) {
+        adminBoardState.selectedDiscordId = String(discordId);
+      }
+      applyAdminBoardPayload(adminBoardState.payload);
+      return;
+    }
+
+    const row = event.target.closest("tr[data-full-hours-row]");
+    if (!row) return;
+    const discordId = String(row.getAttribute("data-full-hours-row") || "");
+    adminBoardState.selectedDiscordId = discordId;
+    toggleSelectedBulkDiscordId(discordId, true);
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
@@ -1042,6 +1425,22 @@ function initializeAdminBoard() {
         const node = document.getElementById(filterId);
         if (node) node.value = "";
       });
+    applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("hours-bulk-select-visible")?.addEventListener("click", () => {
+    const visiblePeople = filterAdminPeople(getAdminPeople());
+    setSelectedBulkDiscordIds(visiblePeople.map(person => String(person?.discordId || "")));
+    if (visiblePeople[0]?.discordId) {
+      adminBoardState.selectedDiscordId = String(visiblePeople[0].discordId);
+    }
+    setBulkFeedback(`${visiblePeople.length} visible staff row(s) selected.`, false);
+    applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("hours-bulk-clear")?.addEventListener("click", () => {
+    setSelectedBulkDiscordIds([]);
+    setBulkFeedback("Selection cleared.", false);
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
@@ -1114,6 +1513,107 @@ function initializeAdminBoard() {
     }
 
     sendAdminCommand("force_logout_hotel", { hotelId });
+  });
+
+  document.getElementById("hours-bulk-team-submit")?.addEventListener("click", () => {
+    const selected = getSelectedBulkDiscordIds();
+    const team = String(document.getElementById("hours-bulk-team-select")?.value || "").trim();
+    if (selected.length === 0) {
+      setBulkFeedback("Select at least one staff row before applying a bulk team move.", true);
+      return;
+    }
+    if (!team) {
+      setBulkFeedback("Choose a target team first.", true);
+      return;
+    }
+    sendAdminCommand("bulk_update_team", { discordIds: selected, team }, { feedback: "bulk" });
+  });
+
+  document.getElementById("hours-bulk-hotel-submit")?.addEventListener("click", () => {
+    const selected = getSelectedBulkDiscordIds();
+    const hotelId = String(document.getElementById("hours-bulk-hotel-select")?.value || "").trim();
+    if (selected.length === 0) {
+      setBulkFeedback("Select at least one staff row before applying a bulk hotel move.", true);
+      return;
+    }
+    if (!hotelId) {
+      setBulkFeedback("Choose a target hotel first.", true);
+      return;
+    }
+    sendAdminCommand("bulk_update_hotel", { discordIds: selected, hotelId }, { feedback: "bulk" });
+  });
+
+  document.getElementById("hours-bulk-logout-submit")?.addEventListener("click", () => {
+    const selected = getSelectedBulkDiscordIds();
+    if (selected.length === 0) {
+      setBulkFeedback("Select at least one staff row before forcing a bulk logout.", true);
+      return;
+    }
+    sendAdminCommand("bulk_force_logout_agents", { discordIds: selected }, { feedback: "bulk" });
+  });
+
+  document.getElementById("hours-editor-add-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const shiftDate = String(document.getElementById("hours-editor-date")?.value || "").trim();
+    const loginTime = String(document.getElementById("hours-editor-login")?.value || "").trim();
+    const logoutTime = String(document.getElementById("hours-editor-logout")?.value || "").trim();
+    const mode = String(document.getElementById("hours-editor-mode")?.value || "shift").trim();
+    const hotelId = String(document.getElementById("hours-editor-hotel")?.value || "").trim();
+    const reason = String(document.getElementById("hours-editor-reason")?.value || "").trim();
+
+    if (!person) {
+      setEditorFeedback("Select a staff row before adding hours.", true);
+      return;
+    }
+    if (!shiftDate || !loginTime || !logoutTime || !reason) {
+      setEditorFeedback("Fill in the date, login, logout, and reason before adding hours.", true);
+      return;
+    }
+
+    sendAdminCommand("add_manual_hours", {
+      discordId: person.discordId,
+      shiftDate,
+      loginTime,
+      logoutTime,
+      mode,
+      hotelId,
+      reason
+    }, { feedback: "editor" });
+  });
+
+  document.getElementById("hours-remove-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const shiftDate = String(document.getElementById("hours-remove-date")?.value || "").trim();
+    const hours = Number(document.getElementById("hours-remove-hours")?.value || 0);
+    const mode = String(document.getElementById("hours-remove-mode")?.value || "shift").trim();
+    const reason = String(document.getElementById("hours-remove-reason")?.value || "").trim();
+
+    if (!person) {
+      setEditorFeedback("Select a staff row before removing hours.", true);
+      return;
+    }
+    if (!shiftDate || !Number.isFinite(hours) || hours <= 0 || !reason) {
+      setEditorFeedback("Fill in the date, hour amount, and reason before removing hours.", true);
+      return;
+    }
+
+    sendAdminCommand("remove_manual_hours", {
+      discordId: person.discordId,
+      shiftDate,
+      hours,
+      mode,
+      reason
+    }, { feedback: "editor" });
+  });
+
+  document.getElementById("hours-hotel-lanes")?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-hotel-lane-logout]");
+    if (!button) return;
+    const hotelId = String(button.getAttribute("data-hotel-lane-logout") || "").trim();
+    if (!hotelId || hotelId === "UNASSIGNED") {
+      return;
+    }
+    sendAdminCommand("force_logout_hotel", { hotelId }, { feedback: "bulk" });
   });
 
   document.getElementById("developer-sync-all")?.addEventListener("click", () => {

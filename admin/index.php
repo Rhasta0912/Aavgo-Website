@@ -85,7 +85,9 @@ $bootstrapJson = json_encode(
         <a class="dashboard-nav-link" href="#leadership-broadcast">Command center</a>
         <a class="dashboard-nav-link" href="#leadership-filters">Filters</a>
         <a class="dashboard-nav-link" href="#leadership-hours">Live hours</a>
+        <a class="dashboard-nav-link" href="#leadership-full-hours">Full hours</a>
         <a class="dashboard-nav-link" href="#leadership-actions">Staff controls</a>
+        <a class="dashboard-nav-link" href="#leadership-hotels">Hotel lanes</a>
         <a class="dashboard-nav-link" href="#leadership-audit">Audit log</a>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
@@ -110,6 +112,7 @@ $bootstrapJson = json_encode(
         <div class="dashboard-toolbar">
           <a class="dashboard-toolbar-link" href="#leadership-broadcast">Command center</a>
           <a class="dashboard-toolbar-link" href="#leadership-actions">Staff controls</a>
+          <a class="dashboard-toolbar-link" href="#leadership-full-hours">Full hours</a>
           <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
           <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
@@ -189,6 +192,12 @@ $bootstrapJson = json_encode(
         </div>
       </section>
 
+      <section class="dashboard-view-switch reveal reveal-delay-1" aria-label="Leadership view switcher">
+        <button class="dashboard-view-tab is-active" type="button" data-hours-view="board">Leadership board</button>
+        <button class="dashboard-view-tab" type="button" data-hours-view="full-hours">Full hours</button>
+      </section>
+
+      <section class="dashboard-view-panel is-active" data-hours-view-panel="board">
       <section class="dashboard-admin-grid reveal reveal-delay-2">
         <article class="dashboard-panel dashboard-panel-board" id="leadership-hours">
           <div class="dashboard-panel-heading">
@@ -412,6 +421,176 @@ $bootstrapJson = json_encode(
             </div>
           </article>
         </aside>
+      </section>
+      </section>
+
+      <section class="dashboard-view-panel" data-hours-view-panel="full-hours" id="leadership-full-hours" hidden>
+        <article class="dashboard-panel dashboard-panel-full-hours reveal reveal-delay-2">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Full hours</p>
+              <h2>Spreadsheet-style month view with bulk actions.</h2>
+            </div>
+            <div class="dashboard-panel-meta">
+              <span class="dashboard-chip dashboard-chip-accent" id="hours-bulk-selected-count">0 selected</span>
+              <span class="dashboard-chip">Current month</span>
+            </div>
+          </div>
+
+          <div class="dashboard-bulk-shell">
+            <div class="dashboard-bulk-actions">
+              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-select-visible" type="button">Select filtered</button>
+              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-clear" type="button">Clear selection</button>
+            </div>
+            <div class="dashboard-bulk-controls">
+              <label class="dashboard-control-field">
+                <span>Bulk team</span>
+                <select id="hours-bulk-team-select">
+                  <option value="">Choose a team</option>
+                </select>
+              </label>
+              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-team-submit" type="button">Update selected teams</button>
+
+              <label class="dashboard-control-field">
+                <span>Bulk hotel</span>
+                <select id="hours-bulk-hotel-select">
+                  <option value="">Choose a hotel</option>
+                </select>
+              </label>
+              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-hotel-submit" type="button">Update selected hotels</button>
+              <button class="button button-primary dashboard-inline-button" id="hours-bulk-logout-submit" type="button">Force logout selected</button>
+            </div>
+            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then apply team, hotel, or logout actions in one pass.</p>
+          </div>
+
+          <div class="dashboard-hours-sheet-wrap">
+            <table class="dashboard-hours-sheet" id="hours-full-board">
+              <thead id="hours-full-board-head">
+                <tr>
+                  <th>Select</th>
+                  <th>Staff</th>
+                  <th>Role</th>
+                  <th>Team</th>
+                  <th>Hotel</th>
+                  <th>1st - 15th</th>
+                  <th>16th - end</th>
+                  <th>Month</th>
+                  <th>All time</th>
+                </tr>
+              </thead>
+              <tbody id="hours-full-board-rows">
+                <tr>
+                  <td colspan="9">
+                    <div class="dashboard-empty-state">
+                      <strong>Loading the full hours sheet.</strong>
+                      <p>The complete month lane will appear here as soon as the first snapshot is applied.</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <section class="dashboard-admin-grid dashboard-admin-grid-full reveal reveal-delay-2">
+          <article class="dashboard-panel" id="leadership-editor">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Manual hours editor</p>
+                <h2 id="hours-editor-selected">Pick a staff row to edit hours.</h2>
+              </div>
+              <span class="dashboard-chip">Audited</span>
+            </div>
+
+            <div class="dashboard-control-grid dashboard-control-grid-double">
+              <label class="dashboard-control-field">
+                <span>Date</span>
+                <input id="hours-editor-date" type="date">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Mode</span>
+                <select id="hours-editor-mode">
+                  <option value="shift">Live shift</option>
+                  <option value="training">Training</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Login</span>
+                <input id="hours-editor-login" type="time">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Logout</span>
+                <input id="hours-editor-logout" type="time">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Hotel (for live shift)</span>
+                <select id="hours-editor-hotel">
+                  <option value="">Use linked hotel</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field dashboard-control-field-wide">
+                <span>Reason</span>
+                <input id="hours-editor-reason" type="text" maxlength="160" placeholder="Why is this correction needed?">
+              </label>
+            </div>
+
+            <div class="dashboard-control-row">
+              <button class="button button-primary dashboard-inline-button" id="hours-editor-add-submit" type="button">Add hours correction</button>
+            </div>
+
+            <div class="dashboard-control-grid dashboard-control-grid-double dashboard-control-grid-separate">
+              <label class="dashboard-control-field">
+                <span>Removal date</span>
+                <input id="hours-remove-date" type="date">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Hours to remove</span>
+                <input id="hours-remove-hours" type="number" min="0.25" step="0.25" placeholder="2.5">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Removal mode</span>
+                <select id="hours-remove-mode">
+                  <option value="shift">Live shift</option>
+                  <option value="training">Training</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field dashboard-control-field-wide">
+                <span>Removal reason</span>
+                <input id="hours-remove-reason" type="text" maxlength="160" placeholder="Why are hours being removed?">
+              </label>
+            </div>
+
+            <div class="dashboard-control-row">
+              <button class="button button-secondary dashboard-inline-button" id="hours-remove-submit" type="button">Remove hours</button>
+            </div>
+
+            <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
+
+            <div class="dashboard-adjustment-log" id="hours-adjustment-log">
+              <div class="dashboard-empty-state">
+                <strong>Waiting for a staff selection.</strong>
+                <p>Recent manual hour adjustments for the selected staff member will show here.</p>
+              </div>
+            </div>
+          </article>
+
+          <aside class="dashboard-stack dashboard-stack-admin">
+            <article class="dashboard-panel" id="leadership-hotels">
+              <div class="dashboard-panel-heading">
+                <div>
+                  <p class="dashboard-kicker">Hotel command lanes</p>
+                  <h2>Live hotel rows with quick visibility.</h2>
+                </div>
+              </div>
+              <div class="dashboard-hotel-lane-grid" id="hours-hotel-lanes">
+                <div class="dashboard-empty-state">
+                  <strong>Waiting for hotel lane data.</strong>
+                  <p>Once the board snapshot is ready, hotel command cards will appear here.</p>
+                </div>
+              </div>
+            </article>
+          </aside>
+        </section>
       </section>
     </main>
   </div>

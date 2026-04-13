@@ -51,6 +51,64 @@ function aavgo_validate_team_option(array $meta, string $teamName): bool
     return false;
 }
 
+function aavgo_normalize_discord_id_list(mixed $value): array
+{
+    $list = is_array($value) ? $value : [$value];
+    $normalized = [];
+
+    foreach ($list as $item) {
+        $discordId = trim((string) $item);
+        if ($discordId !== '') {
+            $normalized[$discordId] = $discordId;
+        }
+    }
+
+    return array_values($normalized);
+}
+
+function aavgo_find_staff_rows_by_ids(array $people, array $discordIds): array
+{
+    $indexed = [];
+    foreach ($people as $person) {
+        if (!is_array($person)) {
+            continue;
+        }
+
+        $discordId = trim((string) ($person['discordId'] ?? ''));
+        if ($discordId !== '') {
+            $indexed[$discordId] = $person;
+        }
+    }
+
+    $rows = [];
+    foreach ($discordIds as $discordId) {
+        if (isset($indexed[$discordId])) {
+            $rows[] = $indexed[$discordId];
+        }
+    }
+
+    return $rows;
+}
+
+function aavgo_validate_shift_date(string $value): bool
+{
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        return false;
+    }
+
+    return strtotime($value . ' 00:00:00 UTC') !== false;
+}
+
+function aavgo_validate_clock_time(string $value): bool
+{
+    if (!preg_match('/^\d{2}:\d{2}$/', $value)) {
+        return false;
+    }
+
+    [$hours, $minutes] = array_map('intval', explode(':', $value, 2));
+    return $hours >= 0 && $hours <= 23 && $minutes >= 0 && $minutes <= 59;
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     aavgo_json_response([
         'ok' => true,
@@ -70,6 +128,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 $decoded = aavgo_decode_json_body();
 $action = trim((string) ($decoded['action'] ?? ''));
 $payload = is_array($decoded['payload'] ?? null) ? $decoded['payload'] : [];
+$managementPayload = aavgo_build_management_payload($user, $hoursPayload);
 $actor = [
     'discordId' => trim((string) ($user['id'] ?? '')),
     'name' => aavgo_display_name($user),
@@ -87,7 +146,7 @@ if ($action === '') {
 $normalizedPayload = [];
 switch ($action) {
     case 'broadcast_announcement':
-        if (!(bool) (aavgo_build_management_payload($user, $hoursPayload)['actions']['canBroadcast'] ?? false)) {
+        if (!(bool) ($managementPayload['actions']['canBroadcast'] ?? false)) {
             aavgo_json_response(['ok' => false, 'error' => 'This role cannot send leadership broadcasts.'], 403);
             exit;
         }
@@ -107,7 +166,7 @@ switch ($action) {
         exit;
 
     case 'clear_announcement':
-        if (!(bool) (aavgo_build_management_payload($user, $hoursPayload)['actions']['canBroadcast'] ?? false)) {
+        if (!(bool) ($managementPayload['actions']['canBroadcast'] ?? false)) {
             aavgo_json_response(['ok' => false, 'error' => 'This role cannot clear leadership broadcasts.'], 403);
             exit;
         }
@@ -148,6 +207,33 @@ switch ($action) {
         ];
         break;
 
+    case 'bulk_update_team':
+        if (!(bool) ($managementPayload['actions']['canBulkManage'] ?? false) || !(bool) ($managementPayload['actions']['canReassign'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot bulk reassign teams from the website.'], 403);
+            exit;
+        }
+
+        $discordIds = aavgo_normalize_discord_id_list($payload['discordIds'] ?? []);
+        $teamName = trim((string) ($payload['team'] ?? ''));
+        $rows = aavgo_find_staff_rows_by_ids($people, $discordIds);
+
+        if ($discordIds === [] || $rows === []) {
+            aavgo_json_response(['ok' => false, 'error' => 'Select at least one valid staff member before changing the team.'], 400);
+            exit;
+        }
+
+        if ($teamName === '' || !aavgo_validate_team_option($meta, $teamName)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Choose a valid team before sending the bulk reassignment.'], 400);
+            exit;
+        }
+
+        $normalizedPayload = [
+            'discordIds' => $discordIds,
+            'displayNames' => array_values(array_map(static fn(array $row): string => (string) ($row['displayName'] ?? $row['username'] ?? 'Unknown'), $rows)),
+            'team' => $teamName,
+        ];
+        break;
+
     case 'update_hotel':
         $discordId = trim((string) ($payload['discordId'] ?? ''));
         $hotelId = trim((string) ($payload['hotelId'] ?? ''));
@@ -172,6 +258,35 @@ switch ($action) {
         ];
         break;
 
+    case 'bulk_update_hotel':
+        if (!(bool) ($managementPayload['actions']['canBulkManage'] ?? false) || !(bool) ($managementPayload['actions']['canReassign'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot bulk reassign hotels from the website.'], 403);
+            exit;
+        }
+
+        $discordIds = aavgo_normalize_discord_id_list($payload['discordIds'] ?? []);
+        $hotelId = trim((string) ($payload['hotelId'] ?? ''));
+        $rows = aavgo_find_staff_rows_by_ids($people, $discordIds);
+        $hotel = aavgo_find_hotel_option($meta, $hotelId);
+
+        if ($discordIds === [] || $rows === []) {
+            aavgo_json_response(['ok' => false, 'error' => 'Select at least one valid staff member before changing the hotel.'], 400);
+            exit;
+        }
+
+        if ($hotel === null) {
+            aavgo_json_response(['ok' => false, 'error' => 'Choose a valid hotel before sending the bulk hotel move.'], 400);
+            exit;
+        }
+
+        $normalizedPayload = [
+            'discordIds' => $discordIds,
+            'displayNames' => array_values(array_map(static fn(array $row): string => (string) ($row['displayName'] ?? $row['username'] ?? 'Unknown'), $rows)),
+            'hotelId' => $hotelId,
+            'hotelLabel' => (string) ($hotel['name'] ?? $hotelId),
+        ];
+        break;
+
     case 'force_logout_agent':
         $discordId = trim((string) ($payload['discordId'] ?? ''));
         $person = aavgo_find_staff_row($people, $discordId);
@@ -187,6 +302,26 @@ switch ($action) {
         ];
         break;
 
+    case 'bulk_force_logout_agents':
+        if (!(bool) ($managementPayload['actions']['canBulkManage'] ?? false) || !(bool) ($managementPayload['actions']['canForceLogout'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot bulk force logout staff from the website.'], 403);
+            exit;
+        }
+
+        $discordIds = aavgo_normalize_discord_id_list($payload['discordIds'] ?? []);
+        $rows = aavgo_find_staff_rows_by_ids($people, $discordIds);
+
+        if ($discordIds === [] || $rows === []) {
+            aavgo_json_response(['ok' => false, 'error' => 'Select at least one valid staff member before forcing a logout.'], 400);
+            exit;
+        }
+
+        $normalizedPayload = [
+            'discordIds' => $discordIds,
+            'displayNames' => array_values(array_map(static fn(array $row): string => (string) ($row['displayName'] ?? $row['username'] ?? 'Unknown'), $rows)),
+        ];
+        break;
+
     case 'force_logout_hotel':
         $hotelId = trim((string) ($payload['hotelId'] ?? ''));
         $hotel = aavgo_find_hotel_option($meta, $hotelId);
@@ -198,6 +333,91 @@ switch ($action) {
         $normalizedPayload = [
             'hotelId' => $hotelId,
             'hotelLabel' => (string) ($hotel['name'] ?? $hotelId),
+        ];
+        break;
+
+    case 'add_manual_hours':
+        if (!(bool) ($managementPayload['actions']['canEditHours'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot edit hours from the website.'], 403);
+            exit;
+        }
+
+        $discordId = trim((string) ($payload['discordId'] ?? ''));
+        $person = aavgo_find_staff_row($people, $discordId);
+        $shiftDate = trim((string) ($payload['shiftDate'] ?? ''));
+        $loginTime = trim((string) ($payload['loginTime'] ?? ''));
+        $logoutTime = trim((string) ($payload['logoutTime'] ?? ''));
+        $mode = trim((string) ($payload['mode'] ?? 'shift'));
+        $reason = trim((string) ($payload['reason'] ?? ''));
+        $hotelId = trim((string) ($payload['hotelId'] ?? ''));
+
+        if ($person === null) {
+            aavgo_json_response(['ok' => false, 'error' => 'Select a valid staff member before editing hours.'], 404);
+            exit;
+        }
+
+        if (!aavgo_validate_shift_date($shiftDate) || !aavgo_validate_clock_time($loginTime) || !aavgo_validate_clock_time($logoutTime)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Use a valid date and 24-hour login/logout times for the manual hours entry.'], 400);
+            exit;
+        }
+
+        if ($reason === '') {
+            aavgo_json_response(['ok' => false, 'error' => 'Add a reason before saving the manual hours correction.'], 400);
+            exit;
+        }
+
+        if ($mode === 'shift' && $hotelId !== '' && aavgo_find_hotel_option($meta, $hotelId) === null) {
+            aavgo_json_response(['ok' => false, 'error' => 'Choose a valid hotel for live-shift hour corrections.'], 400);
+            exit;
+        }
+
+        $normalizedPayload = [
+            'discordId' => $discordId,
+            'displayName' => (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown'),
+            'shiftDate' => $shiftDate,
+            'loginTime' => $loginTime,
+            'logoutTime' => $logoutTime,
+            'mode' => $mode,
+            'reason' => $reason,
+            'hotelId' => $hotelId,
+        ];
+        break;
+
+    case 'remove_manual_hours':
+        if (!(bool) ($managementPayload['actions']['canEditHours'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot edit hours from the website.'], 403);
+            exit;
+        }
+
+        $discordId = trim((string) ($payload['discordId'] ?? ''));
+        $person = aavgo_find_staff_row($people, $discordId);
+        $shiftDate = trim((string) ($payload['shiftDate'] ?? ''));
+        $hours = (float) ($payload['hours'] ?? 0);
+        $mode = trim((string) ($payload['mode'] ?? 'shift'));
+        $reason = trim((string) ($payload['reason'] ?? ''));
+
+        if ($person === null) {
+            aavgo_json_response(['ok' => false, 'error' => 'Select a valid staff member before removing hours.'], 404);
+            exit;
+        }
+
+        if (!aavgo_validate_shift_date($shiftDate) || $hours <= 0) {
+            aavgo_json_response(['ok' => false, 'error' => 'Use a valid date and a positive hour amount for the removal.'], 400);
+            exit;
+        }
+
+        if ($reason === '') {
+            aavgo_json_response(['ok' => false, 'error' => 'Add a reason before saving the manual hour removal.'], 400);
+            exit;
+        }
+
+        $normalizedPayload = [
+            'discordId' => $discordId,
+            'displayName' => (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown'),
+            'shiftDate' => $shiftDate,
+            'hours' => $hours,
+            'mode' => $mode,
+            'reason' => $reason,
         ];
         break;
 

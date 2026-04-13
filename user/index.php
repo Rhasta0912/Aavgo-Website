@@ -15,10 +15,11 @@ $hoursPayload = aavgo_fetch_hours_bridge_payload();
 $personalHours = aavgo_find_hours_person_for_user($user);
 $hoursConnected = (bool) ($hoursPayload['ok'] ?? false) && is_array($personalHours);
 $payPeriods = is_array($personalHours['payPeriods'] ?? null) ? $personalHours['payPeriods'] : [];
-$firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1-15', 'totalHours' => 0, 'days' => []];
-$secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16-end', 'totalHours' => 0, 'days' => []];
+$firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []];
+$secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16th - end', 'totalHours' => 0, 'days' => []];
 $currentMonth = is_array($personalHours['currentMonth'] ?? null) ? $personalHours['currentMonth'] : ['label' => 'Current month', 'days' => []];
 $recentMonths = is_array($personalHours['recentMonths'] ?? null) ? $personalHours['recentMonths'] : [];
+$recentAdjustments = is_array($personalHours['recentAdjustments'] ?? null) ? $personalHours['recentAdjustments'] : [];
 
 function aavgo_user_hours_label(mixed $value): string
 {
@@ -112,6 +113,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
         <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
         <a class="dashboard-nav-link" href="#user-history">Hour history</a>
+        <a class="dashboard-nav-link" href="#user-adjustments">Manual adjustments</a>
         <?php if ($showAdminLink): ?>
           <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
         <?php endif; ?>
@@ -271,7 +273,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </div>
         </article>
 
-        <article class="dashboard-panel">
+        <article class="dashboard-panel" id="user-adjustments">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Recent month totals</p>
@@ -292,6 +294,34 @@ if (is_array($personalHours['activeSession'] ?? null)) {
                   <span>Shift: <?php echo aavgo_user_hours_label($month['shiftHours'] ?? 0); ?>h</span>
                   <span>Training: <?php echo aavgo_user_hours_label($month['trainingHours'] ?? 0); ?>h</span>
                 </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+
+          <div class="dashboard-adjustment-log dashboard-adjustment-log-user">
+            <?php if ($recentAdjustments === []): ?>
+              <div class="dashboard-empty-state">
+                <strong>No recent manual adjustments.</strong>
+                <p>If leadership edits your hours, the latest entries will appear here.</p>
+              </div>
+            <?php else: ?>
+              <?php foreach ($recentAdjustments as $entry): ?>
+                <article class="dashboard-adjustment-item">
+                  <div class="dashboard-adjustment-top">
+                    <span class="dashboard-chip"><?php echo aavgo_user_text(($entry['mode'] ?? 'shift') === 'training' ? 'Training' : 'Live shift'); ?></span>
+                    <strong><?php echo aavgo_user_text($entry['shiftDate'] ?? ''); ?></strong>
+                  </div>
+                  <p>
+                    <?php echo aavgo_user_text($entry['hotelLabel'] ?? 'N/A'); ?>
+                    ·
+                    <?php echo aavgo_user_text($entry['loginTime'] ?? '--:--'); ?>
+                    -
+                    <?php echo aavgo_user_text($entry['logoutTime'] ?? '--:--'); ?>
+                    ·
+                    <?php echo aavgo_user_hours_label($entry['hours'] ?? 0); ?>h
+                  </p>
+                  <span><?php echo aavgo_user_text($entry['reason'] ?? 'Manual adjustment'); ?></span>
+                </article>
               <?php endforeach; ?>
             <?php endif; ?>
           </div>
