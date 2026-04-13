@@ -7,6 +7,62 @@ require __DIR__ . '/../../auth/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
+function aavgo_sync_request_header(string $name): string
+{
+    $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+    $candidates = [
+        $_SERVER[$serverKey] ?? '',
+        $_SERVER['REDIRECT_' . $serverKey] ?? '',
+    ];
+
+    foreach ($candidates as $candidate) {
+        $value = trim((string) $candidate);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        if (is_array($headers)) {
+            foreach ($headers as $headerName => $value) {
+                if (strcasecmp((string) $headerName, $name) === 0) {
+                    $normalizedValue = trim((string) $value);
+                    if ($normalizedValue !== '') {
+                        return $normalizedValue;
+                    }
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
+function aavgo_sync_extract_token(array $decodedPayload): string
+{
+    $authorization = aavgo_sync_request_header('Authorization');
+    if (
+        $authorization !== ''
+        && preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches) === 1
+    ) {
+        $bearerToken = trim((string) ($matches[1] ?? ''));
+        if ($bearerToken !== '') {
+            return $bearerToken;
+        }
+    }
+
+    foreach (['X-Aavgo-Token', 'X-Aavgo-Website-Token'] as $headerName) {
+        $headerValue = aavgo_sync_request_header($headerName);
+        if ($headerValue !== '') {
+            return $headerValue;
+        }
+    }
+
+    $bodyToken = trim((string) ($decodedPayload['token'] ?? ''));
+    return $bodyToken;
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -26,8 +82,11 @@ if ($token === '') {
     exit;
 }
 
-$authorization = trim((string) ($_SERVER['HTTP_AUTHORIZATION'] ?? ''));
-if (!hash_equals('Bearer ' . $token, $authorization)) {
+$rawBody = file_get_contents('php://input');
+$decoded = json_decode($rawBody ?: '', true);
+$providedToken = aavgo_sync_extract_token(is_array($decoded) ? $decoded : []);
+
+if ($providedToken === '' || !hash_equals($token, $providedToken)) {
     http_response_code(401);
     echo json_encode([
         'ok' => false,
@@ -35,9 +94,6 @@ if (!hash_equals('Bearer ' . $token, $authorization)) {
     ], JSON_PRETTY_PRINT);
     exit;
 }
-
-$rawBody = file_get_contents('php://input');
-$decoded = json_decode($rawBody ?: '', true);
 
 if (!is_array($decoded) || !is_array($decoded['data'] ?? null)) {
     http_response_code(400);
