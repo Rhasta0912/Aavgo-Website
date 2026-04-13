@@ -40,76 +40,21 @@ jobs:
 
       - name: Upload site to cPanel
         env:
-          CPANEL_FTP_HOST: ${{ secrets.CPANEL_FTP_HOST }}
-          CPANEL_FTP_USERNAME: ${{ secrets.CPANEL_FTP_USERNAME }}
+          CPANEL_FTP_HOST: web-slc-02.sparkedhost.us
+          CPANEL_FTP_USERNAME: Web@aavgodesk.xyz
           CPANEL_FTP_PASSWORD: ${{ secrets.CPANEL_FTP_PASSWORD }}
-          CPANEL_FTP_PORT: ${{ secrets.CPANEL_FTP_PORT }}
-          CPANEL_FTP_PATH: ${{ secrets.CPANEL_FTP_PATH }}
+          CPANEL_FTP_PORT: 21
         run: |
           test -n "$CPANEL_FTP_HOST"
           test -n "$CPANEL_FTP_USERNAME"
           test -n "$CPANEL_FTP_PASSWORD"
           test -n "$CPANEL_FTP_PORT"
-          test -n "$CPANEL_FTP_PATH"
 
-          DEPLOY_ROOT="$CPANEL_FTP_PATH"
-          DEPLOY_ROOT="${DEPLOY_ROOT#\"}"
-          DEPLOY_ROOT="${DEPLOY_ROOT%\"}"
-          DEPLOY_ROOT="${DEPLOY_ROOT#\'}"
-          DEPLOY_ROOT="${DEPLOY_ROOT%\'}"
-          DEPLOY_ROOT="${DEPLOY_ROOT%/}"
-          if [ -z "$DEPLOY_ROOT" ]; then
-            DEPLOY_ROOT="/"
-          fi
-
-          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          TARGETS="$DEPLOY_ROOT"
-          for EXTRA in public_html /public_html aavgodesk.xyz /aavgodesk.xyz public_html/aavgodesk.xyz /public_html/aavgodesk.xyz www.aavgodesk.xyz /www.aavgodesk.xyz public_html/www.aavgodesk.xyz /public_html/www.aavgodesk.xyz; do
-            case " $TARGETS " in
-              *" $EXTRA "*) ;;
-              *) TARGETS="$TARGETS $EXTRA" ;;
-            esac
-          done
-
-          DEPLOYED_ANY="false"
-          for TARGET in $TARGETS; do
-            if [ "$TARGET" = "/" ]; then
-              EXISTS="true"
-            else
-              if lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
-              set cmd:fail-exit yes
-              set ftp:ssl-force true
-              set ftp:ssl-protect-data true
-              set ssl:verify-certificate no
-              cls -d \"$TARGET\"
-              bye
-              "
-              then
-                EXISTS="true"
-              else
-                EXISTS="false"
-              fi
-            fi
-
-            if [ "$EXISTS" = "true" ]; then
-              TARGET_DEPLOY_DIR="$(mktemp -d)"
-              cp -R deploy/. "$TARGET_DEPLOY_DIR"/
-              printf "sha=%s\nbuilt_at=%s\ntarget=%s\n" "$GITHUB_SHA" "$BUILT_AT" "$TARGET" > "$TARGET_DEPLOY_DIR/_aavgo_target.txt"
-
-              lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
-              set cmd:fail-exit yes
-              set ftp:ssl-force true
-              set ftp:ssl-protect-data true
-              set ssl:verify-certificate no
-              mirror -R --verbose \"$TARGET_DEPLOY_DIR/\" \"$TARGET\"
-              bye
-              "
-              rm -rf "$TARGET_DEPLOY_DIR"
-              DEPLOYED_ANY="true"
-            fi
-          done
-
-          if [ "$DEPLOYED_ANY" != "true" ]; then
-            echo "No deploy targets were found in candidates: $TARGETS"
-            exit 1
-          fi
+          lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
+          set cmd:fail-exit yes
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          mirror -R --verbose deploy/ /
+          bye
+          "
