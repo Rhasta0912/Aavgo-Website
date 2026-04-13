@@ -16,46 +16,48 @@
   >
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="workspace-page workspace-dashboard workspace-page-access">
-  <main class="access-frontdoor">
-    <section class="access-frontdoor-card reveal reveal-in">
-      <div class="access-frontdoor-badge-row">
-        <a class="dashboard-brand access-frontdoor-brand" href="/" aria-label="Aavgo home">Aavgo</a>
-        <span class="dashboard-chip access-frontdoor-chip">Private Access</span>
-      </div>
+<body class="gateway-page-premium frontdoor-page">
+  <div class="gateway-shell-premium gateway-shell-simple">
+    <main class="gateway-main gateway-main-centered frontdoor-main">
+      <section class="frontdoor-stage reveal reveal-in">
+        <div class="login-stage-copy frontdoor-card">
+          <div class="frontdoor-badge-row">
+            <a class="brand brand-plain frontdoor-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+            <span class="dashboard-chip frontdoor-chip">Private Access</span>
+          </div>
 
-      <div class="access-frontdoor-core">
-        <p class="dashboard-breadcrumb access-frontdoor-breadcrumb">Invitation-only front door</p>
-        <h1 class="access-frontdoor-title">Log in</h1>
-        <p class="access-frontdoor-copy">
-          Continue with Discord to enter the private Aavgo workspace. Access is verified quietly, the door opens once, and the rest stays out of sight.
-        </p>
+          <p class="eyebrow-light frontdoor-brow">Invitation-only front door</p>
+          <h1 class="frontdoor-title">Log in</h1>
+          <p class="hero-text frontdoor-copy">
+            Continue with Discord to enter the private Aavgo workspace. Access is verified quietly, the door opens once, and the rest stays out of sight.
+          </p>
 
-        <div class="access-frontdoor-actions">
-          <a class="button button-primary access-frontdoor-button" href="/auth/discord/login/">Log in with Discord</a>
+          <div class="hero-actions hero-actions-centered frontdoor-actions">
+            <a class="button button-primary frontdoor-button" href="/auth/discord/login/">Log in with Discord</a>
+          </div>
+
+          <p class="locked-note frontdoor-note">
+            Invitation-only access for approved Aavgo members. No public browsing. No public workspace surface.
+          </p>
+
+          <div class="frontdoor-meta" aria-label="Access details">
+            <div class="frontdoor-meta-card">
+              <span>Private</span>
+              <strong>Discrete by design</strong>
+            </div>
+            <div class="frontdoor-meta-card">
+              <span>Verified</span>
+              <strong>Discord opens the door</strong>
+            </div>
+            <div class="frontdoor-meta-card">
+              <span>Aavgo</span>
+              <strong>&copy; <span id="year"></span></strong>
+            </div>
+          </div>
         </div>
-
-        <p class="access-frontdoor-note">
-          Invitation-only access for approved Aavgo members. No public browsing. No public workspace surface.
-        </p>
-
-        <div class="access-frontdoor-meta" aria-label="Access details">
-          <div class="access-frontdoor-detail">
-            <span>Private</span>
-            <strong>Discrete by design</strong>
-          </div>
-          <div class="access-frontdoor-detail">
-            <span>Verified</span>
-            <strong>Discord opens the door</strong>
-          </div>
-          <div class="access-frontdoor-detail">
-            <span>Aavgo</span>
-            <strong>&copy; <span id="year"></span></strong>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>
