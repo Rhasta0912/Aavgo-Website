@@ -58,6 +58,8 @@ try {
 } catch (Throwable $exception) {
     aavgo_log_auth_failure('token_exchange', $exception, [
         'has_code' => true,
+        'request_host' => aavgo_get_request_host(),
+        'callback_candidates' => aavgo_get_callback_url_candidates(),
     ]);
 
     http_response_code(502);
@@ -73,7 +75,9 @@ try {
 try {
     $user = aavgo_fetch_user($accessToken);
 } catch (Throwable $exception) {
-    aavgo_log_auth_failure('fetch_user', $exception, []);
+    aavgo_log_auth_failure('fetch_user', $exception, [
+        'request_host' => aavgo_get_request_host(),
+    ]);
 
     http_response_code(502);
     aavgo_render_message_page(
@@ -105,6 +109,7 @@ try {
     aavgo_log_auth_failure('fetch_current_member', $exception, [
         'user_id' => (string) ($user['id'] ?? ''),
         'username' => (string) ($user['username'] ?? ''),
+        'request_host' => aavgo_get_request_host(),
     ]);
 
     if ((int) $exception->getCode() === 404) {

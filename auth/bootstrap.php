@@ -185,7 +185,8 @@ function aavgo_get_role_ids(string $bucket): array
 
 function aavgo_get_callback_url(): string
 {
-    return aavgo_get_config_string('base_url') . '/auth/discord/callback/';
+    $baseUrl = aavgo_get_runtime_base_url();
+    return $baseUrl . '/auth/discord/callback/';
 }
 
 function aavgo_get_website_api_url(): string
@@ -224,6 +225,65 @@ function aavgo_get_auth_error_log_path(): string
 function aavgo_get_admin_user_ids(): array
 {
     return aavgo_parse_id_list(aavgo_get_config('admin_user_ids') ?? []);
+}
+
+function aavgo_get_request_host(): string
+{
+    return strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
+}
+
+function aavgo_get_request_scheme(): string
+{
+    $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+    if ($https === 'on' || $https === '1') {
+        return 'https';
+    }
+
+    $forwardedProto = strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')));
+    if ($forwardedProto === 'https') {
+        return 'https';
+    }
+
+    return 'http';
+}
+
+function aavgo_is_allowed_runtime_host(string $host): bool
+{
+    $normalized = strtolower(trim($host));
+    return in_array($normalized, ['aavgodesk.xyz', 'www.aavgodesk.xyz'], true);
+}
+
+function aavgo_get_runtime_base_url(): string
+{
+    $requestHost = aavgo_get_request_host();
+    if (aavgo_is_allowed_runtime_host($requestHost)) {
+        return aavgo_get_request_scheme() . '://' . $requestHost;
+    }
+
+    return aavgo_get_config_string('base_url');
+}
+
+function aavgo_get_callback_url_candidates(): array
+{
+    $candidates = [
+        aavgo_get_runtime_base_url(),
+        aavgo_get_config_string('base_url'),
+        'https://www.aavgodesk.xyz',
+        'https://aavgodesk.xyz',
+    ];
+
+    $urls = [];
+    foreach ($candidates as $baseUrl) {
+        $baseUrl = rtrim(trim((string) $baseUrl), '/');
+        if ($baseUrl === '') {
+            continue;
+        }
+
+        $candidate = $baseUrl . '/auth/discord/callback/';
+        $urls[$candidate] = $candidate;
+    }
+
+    return array_values($urls);
 }
 
 function aavgo_is_configured(): bool
@@ -1089,15 +1149,29 @@ function aavgo_api_request(string $method, string $endpoint, array $headers = []
 
 function aavgo_exchange_code(string $code): array
 {
-    return aavgo_api_request('POST', '/oauth2/token', [
-        'Content-Type: application/x-www-form-urlencoded',
-    ], [
-        'client_id' => aavgo_get_config_string('client_id'),
-        'client_secret' => aavgo_get_config_string('client_secret'),
-        'grant_type' => 'authorization_code',
-        'code' => $code,
-        'redirect_uri' => aavgo_get_callback_url(),
-    ]);
+    $lastException = null;
+
+    foreach (aavgo_get_callback_url_candidates() as $callbackUrl) {
+        try {
+            return aavgo_api_request('POST', '/oauth2/token', [
+                'Content-Type: application/x-www-form-urlencoded',
+            ], [
+                'client_id' => aavgo_get_config_string('client_id'),
+                'client_secret' => aavgo_get_config_string('client_secret'),
+                'grant_type' => 'authorization_code',
+                'code' => $code,
+                'redirect_uri' => $callbackUrl,
+            ]);
+        } catch (Throwable $exception) {
+            $lastException = $exception;
+        }
+    }
+
+    if ($lastException instanceof Throwable) {
+        throw $lastException;
+    }
+
+    throw new RuntimeException('Discord token exchange failed without a response.');
 }
 
 function aavgo_fetch_user(string $accessToken): array
