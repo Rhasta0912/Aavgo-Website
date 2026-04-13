@@ -619,6 +619,19 @@ function aavgo_take_auth_handoff(string $state): ?array
     return $entry;
 }
 
+function aavgo_peek_auth_handoff(string $state): ?array
+{
+    $state = trim($state);
+    if ($state === '') {
+        return null;
+    }
+
+    $key = aavgo_auth_handoff_key($state);
+    $store = aavgo_read_auth_handoffs();
+    $entry = $store['entries'][$key] ?? null;
+    return is_array($entry) ? $entry : null;
+}
+
 function aavgo_claim_auth_handoff(string $state, int $attempts = 5, int $delayMicros = 250000): ?array
 {
     $attempts = max(1, $attempts);
@@ -963,13 +976,19 @@ function aavgo_normalize_callback_url(string $callbackUrl): string
     return '';
 }
 
-function aavgo_create_oauth_state(string $afterLogin = '', string $callbackUrl = ''): string
+function aavgo_normalize_oauth_flow(string $flow): string
+{
+    return strtolower(trim($flow)) === 'direct' ? 'direct' : 'bridge';
+}
+
+function aavgo_create_oauth_state(string $afterLogin = '', string $callbackUrl = '', string $flow = 'bridge'): string
 {
     $payload = [
         'nonce' => aavgo_create_state(),
         'iat' => time(),
         'after_login' => aavgo_normalize_after_login_path($afterLogin),
         'callback_url' => aavgo_normalize_callback_url($callbackUrl),
+        'flow' => aavgo_normalize_oauth_flow($flow),
     ];
 
     $encodedPayload = aavgo_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES) ?: '{}');
@@ -1008,6 +1027,7 @@ function aavgo_validate_oauth_state(string $state): ?array
 
     $payload['after_login'] = aavgo_normalize_after_login_path((string) ($payload['after_login'] ?? ''));
     $payload['callback_url'] = aavgo_normalize_callback_url((string) ($payload['callback_url'] ?? ''));
+    $payload['flow'] = aavgo_normalize_oauth_flow((string) ($payload['flow'] ?? 'bridge'));
     return $payload;
 }
 

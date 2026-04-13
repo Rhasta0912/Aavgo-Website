@@ -51,6 +51,9 @@ if ($code === '') {
 $preferredCallbackUrl = is_array($validatedState)
     ? aavgo_normalize_callback_url((string) ($validatedState['callback_url'] ?? ''))
     : '';
+$flow = is_array($validatedState)
+    ? aavgo_normalize_oauth_flow((string) ($validatedState['flow'] ?? 'bridge'))
+    : 'bridge';
 $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
 if ($afterLogin === '' && is_array($validatedState)) {
     $afterLogin = (string) ($validatedState['after_login'] ?? '');
@@ -157,6 +160,58 @@ if ($inConfiguredGuild === false) {
 $fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
 if (is_array($fallbackSessionUser)) {
     aavgo_store_auth_handoff((string) $state, $fallbackSessionUser, $afterLogin);
+
+    if ($flow === 'bridge') {
+        $claimHref = htmlspecialchars('/auth/discord/claim/?state=' . rawurlencode((string) $state), ENT_QUOTES, 'UTF-8');
+        echo <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord approved</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="workspace-page workspace-page-access">
+  <main class="workspace-message-shell">
+    <section class="workspace-message-card reveal reveal-in">
+      <div class="workspace-message-main">
+        <p class="dashboard-kicker">Secure browser handoff</p>
+        <h1 class="workspace-message-title">Discord approved.</h1>
+        <p class="workspace-message-copy">Return to the original Aavgo tab. It should finish the private sign-in automatically in a moment.</p>
+        <div class="workspace-message-actions">
+          <a class="button button-primary" href="{$claimHref}">Finish Here</a>
+        </div>
+      </div>
+      <aside class="workspace-message-aside reveal reveal-delay-1 reveal-in">
+        <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+        <span class="dashboard-chip dashboard-chip-accent">Private front door</span>
+        <strong>Approval captured.</strong>
+        <p>If you started sign-in in another browser tab, go back there now. This window can be closed after the handoff finishes.</p>
+      </aside>
+    </section>
+  </main>
+  <script>
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'aavgo-auth-ready' }, window.location.origin);
+      }
+    } catch (_) {}
+    window.setTimeout(() => {
+      try { window.close(); } catch (_) {}
+    }, 1200);
+  </script>
+  <script src="/script.js"></script>
+</body>
+</html>
+HTML;
+        exit;
+    }
+
     session_regenerate_id(true);
     $_SESSION['aavgo_user'] = $fallbackSessionUser;
     unset($_SESSION['aavgo_after_login']);
