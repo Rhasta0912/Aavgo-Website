@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 const AAVGO_EXTERNAL_CONFIG = '/home/aavgodes/discord-auth-config.php';
 const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
-const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
+const AAVGO_REQUIRED_SCOPES = 'identify guilds guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
 const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
@@ -1179,6 +1179,33 @@ function aavgo_fetch_user(string $accessToken): array
     return aavgo_api_request('GET', '/users/@me', [
         'Authorization: Bearer ' . $accessToken,
     ]);
+}
+
+function aavgo_fetch_user_guilds(string $accessToken): array
+{
+    return aavgo_api_request('GET', '/users/@me/guilds', [
+        'Authorization: Bearer ' . $accessToken,
+    ]);
+}
+
+function aavgo_user_is_in_configured_guild(array $guilds): bool
+{
+    $targetGuildId = aavgo_get_config_string('guild_id');
+    if ($targetGuildId === '') {
+        return false;
+    }
+
+    foreach ($guilds as $guild) {
+        if (!is_array($guild)) {
+            continue;
+        }
+
+        if (trim((string) ($guild['id'] ?? '')) === $targetGuildId) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function aavgo_fetch_current_member(string $accessToken): array
