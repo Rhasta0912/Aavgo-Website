@@ -82,6 +82,7 @@ $bootstrapJson = json_encode(
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
         <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
+        <a class="dashboard-nav-link" href="#leadership-broadcast">Command center</a>
         <a class="dashboard-nav-link" href="#leadership-filters">Filters</a>
         <a class="dashboard-nav-link" href="#leadership-hours">Live hours</a>
         <a class="dashboard-nav-link" href="#leadership-actions">Staff controls</a>
@@ -107,7 +108,8 @@ $bootstrapJson = json_encode(
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <a class="dashboard-toolbar-link" href="#leadership-actions">Open controls</a>
+          <a class="dashboard-toolbar-link" href="#leadership-broadcast">Command center</a>
+          <a class="dashboard-toolbar-link" href="#leadership-actions">Staff controls</a>
           <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
           <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
@@ -239,6 +241,49 @@ $bootstrapJson = json_encode(
         </article>
 
         <aside class="dashboard-stack dashboard-stack-admin" id="leadership-actions">
+          <article class="dashboard-panel dashboard-panel-command" id="leadership-broadcast">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Command center</p>
+                <h2>Broadcast one website-wide leadership alert.</h2>
+              </div>
+              <span class="dashboard-chip dashboard-chip-accent" id="broadcast-live-status">No live alert</span>
+            </div>
+
+            <div class="dashboard-command-surface">
+              <label class="dashboard-control-field">
+                <span>Announcement</span>
+                <textarea
+                  id="broadcast-message"
+                  class="dashboard-control-textarea"
+                  rows="4"
+                  maxlength="280"
+                  placeholder="Write the announcement that should appear across signed-in Aavgo pages."
+                ></textarea>
+              </label>
+
+              <div class="dashboard-control-row">
+                <label class="dashboard-control-field">
+                  <span>Tone</span>
+                  <select id="broadcast-tone-select">
+                    <option value="standard">Standard alert</option>
+                    <option value="urgent">Urgent alert</option>
+                  </select>
+                </label>
+                <div class="dashboard-control-stack dashboard-control-stack-tight">
+                  <button class="button button-primary dashboard-inline-button" id="broadcast-send" type="button">Send broadcast</button>
+                  <button class="button button-secondary dashboard-inline-button" id="broadcast-clear" type="button">Clear broadcast</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-broadcast-preview" id="broadcast-preview">
+              <strong>No live announcement yet.</strong>
+              <p>Once sent, the active alert will show here and across signed-in pages with a website beep.</p>
+            </div>
+            <p class="dashboard-panel-copy" id="broadcast-feedback">SME, Team Leaders, Operations Managers, and Developers can use this channel for fast website-wide alerts.</p>
+          </article>
+
           <article class="dashboard-panel">
             <div class="dashboard-panel-heading">
               <div>
@@ -375,6 +420,7 @@ $bootstrapJson = json_encode(
   <script>
     window.AAVGO_ADMIN_HOURS_ENDPOINT = '/api/admin-hours/';
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
+    window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
   </script>
   <script src="/script.js"></script>
 </body>

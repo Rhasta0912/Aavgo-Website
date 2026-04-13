@@ -73,6 +73,22 @@ function formatAuditLabel(value) {
   })}`;
 }
 
+function safeLocalStorageGet(key) {
+  try {
+    return window.localStorage.getItem(key) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function safeLocalStorageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (_) {
+    // Ignore storage failures on restricted browsers.
+  }
+}
+
 function setText(id, value) {
   const node = document.getElementById(id);
   if (node) {
@@ -96,6 +112,211 @@ function parseJsonScript(id) {
   } catch (_) {
     return null;
   }
+}
+
+function normalizeAnnouncement(announcement) {
+  if (!announcement || typeof announcement !== "object") return null;
+
+  const id = String(announcement.id || "").trim();
+  const message = String(announcement.message || "").trim();
+  if (!id || !message) return null;
+
+  const actor = announcement.actor && typeof announcement.actor === "object" ? announcement.actor : {};
+  return {
+    id,
+    message,
+    tone: String(announcement.tone || "standard").trim() === "urgent" ? "urgent" : "standard",
+    createdAt: String(announcement.createdAt || ""),
+    updatedAt: String(announcement.updatedAt || announcement.createdAt || ""),
+    actorName: String(actor.name || "Leadership"),
+    actorRole: String(actor.roleSummary || "Leadership")
+  };
+}
+
+const liveSignalState = {
+  endpoint: String(window.AAVGO_LIVE_SIGNALS_ENDPOINT || "/api/live-signals/"),
+  pollTimer: null,
+  banner: null,
+  message: null,
+  meta: null,
+  chip: null,
+  dismiss: null,
+  audioUnlocked: false,
+  audioContext: null,
+  pendingTone: "",
+  currentAnnouncementId: "",
+  lastPlayedId: safeLocalStorageGet("aavgo:last-live-signal-id")
+};
+
+function ensureLiveSignalBanner() {
+  if (liveSignalState.banner) {
+    return liveSignalState.banner;
+  }
+
+  const banner = document.createElement("aside");
+  banner.className = "live-signal-banner is-hidden";
+  banner.innerHTML = `
+    <div class="live-signal-shell">
+      <span class="live-signal-chip">Leadership alert</span>
+      <div class="live-signal-copy">
+        <strong class="live-signal-message"></strong>
+        <p class="live-signal-meta"></p>
+      </div>
+      <button class="live-signal-dismiss" type="button" aria-label="Dismiss alert">Hide</button>
+    </div>
+  `;
+
+  document.body.appendChild(banner);
+
+  liveSignalState.banner = banner;
+  liveSignalState.message = banner.querySelector(".live-signal-message");
+  liveSignalState.meta = banner.querySelector(".live-signal-meta");
+  liveSignalState.chip = banner.querySelector(".live-signal-chip");
+  liveSignalState.dismiss = banner.querySelector(".live-signal-dismiss");
+  liveSignalState.dismiss?.addEventListener("click", () => {
+    banner.classList.add("is-hidden");
+  });
+
+  return banner;
+}
+
+function unlockAnnouncementAudio() {
+  if (liveSignalState.audioUnlocked) {
+    if (liveSignalState.audioContext?.state === "suspended") {
+      liveSignalState.audioContext.resume().catch(() => {});
+    }
+    return;
+  }
+
+  try {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) {
+      liveSignalState.audioUnlocked = true;
+      liveSignalState.pendingTone = "";
+      return;
+    }
+
+    liveSignalState.audioContext = liveSignalState.audioContext || new Context();
+    liveSignalState.audioContext.resume().catch(() => {});
+    liveSignalState.audioUnlocked = true;
+
+    if (liveSignalState.pendingTone) {
+      playAnnouncementTone(liveSignalState.pendingTone);
+      liveSignalState.pendingTone = "";
+    }
+  } catch (_) {
+    liveSignalState.audioUnlocked = true;
+    liveSignalState.pendingTone = "";
+  }
+}
+
+function playSingleBeep(startAt, duration, frequency) {
+  const audioContext = liveSignalState.audioContext;
+  if (!audioContext) return;
+
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+
+  gainNode.gain.setValueAtTime(0.0001, startAt);
+  gainNode.gain.exponentialRampToValueAtTime(0.12, startAt + 0.02);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.start(startAt);
+  oscillator.stop(startAt + duration + 0.02);
+}
+
+function playAnnouncementTone(tone = "standard") {
+  if (!liveSignalState.audioUnlocked) {
+    liveSignalState.pendingTone = tone;
+    return;
+  }
+
+  unlockAnnouncementAudio();
+  const audioContext = liveSignalState.audioContext;
+  if (!audioContext) return;
+
+  const startAt = audioContext.currentTime + 0.02;
+  if (tone === "urgent") {
+    playSingleBeep(startAt, 0.16, 880);
+    playSingleBeep(startAt + 0.22, 0.18, 990);
+    return;
+  }
+
+  playSingleBeep(startAt, 0.18, 784);
+}
+
+function renderLiveSignalBanner(announcement) {
+  const banner = ensureLiveSignalBanner();
+  const normalized = normalizeAnnouncement(announcement);
+
+  if (!normalized) {
+    liveSignalState.currentAnnouncementId = "";
+    banner.classList.add("is-hidden");
+    banner.classList.remove("is-urgent");
+    return;
+  }
+
+  liveSignalState.currentAnnouncementId = normalized.id;
+  banner.classList.remove("is-hidden");
+  banner.classList.toggle("is-urgent", normalized.tone === "urgent");
+  if (liveSignalState.message) {
+    liveSignalState.message.textContent = normalized.message;
+  }
+  if (liveSignalState.meta) {
+    const parts = [normalized.actorName];
+    if (normalized.createdAt) {
+      parts.push(formatAuditLabel(normalized.createdAt));
+    }
+    liveSignalState.meta.textContent = parts.join(" - ");
+  }
+  if (liveSignalState.chip) {
+    liveSignalState.chip.textContent = normalized.tone === "urgent" ? "Urgent broadcast" : "Leadership alert";
+  }
+
+  if (normalized.id !== liveSignalState.lastPlayedId) {
+    liveSignalState.lastPlayedId = normalized.id;
+    safeLocalStorageSet("aavgo:last-live-signal-id", normalized.id);
+    playAnnouncementTone(normalized.tone);
+  }
+}
+
+async function refreshLiveSignals() {
+  if (!liveSignalState.endpoint) return;
+
+  try {
+    const response = await fetch(liveSignalState.endpoint, {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    });
+
+    const payload = await response.json().catch(() => ({ ok: false, announcement: null }));
+    if (!response.ok || !payload?.ok) {
+      renderLiveSignalBanner(null);
+      return;
+    }
+
+    if (payload?.authenticated === false) {
+      renderLiveSignalBanner(null);
+      return;
+    }
+
+    renderLiveSignalBanner(payload?.announcement || null);
+  } catch (_) {
+    // Keep the last rendered state if polling fails.
+  }
+}
+
+function initializeLiveSignals() {
+  ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
+    window.addEventListener(eventName, unlockAnnouncementAudio, { passive: true });
+  });
+
+  refreshLiveSignals();
+  liveSignalState.pollTimer = window.setInterval(refreshLiveSignals, 12000);
 }
 
 function getPrimaryHotelId(person) {
@@ -304,6 +525,10 @@ function setActionFeedback(message, isError = false) {
 
 function setActionControlsDisabled(disabled) {
   [
+    "broadcast-message",
+    "broadcast-tone-select",
+    "broadcast-send",
+    "broadcast-clear",
     "hours-action-team-select",
     "hours-action-team-submit",
     "hours-action-hotel-select",
@@ -319,6 +544,65 @@ function setActionControlsDisabled(disabled) {
       node.disabled = disabled;
     }
   });
+}
+
+function setBroadcastFeedback(message, isError = false) {
+  const node = document.getElementById("broadcast-feedback");
+  if (!node) return;
+  node.textContent = message;
+  node.classList.toggle("is-error", Boolean(isError));
+  node.classList.toggle("is-success", !isError && message !== "");
+}
+
+function renderBroadcastComposer(announcement) {
+  const status = document.getElementById("broadcast-live-status");
+  const preview = document.getElementById("broadcast-preview");
+  const clearButton = document.getElementById("broadcast-clear");
+  const toneSelect = document.getElementById("broadcast-tone-select");
+  const textarea = document.getElementById("broadcast-message");
+  const normalized = normalizeAnnouncement(announcement);
+
+  if (status) {
+    status.textContent = normalized
+      ? normalized.tone === "urgent" ? "Urgent live" : "Live alert"
+      : "No live alert";
+    status.classList.toggle("dashboard-chip-accent", Boolean(normalized));
+  }
+
+  if (clearButton) {
+    clearButton.disabled = adminBoardState.actionInFlight || !normalized;
+  }
+
+  if (!preview) return;
+
+  if (!normalized) {
+    preview.innerHTML = `
+      <strong>No live announcement yet.</strong>
+      <p>Once sent, the active alert will show here and across signed-in pages with a website beep.</p>
+    `;
+    if (toneSelect && !adminBoardState.actionInFlight) {
+      toneSelect.value = "standard";
+    }
+    return;
+  }
+
+  preview.innerHTML = `
+    <span class="dashboard-chip ${normalized.tone === "urgent" ? "dashboard-chip-accent" : ""}">
+      ${escapeHtml(normalized.tone === "urgent" ? "Urgent" : "Standard")}
+    </span>
+    <strong>${escapeHtml(normalized.message)}</strong>
+    <p>${escapeHtml(normalized.actorName)} · ${escapeHtml(formatAuditLabel(normalized.createdAt))}</p>
+  `;
+
+  if (toneSelect && !adminBoardState.actionInFlight) {
+    toneSelect.value = normalized.tone;
+  }
+
+  if (textarea && !adminBoardState.actionInFlight && textarea.value.trim() === "") {
+    textarea.value = normalized.message;
+  }
+
+  renderLiveSignalBanner(normalized);
 }
 
 function renderHoursNotice(payload) {
@@ -594,7 +878,8 @@ function normalizeAdminPayload(payload) {
       actions: nextManagement.actions || {},
       meta: nextManagement.meta || {},
       queue: nextManagement.queue || { pendingCount: 0, recent: [] },
-      audit: nextManagement.audit || { entries: [] }
+      audit: nextManagement.audit || { entries: [] },
+      signals: nextManagement.signals || { announcement: null }
     }
   };
 }
@@ -630,6 +915,7 @@ function applyAdminBoardPayload(payload) {
   renderHoursRows(visiblePeople, selectedStaff?.discordId || "");
   renderTeamCards(deriveTeamCards(visiblePeople));
   renderAuditLog(getAdminManagement()?.audit?.entries || []);
+  renderBroadcastComposer(getAdminManagement()?.signals?.announcement || null);
   renderSelectedStaff(selectedStaff);
 }
 
@@ -666,6 +952,7 @@ async function refreshAdminBoard() {
 async function sendAdminCommand(action, payload = {}) {
   if (!window.AAVGO_ADMIN_COMMAND_ENDPOINT || adminBoardState.actionInFlight) return;
 
+  const isBroadcastAction = action === "broadcast_announcement" || action === "clear_announcement";
   adminBoardState.actionInFlight = true;
   setActionControlsDisabled(true);
 
@@ -686,7 +973,11 @@ async function sendAdminCommand(action, payload = {}) {
     }));
 
     if (!response.ok || !data?.ok) {
-      setActionFeedback(data?.error || "The leadership action failed.", true);
+      if (isBroadcastAction) {
+        setBroadcastFeedback(data?.error || "The leadership broadcast failed.", true);
+      } else {
+        setActionFeedback(data?.error || "The leadership action failed.", true);
+      }
       return;
     }
 
@@ -698,10 +989,22 @@ async function sendAdminCommand(action, payload = {}) {
     }
 
     applyAdminBoardPayload(adminBoardState.payload);
-    setActionFeedback(data?.message || "Leadership action queued for bot sync.", false);
+    if (isBroadcastAction) {
+      setBroadcastFeedback(data?.message || "Leadership broadcast updated.", false);
+      const broadcastInput = document.getElementById("broadcast-message");
+      if (broadcastInput && action === "clear_announcement") {
+        broadcastInput.value = "";
+      }
+    } else {
+      setActionFeedback(data?.message || "Leadership action queued for bot sync.", false);
+    }
     window.setTimeout(refreshAdminBoard, 2200);
   } catch (_) {
-    setActionFeedback("The leadership action could not be sent right now.", true);
+    if (isBroadcastAction) {
+      setBroadcastFeedback("The leadership broadcast could not be sent right now.", true);
+    } else {
+      setActionFeedback("The leadership action could not be sent right now.", true);
+    }
   } finally {
     adminBoardState.actionInFlight = false;
     setActionControlsDisabled(false);
@@ -740,6 +1043,22 @@ function initializeAdminBoard() {
         if (node) node.value = "";
       });
     applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("broadcast-send")?.addEventListener("click", () => {
+    const message = String(document.getElementById("broadcast-message")?.value || "").trim();
+    const tone = String(document.getElementById("broadcast-tone-select")?.value || "standard").trim();
+
+    if (!message) {
+      setBroadcastFeedback("Write the announcement before sending it.", true);
+      return;
+    }
+
+    sendAdminCommand("broadcast_announcement", { message, tone });
+  });
+
+  document.getElementById("broadcast-clear")?.addEventListener("click", () => {
+    sendAdminCommand("clear_announcement");
   });
 
   document.getElementById("hours-action-team-submit")?.addEventListener("click", () => {
@@ -809,3 +1128,4 @@ function initializeAdminBoard() {
 }
 
 initializeAdminBoard();
+initializeLiveSignals();

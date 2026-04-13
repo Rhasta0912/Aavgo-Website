@@ -86,6 +86,44 @@ if ($action === '') {
 
 $normalizedPayload = [];
 switch ($action) {
+    case 'broadcast_announcement':
+        if (!(bool) (aavgo_build_management_payload($user, $hoursPayload)['actions']['canBroadcast'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot send leadership broadcasts.'], 403);
+            exit;
+        }
+
+        $announcement = aavgo_publish_announcement(
+            (string) ($payload['message'] ?? ''),
+            trim((string) ($payload['tone'] ?? 'standard')),
+            $actor
+        );
+
+        aavgo_json_response([
+            'ok' => true,
+            'message' => 'Leadership broadcast is live across the signed-in website.',
+            'announcement' => $announcement,
+            'management' => aavgo_build_management_payload($user, $hoursPayload),
+        ]);
+        exit;
+
+    case 'clear_announcement':
+        if (!(bool) (aavgo_build_management_payload($user, $hoursPayload)['actions']['canBroadcast'] ?? false)) {
+            aavgo_json_response(['ok' => false, 'error' => 'This role cannot clear leadership broadcasts.'], 403);
+            exit;
+        }
+
+        if (!aavgo_clear_announcement($actor)) {
+            aavgo_json_response(['ok' => false, 'error' => 'There is no live announcement to clear.'], 400);
+            exit;
+        }
+
+        aavgo_json_response([
+            'ok' => true,
+            'message' => 'The live leadership broadcast was cleared.',
+            'management' => aavgo_build_management_payload($user, $hoursPayload),
+        ]);
+        exit;
+
     case 'update_team':
         $discordId = trim((string) ($payload['discordId'] ?? ''));
         $teamName = trim((string) ($payload['team'] ?? ''));

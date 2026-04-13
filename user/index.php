@@ -300,6 +300,9 @@ if (is_array($personalHours['activeSession'] ?? null)) {
     </main>
   </div>
 
+  <script>
+    window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
+  </script>
   <script src="/script.js"></script>
 </body>
 </html>
