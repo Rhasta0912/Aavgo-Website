@@ -51,6 +51,10 @@ if ($code === '') {
 $preferredCallbackUrl = is_array($validatedState)
     ? aavgo_normalize_callback_url((string) ($validatedState['callback_url'] ?? ''))
     : '';
+$afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
+if ($afterLogin === '' && is_array($validatedState)) {
+    $afterLogin = (string) ($validatedState['after_login'] ?? '');
+}
 
 try {
     $tokenData = aavgo_exchange_code((string) $code, $preferredCallbackUrl);
@@ -60,6 +64,16 @@ try {
         throw new RuntimeException('Discord did not return an access token.');
     }
 } catch (Throwable $exception) {
+    $cachedHandoff = aavgo_claim_auth_handoff((string) $state);
+    if (is_array($cachedHandoff) && is_array($cachedHandoff['user'] ?? null)) {
+        session_regenerate_id(true);
+        $_SESSION['aavgo_user'] = $cachedHandoff['user'];
+        unset($_SESSION['aavgo_after_login']);
+
+        $handoffAfterLogin = (string) ($cachedHandoff['afterLogin'] ?? $afterLogin);
+        aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $handoffAfterLogin));
+    }
+
     aavgo_log_auth_failure('token_exchange', $exception, [
         'has_code' => true,
         'request_host' => aavgo_get_request_host(),
@@ -142,13 +156,9 @@ if ($inConfiguredGuild === false) {
 
 $fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
 if (is_array($fallbackSessionUser)) {
+    aavgo_store_auth_handoff((string) $state, $fallbackSessionUser, $afterLogin);
     session_regenerate_id(true);
     $_SESSION['aavgo_user'] = $fallbackSessionUser;
-
-    $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
-    if ($afterLogin === '' && is_array($validatedState)) {
-        $afterLogin = (string) ($validatedState['after_login'] ?? '');
-    }
     unset($_SESSION['aavgo_after_login']);
 
     aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));

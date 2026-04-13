@@ -11,6 +11,7 @@ const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.j
 const AAVGO_DEFAULT_COMMAND_QUEUE_PATH = '/home/aavgodes/admin-command-queue.json';
 const AAVGO_DEFAULT_AUDIT_LOG_PATH = '/home/aavgodes/admin-audit-log.json';
 const AAVGO_DEFAULT_AUTH_ERROR_LOG_PATH = '/home/aavgodes/discord-auth-errors.log';
+const AAVGO_DEFAULT_AUTH_HANDOFF_PATH = '/home/aavgodes/discord-auth-handoffs.json';
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_OPERATIONS_MANAGER_ROLE_ID = '1482226842047090809';
 const AAVGO_TEAM_LEADER_ROLE_ID = '1482732583660818636';
@@ -215,6 +216,11 @@ function aavgo_get_audit_log_path(): string
 {
     $path = trim((string) aavgo_get_config('audit_log_path'));
     return $path !== '' ? $path : AAVGO_DEFAULT_AUDIT_LOG_PATH;
+}
+
+function aavgo_get_auth_handoff_path(): string
+{
+    return AAVGO_DEFAULT_AUTH_HANDOFF_PATH;
 }
 
 function aavgo_get_auth_error_log_path(): string
@@ -533,6 +539,102 @@ function aavgo_write_audit_log(array $log): bool
     $log['entries'] = array_slice(aavgo_sort_descending_by_created_at(array_values(array_filter($entries, 'is_array'))), 0, 180);
     $log['updatedAt'] = gmdate('c');
     return aavgo_write_json_file(aavgo_get_audit_log_path(), $log);
+}
+
+function aavgo_auth_handoff_template(): array
+{
+    return [
+        'entries' => [],
+        'updatedAt' => gmdate('c'),
+    ];
+}
+
+function aavgo_read_auth_handoffs(): array
+{
+    $store = aavgo_read_json_file(aavgo_get_auth_handoff_path(), aavgo_auth_handoff_template());
+    $entries = is_array($store['entries'] ?? null) ? $store['entries'] : [];
+    $now = time();
+    $filtered = [];
+
+    foreach ($entries as $key => $entry) {
+        if (!is_string($key) || !is_array($entry)) {
+            continue;
+        }
+
+        $expiresAt = (int) ($entry['expiresAt'] ?? 0);
+        if ($expiresAt > $now && is_array($entry['user'] ?? null)) {
+            $filtered[$key] = $entry;
+        }
+    }
+
+    $store['entries'] = $filtered;
+    $store['updatedAt'] = trim((string) ($store['updatedAt'] ?? '')) ?: gmdate('c');
+    return $store;
+}
+
+function aavgo_write_auth_handoffs(array $store): bool
+{
+    $store['updatedAt'] = gmdate('c');
+    return aavgo_write_json_file(aavgo_get_auth_handoff_path(), $store);
+}
+
+function aavgo_auth_handoff_key(string $state): string
+{
+    return hash('sha256', $state);
+}
+
+function aavgo_store_auth_handoff(string $state, array $user, string $afterLogin): void
+{
+    $state = trim($state);
+    if ($state === '' || !is_array($user)) {
+        return;
+    }
+
+    $store = aavgo_read_auth_handoffs();
+    $store['entries'][aavgo_auth_handoff_key($state)] = [
+        'user' => $user,
+        'afterLogin' => aavgo_normalize_after_login_path($afterLogin),
+        'createdAt' => gmdate('c'),
+        'expiresAt' => time() + 180,
+    ];
+    aavgo_write_auth_handoffs($store);
+}
+
+function aavgo_take_auth_handoff(string $state): ?array
+{
+    $state = trim($state);
+    if ($state === '') {
+        return null;
+    }
+
+    $key = aavgo_auth_handoff_key($state);
+    $store = aavgo_read_auth_handoffs();
+    $entry = is_array($store['entries'][$key] ?? null) ? $store['entries'][$key] : null;
+    if ($entry === null) {
+        return null;
+    }
+
+    unset($store['entries'][$key]);
+    aavgo_write_auth_handoffs($store);
+    return $entry;
+}
+
+function aavgo_claim_auth_handoff(string $state, int $attempts = 5, int $delayMicros = 250000): ?array
+{
+    $attempts = max(1, $attempts);
+
+    for ($index = 0; $index < $attempts; $index++) {
+        $entry = aavgo_take_auth_handoff($state);
+        if (is_array($entry)) {
+            return $entry;
+        }
+
+        if ($index < $attempts - 1) {
+            usleep($delayMicros);
+        }
+    }
+
+    return null;
 }
 
 function aavgo_command_action_label(string $action): string
