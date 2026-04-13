@@ -7,7 +7,9 @@ require __DIR__ . '/../auth/bootstrap.php';
 $user = aavgo_require_access('admin');
 $displayName = aavgo_display_name($user);
 $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
-$safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A'), ENT_QUOTES, 'UTF-8');
+$roleLabels = aavgo_user_role_labels($user);
+$roleSummary = aavgo_user_role_summary($user);
+$safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
 $hoursPayload = aavgo_fetch_hours_bridge_payload();
 $hoursSyncUrl = rtrim(aavgo_get_config_string('base_url'), '/') . '/api/admin-hours-sync/';
 $safeHoursSyncUrl = htmlspecialchars($hoursSyncUrl, ENT_QUOTES, 'UTF-8');
@@ -32,6 +34,7 @@ function aavgo_admin_hours_label(mixed $value): string
     if (!is_finite($number)) {
         $number = 0.0;
     }
+
     $formatted = number_format($number, 1);
     return preg_replace('/\.0$/', '', $formatted) ?: '0';
 }
@@ -47,6 +50,31 @@ function aavgo_admin_text(mixed $value, string $fallback = 'Unavailable'): strin
     return htmlspecialchars($text !== '' ? $text : $fallback, ENT_QUOTES, 'UTF-8');
 }
 
+function aavgo_admin_unique_values(array $people, string $key): array
+{
+    $values = [];
+    foreach ($people as $person) {
+        if (!is_array($person)) {
+            continue;
+        }
+
+        $value = trim((string) ($person[$key] ?? ''));
+        if ($value === '') {
+            continue;
+        }
+
+        $values[$value] = $value;
+    }
+
+    $items = array_values($values);
+    natcasesort($items);
+    return array_values($items);
+}
+
+$roleOptions = aavgo_admin_unique_values($people, 'role');
+$teamOptions = aavgo_admin_unique_values($people, 'team');
+$hotelOptions = aavgo_admin_unique_values($people, 'linkedHotel');
+
 $bootstrapJson = json_encode(
     $hoursPayload,
     JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
@@ -61,7 +89,7 @@ $bootstrapJson = json_encode(
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta
     name="description"
-    content="Private Aavgo leadership suite for Team Leaders, Operations Managers, and Developers."
+    content="Private Aavgo leadership suite for Team Leaders, Operations Managers, Developers, and approved leadership roles."
   >
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,53 +104,43 @@ $bootstrapJson = json_encode(
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
 
-      <section class="dashboard-profile-card">
-        <div class="dashboard-avatar"><?php echo $safeAvatarLetter; ?></div>
+      <section class="dashboard-profile-card dashboard-profile-card-plain">
         <div class="dashboard-profile-copy">
           <strong><?php echo $safeDisplayName; ?></strong>
-          <p>Leadership access is active</p>
+          <p><?php echo $safeRoleSummary; ?></p>
         </div>
       </section>
 
       <div class="dashboard-sidebar-meta">
-        <span class="dashboard-chip dashboard-chip-accent">Admin</span>
-        <span class="dashboard-chip">Live board</span>
-        <span class="dashboard-chip">Developers allowed</span>
-      </div>
-
-      <div class="dashboard-command-box">
-        <span class="dashboard-command-label">Control mode</span>
-        <strong>The left rail stays fixed so the hours board can breathe on the right.</strong>
+        <?php foreach ($roleLabels as $roleLabel): ?>
+          <span class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>">
+            <?php echo htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8'); ?>
+          </span>
+        <?php endforeach; ?>
       </div>
 
       <nav class="dashboard-nav" aria-label="Leadership navigation">
         <a class="dashboard-nav-link is-active" href="/admin/">Hours board</a>
+        <a class="dashboard-nav-link" href="#hours-filters">Filters</a>
         <a class="dashboard-nav-link" href="#live-board">Live staff hours</a>
         <a class="dashboard-nav-link" href="#team-board">Team totals</a>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
         <a class="dashboard-nav-link" href="/">Front door</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
-
-      <div class="dashboard-side-note">
-        <p class="dashboard-kicker">Current lane</p>
-        <h3>Cleaner command, less noise.</h3>
-        <p>The board now focuses on actual agent hours, active sessions, and team totals instead of decorative filler.</p>
-      </div>
     </aside>
 
     <main class="dashboard-main">
       <header class="dashboard-header reveal reveal-in">
         <div>
           <p class="dashboard-breadcrumb">Dashboard / Leadership / Hours</p>
-          <h1 class="dashboard-title dashboard-title-wide">Real-time hours for the actual Aavgo team.</h1>
+          <h1 class="dashboard-title dashboard-title-wide">Live hours with cleaner control.</h1>
           <p class="dashboard-subtitle">
-            This board pulls real data from the bot database. Active sessions rise live, weekly and monthly totals stay visible,
-            and the layout is organized around decisions instead of clutter.
+            The leadership board is now focused on real people, real hours, and the quickest path to finding the right lane.
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <a class="dashboard-toolbar-link" href="#live-board">Hours board</a>
+          <a class="dashboard-toolbar-link" href="#hours-filters">Filter board</a>
           <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
           <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
@@ -132,12 +150,12 @@ $bootstrapJson = json_encode(
         <article class="dashboard-stat-card">
           <p>People tracked</p>
           <strong id="hours-summary-total"><?php echo aavgo_admin_text($summary['totalPeople'] ?? '0'); ?></strong>
-          <span>All current staff rows from the live database</span>
+          <span>Visible in the current board view</span>
         </article>
         <article class="dashboard-stat-card">
           <p>Active right now</p>
           <strong id="hours-summary-active"><?php echo aavgo_admin_text($summary['activeNow'] ?? '0'); ?></strong>
-          <span>Sessions currently open across the workspace</span>
+          <span>Sessions currently open across the filtered lane</span>
         </article>
         <article class="dashboard-stat-card">
           <p>Today total</p>
@@ -154,6 +172,55 @@ $bootstrapJson = json_encode(
           <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?>h</strong>
           <span>Combined tracked hours for the current PH month</span>
         </article>
+      </section>
+
+      <section class="dashboard-filter-bar reveal reveal-delay-1" id="hours-filters">
+        <label class="dashboard-filter-control dashboard-filter-search">
+          <span>Search</span>
+          <input id="hours-filter-search" type="search" placeholder="Search staff name">
+        </label>
+        <label class="dashboard-filter-control">
+          <span>Role</span>
+          <select id="hours-filter-role">
+            <option value="">All roles</option>
+            <?php foreach ($roleOptions as $roleOption): ?>
+              <option value="<?php echo htmlspecialchars($roleOption, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php echo htmlspecialchars($roleOption, ENT_QUOTES, 'UTF-8'); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dashboard-filter-control">
+          <span>Team</span>
+          <select id="hours-filter-team">
+            <option value="">All teams</option>
+            <?php foreach ($teamOptions as $teamOption): ?>
+              <option value="<?php echo htmlspecialchars($teamOption, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php echo htmlspecialchars($teamOption, ENT_QUOTES, 'UTF-8'); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dashboard-filter-control">
+          <span>Hotel</span>
+          <select id="hours-filter-hotel">
+            <option value="">All hotels</option>
+            <?php foreach ($hotelOptions as $hotelOption): ?>
+              <option value="<?php echo htmlspecialchars($hotelOption, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php echo htmlspecialchars($hotelOption, ENT_QUOTES, 'UTF-8'); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </label>
+        <label class="dashboard-filter-control">
+          <span>Status</span>
+          <select id="hours-filter-status">
+            <option value="">All staff</option>
+            <option value="active">Active now</option>
+            <option value="offline">Offline</option>
+          </select>
+        </label>
+        <button class="dashboard-filter-reset" id="hours-filter-reset" type="button">Clear filters</button>
       </section>
 
       <section class="dashboard-content-grid dashboard-content-grid-ops reveal reveal-delay-2">
@@ -177,7 +244,7 @@ $bootstrapJson = json_encode(
                 <div class="dashboard-setup-list">
                   <div class="dashboard-setup-item">
                     <strong>1. Bot host</strong>
-                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> and <code>AAVGO_WEBSITE_SYNC_URL=<?php echo $safeHoursSyncUrl; ?></code> on the bot host, then restart the bot. Keep <code>AAVGO_WEBSITE_API_HOST</code> and <code>AAVGO_WEBSITE_API_PORT</code> only if you still want the direct health endpoint.</p>
+                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> and <code>AAVGO_WEBSITE_SYNC_URL=<?php echo $safeHoursSyncUrl; ?></code> on the bot host, then restart the bot.</p>
                   </div>
                   <div class="dashboard-setup-item">
                     <strong>2. Website config</strong>
@@ -185,7 +252,7 @@ $bootstrapJson = json_encode(
                   </div>
                   <div class="dashboard-setup-item">
                     <strong>3. Local snapshot</strong>
-                    <p>The pushed snapshot is stored on the website at <code><?php echo $safeSnapshotPath; ?></code>. Once the bot posts the first sync, this board will read from that local file instead of calling the bot port directly.</p>
+                    <p>The pushed snapshot is stored on the website at <code><?php echo $safeSnapshotPath; ?></code>. Once the bot posts the first sync, this board will read from that local file automatically.</p>
                   </div>
                 </div>
               </div>
@@ -277,29 +344,6 @@ $bootstrapJson = json_encode(
                   </div>
                 <?php endforeach; ?>
               <?php endif; ?>
-            </div>
-          </article>
-
-          <article class="dashboard-panel">
-            <div class="dashboard-panel-heading">
-              <div>
-                <p class="dashboard-kicker">Board rules</p>
-                <h2>Readable first, premium second.</h2>
-              </div>
-            </div>
-            <div class="dashboard-control-list">
-              <div class="dashboard-control-item">
-                <strong>Left rail stays anchored</strong>
-                <span>The navigation remains on the left so the hours board keeps its shape on desktop.</span>
-              </div>
-              <div class="dashboard-control-item">
-                <strong>Medium radius, calmer spacing</strong>
-                <span>Rounded corners stay, but they stop competing with the data.</span>
-              </div>
-              <div class="dashboard-control-item">
-                <strong>Live data only</strong>
-                <span>This route is now built around actual agent hours, not placeholder insight cards.</span>
-              </div>
             </div>
           </article>
         </aside>

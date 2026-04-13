@@ -9,15 +9,21 @@ const AAVGO_API_BASE = 'https://discord.com/api/v10';
 const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
+const AAVGO_OPERATIONS_MANAGER_ROLE_ID = '1482226842047090809';
+const AAVGO_TEAM_LEADER_ROLE_ID = '1482732583660818636';
+const AAVGO_SME_ROLE_ID = '1482382342621233153';
+const AAVGO_AGENT_ROLE_ID = '1482227287159078964';
+const AAVGO_TRAINEE_ROLE_ID = '1484705126026449029';
+const AAVGO_OAUTH_STATE_TTL = 900;
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
         AAVGO_DEVELOPER_ROLE_ID, // Developer
-        '1482732583660818636', // Team Leader
-        '1482226842047090809', // Operations Manager
+        AAVGO_TEAM_LEADER_ROLE_ID, // Team Leader
+        AAVGO_OPERATIONS_MANAGER_ROLE_ID, // Operations Manager
     ],
     'user' => [
-        '1484705126026449029', // Trainee
-        '1482227287159078964', // Agent
+        AAVGO_TRAINEE_ROLE_ID, // Trainee
+        AAVGO_AGENT_ROLE_ID, // Agent
     ],
 ];
 const AAVGO_DEFAULT_ADMIN_USER_IDS = [
@@ -262,6 +268,161 @@ function aavgo_redirect(string $location): void
 function aavgo_create_state(): string
 {
     return bin2hex(random_bytes(24));
+}
+
+function aavgo_base64url_encode(string $value): string
+{
+    return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+}
+
+function aavgo_base64url_decode(string $value): string|false
+{
+    $padding = strlen($value) % 4;
+    if ($padding > 0) {
+        $value .= str_repeat('=', 4 - $padding);
+    }
+
+    return base64_decode(strtr($value, '-_', '+/'), true);
+}
+
+function aavgo_oauth_state_secret(): string
+{
+    $secret = aavgo_get_config_string('client_secret');
+    if ($secret !== '') {
+        return $secret;
+    }
+
+    $fallback = aavgo_get_website_api_token();
+    if ($fallback !== '') {
+        return $fallback;
+    }
+
+    return 'aavgo-private-front-door';
+}
+
+function aavgo_normalize_after_login_path(string $path): string
+{
+    $path = trim($path);
+    if ($path === '' || str_starts_with($path, '//')) {
+        return '';
+    }
+
+    $parts = parse_url($path);
+    if ($parts === false) {
+        return '';
+    }
+
+    $normalizedPath = (string) ($parts['path'] ?? '');
+    if ($normalizedPath === '' || !str_starts_with($normalizedPath, '/')) {
+        return '';
+    }
+
+    $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+    return $normalizedPath . $query;
+}
+
+function aavgo_create_oauth_state(string $afterLogin = ''): string
+{
+    $payload = [
+        'nonce' => aavgo_create_state(),
+        'iat' => time(),
+        'after_login' => aavgo_normalize_after_login_path($afterLogin),
+    ];
+
+    $encodedPayload = aavgo_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES) ?: '{}');
+    $signature = hash_hmac('sha256', $encodedPayload, aavgo_oauth_state_secret());
+
+    return $encodedPayload . '.' . $signature;
+}
+
+function aavgo_validate_oauth_state(string $state): ?array
+{
+    $parts = explode('.', $state, 2);
+    if (count($parts) !== 2) {
+        return null;
+    }
+
+    [$encodedPayload, $providedSignature] = $parts;
+    $expectedSignature = hash_hmac('sha256', $encodedPayload, aavgo_oauth_state_secret());
+    if (!hash_equals($expectedSignature, $providedSignature)) {
+        return null;
+    }
+
+    $decodedJson = aavgo_base64url_decode($encodedPayload);
+    if (!is_string($decodedJson) || $decodedJson === '') {
+        return null;
+    }
+
+    $payload = json_decode($decodedJson, true);
+    if (!is_array($payload)) {
+        return null;
+    }
+
+    $issuedAt = (int) ($payload['iat'] ?? 0);
+    if ($issuedAt <= 0 || abs(time() - $issuedAt) > AAVGO_OAUTH_STATE_TTL) {
+        return null;
+    }
+
+    $payload['after_login'] = aavgo_normalize_after_login_path((string) ($payload['after_login'] ?? ''));
+    return $payload;
+}
+
+function aavgo_role_label_map(): array
+{
+    return [
+        AAVGO_DEVELOPER_ROLE_ID => 'Developer',
+        AAVGO_OPERATIONS_MANAGER_ROLE_ID => 'Operations Manager',
+        AAVGO_TEAM_LEADER_ROLE_ID => 'Team Leader',
+        AAVGO_SME_ROLE_ID => 'SME',
+        AAVGO_AGENT_ROLE_ID => 'Agent',
+        AAVGO_TRAINEE_ROLE_ID => 'Trainee',
+    ];
+}
+
+function aavgo_user_role_labels(array $user): array
+{
+    $roleIds = aavgo_parse_id_list($user['role_ids'] ?? []);
+    $labels = [];
+    $labelMap = aavgo_role_label_map();
+
+    foreach ($labelMap as $roleId => $label) {
+        if (in_array($roleId, $roleIds, true)) {
+            $labels[$label] = $label;
+        }
+    }
+
+    if ($labels === []) {
+        $fallback = aavgo_user_access_level($user) === 'admin' ? 'Leadership' : 'User';
+        $labels[$fallback] = $fallback;
+    }
+
+    return array_values($labels);
+}
+
+function aavgo_user_role_summary(array $user): string
+{
+    return implode(' / ', aavgo_user_role_labels($user));
+}
+
+function aavgo_find_hours_person_for_user(array $user): ?array
+{
+    $payload = aavgo_fetch_hours_bridge_payload();
+    if (!($payload['ok'] ?? false) || !is_array($payload['data']['people'] ?? null)) {
+        return null;
+    }
+
+    $userId = trim((string) ($user['id'] ?? ''));
+    foreach ($payload['data']['people'] as $person) {
+        if (!is_array($person)) {
+            continue;
+        }
+
+        if (trim((string) ($person['discordId'] ?? '')) === $userId) {
+            return $person;
+        }
+    }
+
+    return null;
 }
 
 function aavgo_login_url(): string
@@ -545,8 +706,7 @@ function aavgo_render_message_page(string $title, string $message, string $actio
   <div class="dashboard-shell dashboard-shell-message dashboard-shell-operations">
     <aside class="dashboard-sidebar reveal reveal-in">
       <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
-      <section class="dashboard-profile-card">
-        <div class="dashboard-avatar">A</div>
+      <section class="dashboard-profile-card dashboard-profile-card-plain">
         <div class="dashboard-profile-copy">
           <strong>Private front door</strong>
           <p>Discord-secured website surface</p>

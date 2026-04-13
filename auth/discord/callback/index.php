@@ -18,14 +18,16 @@ if (!aavgo_is_fully_configured()) {
 $state = $_GET['state'] ?? '';
 $expectedState = $_SESSION['discord_oauth_state'] ?? '';
 $code = $_GET['code'] ?? '';
+$validatedState = $state !== '' ? aavgo_validate_oauth_state((string) $state) : null;
+$sessionStateMatches = $state !== '' && $expectedState !== '' && hash_equals((string) $expectedState, (string) $state);
 
 unset($_SESSION['discord_oauth_state']);
 
-if ($state === '' || $expectedState === '' || !hash_equals((string) $expectedState, (string) $state)) {
+if ($state === '' || (!$sessionStateMatches && $validatedState === null)) {
     http_response_code(403);
     aavgo_render_message_page(
         'Sign-in could not be verified.',
-        'The login request no longer matches the website session. Please start the Discord login again.',
+        'The login request no longer matches the secure website handoff. Please start the Discord login again from the front door.',
         'Try Again',
         '/auth/discord/login/'
     );
@@ -104,6 +106,9 @@ $_SESSION['aavgo_user'] = [
 ];
 
 $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
+if ($afterLogin === '' && is_array($validatedState)) {
+    $afterLogin = (string) ($validatedState['after_login'] ?? '');
+}
 unset($_SESSION['aavgo_after_login']);
 
 aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));

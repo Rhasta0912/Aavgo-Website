@@ -881,8 +881,8 @@ h2 {
 
 .dashboard-shell-roomy {
   width: 100%;
-  grid-template-columns: 286px minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1.35rem;
 }
 
 .dashboard-shell-access {
@@ -900,7 +900,9 @@ h2 {
 .dashboard-sidebar {
   position: sticky;
   top: 0;
+  align-self: stretch;
   display: flex;
+  width: 100%;
   min-height: 100vh;
   flex-direction: column;
   gap: 1rem;
@@ -932,6 +934,15 @@ h2 {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+}
+
+.dashboard-profile-card-plain {
+  display: block;
+}
+
+.dashboard-profile-copy {
+  display: grid;
+  gap: 0.2rem;
 }
 
 .dashboard-avatar {
@@ -1009,6 +1020,7 @@ h2 {
 .dashboard-nav {
   display: grid;
   gap: 0.65rem;
+  margin-top: 0.15rem;
 }
 
 .dashboard-nav-link,
@@ -1473,7 +1485,7 @@ h2 {
 }
 
 .dashboard-shell-operations {
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
 }
 
 .dashboard-title-wide {
@@ -1492,7 +1504,73 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
   gap: 0.6rem;
+}
+
+.dashboard-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(0, 1fr)) auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+.dashboard-filter-control {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dashboard-filter-control span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-filter-control input,
+.dashboard-filter-control select,
+.dashboard-filter-reset {
+  min-height: 3.1rem;
+  padding: 0 0.95rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff8ef;
+  font: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+}
+
+.dashboard-filter-control input::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-filter-control select option {
+  color: #101219;
+}
+
+.dashboard-filter-control input:focus,
+.dashboard-filter-control select:focus,
+.dashboard-filter-reset:focus {
+  outline: none;
+  border-color: rgba(216, 176, 95, 0.3);
+  box-shadow: 0 0 0 3px rgba(216, 176, 95, 0.08);
+}
+
+.dashboard-filter-search {
+  grid-column: span 2;
+}
+
+.dashboard-filter-reset {
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.dashboard-filter-reset:hover,
+.dashboard-filter-reset:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .dashboard-inline-notice {
@@ -1700,6 +1778,7 @@ h2 {
   .dashboard-content-grid-bottom,
   .dashboard-content-grid-ops,
   .dashboard-hero-grid,
+  .dashboard-filter-bar,
   .dashboard-shell-message,
   .login-stage-premium {
     grid-template-columns: 1fr;
@@ -1750,6 +1829,10 @@ h2 {
   .dashboard-toolbar,
   .dashboard-header {
     justify-content: flex-start;
+  }
+
+  .dashboard-filter-search {
+    grid-column: auto;
   }
 
   .dashboard-header {
@@ -1868,6 +1951,10 @@ h2 {
   }
 
   .dashboard-toolbar {
+    width: 100%;
+  }
+
+  .dashboard-filter-reset {
     width: 100%;
   }
 
