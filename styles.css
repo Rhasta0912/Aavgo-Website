@@ -2850,6 +2850,42 @@ h2 {
   margin-top: 1.6rem;
 }
 
+.workspace-message-diagnostics {
+  margin-top: 1.45rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.workspace-message-diagnostics-list {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workspace-message-diagnostics-list li {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.workspace-message-diagnostics-list span {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.workspace-message-diagnostics-list strong {
+  color: rgba(255, 248, 239, 0.88);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 @media (max-width: 1240px) {
   .dashboard-admin-grid,
   .dashboard-user-grid,

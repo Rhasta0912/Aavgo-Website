@@ -72,7 +72,18 @@ try {
         'Discord login failed.',
         'Discord could not finish the secure login handoff for this website. If the app opened separately, return to the website and start the sign-in again from here.',
         'Try Again',
-        '/auth/discord/login/'
+        '/auth/discord/login/',
+        [
+            'secondary_action_label' => 'Direct OAuth',
+            'secondary_action_href' => '/auth/discord/login/?direct=1',
+            'diagnostics' => [
+                'Stage' => 'token_exchange',
+                'Discord status' => (string) $exception->getCode(),
+                'Detail' => $exception->getMessage(),
+                'Host' => aavgo_get_request_host(),
+                'Callback' => $preferredCallbackUrl,
+            ],
+        ]
     );
     exit;
 }
@@ -89,7 +100,17 @@ try {
         'Discord login failed.',
         'Discord finished authorization, but the website could not recover your identity from the callback. Please start the sign-in again from the website.',
         'Try Again',
-        '/auth/discord/login/'
+        '/auth/discord/login/',
+        [
+            'secondary_action_label' => 'Direct OAuth',
+            'secondary_action_href' => '/auth/discord/login/?direct=1',
+            'diagnostics' => [
+                'Stage' => 'fetch_user',
+                'Discord status' => (string) $exception->getCode(),
+                'Detail' => $exception->getMessage(),
+                'Host' => aavgo_get_request_host(),
+            ],
+        ]
     );
     exit;
 }

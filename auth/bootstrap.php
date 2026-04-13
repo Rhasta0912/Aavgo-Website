@@ -1428,12 +1428,68 @@ function aavgo_logout(): void
     session_destroy();
 }
 
-function aavgo_render_message_page(string $title, string $message, string $actionLabel, string $actionHref): void
+function aavgo_sanitize_message_diagnostics(array $diagnostics): array
+{
+    $normalized = [];
+
+    foreach ($diagnostics as $label => $value) {
+        $label = trim((string) $label);
+        if ($label === '') {
+            continue;
+        }
+
+        if (is_array($value)) {
+            $value = implode(', ', array_filter(array_map(static function (mixed $item): string {
+                return trim((string) $item);
+            }, $value), static fn (string $item): bool => $item !== ''));
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            continue;
+        }
+
+        $normalized[$label] = mb_substr($value, 0, 240);
+    }
+
+    return $normalized;
+}
+
+function aavgo_render_message_page(string $title, string $message, string $actionLabel, string $actionHref, array $options = []): void
 {
     $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
     $safeActionLabel = htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8');
     $safeActionHref = htmlspecialchars($actionHref, ENT_QUOTES, 'UTF-8');
+    $secondaryActionLabel = trim((string) ($options['secondary_action_label'] ?? ''));
+    $secondaryActionHref = trim((string) ($options['secondary_action_href'] ?? ''));
+    $diagnostics = aavgo_sanitize_message_diagnostics(is_array($options['diagnostics'] ?? null) ? $options['diagnostics'] : []);
+
+    $secondaryActionHtml = '';
+    if ($secondaryActionLabel !== '' && $secondaryActionHref !== '') {
+        $secondaryActionHtml = sprintf(
+            '<a class="button button-secondary" href="%s">%s</a>',
+            htmlspecialchars($secondaryActionHref, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($secondaryActionLabel, ENT_QUOTES, 'UTF-8')
+        );
+    }
+
+    $diagnosticsHtml = '';
+    if ($diagnostics !== []) {
+        $items = [];
+        foreach ($diagnostics as $label => $value) {
+            $items[] = sprintf(
+                '<li><span>%s</span><strong>%s</strong></li>',
+                htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($value, ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        $diagnosticsHtml = sprintf(
+            '<section class="workspace-message-diagnostics"><p class="dashboard-kicker">Debug trace</p><ul class="workspace-message-diagnostics-list">%s</ul></section>',
+            implode('', $items)
+        );
+    }
 
     echo <<<HTML
 <!DOCTYPE html>
@@ -1457,8 +1513,10 @@ function aavgo_render_message_page(string $title, string $message, string $actio
         <p class="workspace-message-copy">{$safeMessage}</p>
         <div class="workspace-message-actions">
           <a class="button button-primary" href="{$safeActionHref}">{$safeActionLabel}</a>
+          {$secondaryActionHtml}
           <a class="button button-secondary" href="/">Back Home</a>
         </div>
+        {$diagnosticsHtml}
       </div>
       <aside class="workspace-message-aside reveal reveal-delay-1 reveal-in">
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
