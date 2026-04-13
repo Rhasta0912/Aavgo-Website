@@ -102,23 +102,35 @@ try {
     ]);
 }
 
+if ($inConfiguredGuild === false) {
+    aavgo_logout();
+    http_response_code(403);
+    aavgo_render_message_page(
+        'Access denied.',
+        'Your Discord account is not an active member of the Aavgo server, so the private website stays closed.',
+        'Back to Home',
+        '/'
+    );
+    exit;
+}
+
+$fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
+if (is_array($fallbackSessionUser)) {
+    session_regenerate_id(true);
+    $_SESSION['aavgo_user'] = $fallbackSessionUser;
+
+    $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
+    if ($afterLogin === '' && is_array($validatedState)) {
+        $afterLogin = (string) ($validatedState['after_login'] ?? '');
+    }
+    unset($_SESSION['aavgo_after_login']);
+
+    aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
+}
+
 try {
     $member = aavgo_fetch_current_member($accessToken);
 } catch (Throwable $exception) {
-    $fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
-    if (is_array($fallbackSessionUser)) {
-        session_regenerate_id(true);
-        $_SESSION['aavgo_user'] = $fallbackSessionUser;
-
-        $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
-        if ($afterLogin === '' && is_array($validatedState)) {
-            $afterLogin = (string) ($validatedState['after_login'] ?? '');
-        }
-        unset($_SESSION['aavgo_after_login']);
-
-        aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
-    }
-
     aavgo_log_auth_failure('fetch_current_member', $exception, [
         'user_id' => (string) ($user['id'] ?? ''),
         'username' => (string) ($user['username'] ?? ''),
@@ -152,20 +164,6 @@ $memberRoleIds = aavgo_member_role_ids($member);
 $accessLevel = aavgo_resolve_access_level($user, $memberRoleIds);
 
 if ($accessLevel === null) {
-    $fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
-    if (is_array($fallbackSessionUser)) {
-        session_regenerate_id(true);
-        $_SESSION['aavgo_user'] = $fallbackSessionUser;
-
-        $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
-        if ($afterLogin === '' && is_array($validatedState)) {
-            $afterLogin = (string) ($validatedState['after_login'] ?? '');
-        }
-        unset($_SESSION['aavgo_after_login']);
-
-        aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
-    }
-
     aavgo_logout();
     http_response_code(403);
     aavgo_render_message_page(
