@@ -730,22 +730,24 @@ h2 {
 
 .access-frontdoor {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.2rem;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 2vw, 1.8rem);
 }
 
 .access-frontdoor-card {
   position: relative;
   overflow: hidden;
-  width: min(980px, 100%);
-  min-height: min(46rem, calc(100vh - 2.4rem));
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 1.4rem;
-  padding: 1.45rem;
-  border-radius: 24px;
+  width: min(760px, 100%);
+  min-height: min(34rem, calc(100dvh - 3.6rem));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.8rem;
+  padding: clamp(1.6rem, 3vw, 2.8rem);
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     radial-gradient(circle at 16% 18%, rgba(109, 120, 255, 0.12), transparent 24%),
@@ -769,12 +771,12 @@ h2 {
   z-index: 1;
 }
 
-.access-frontdoor-header,
-.access-frontdoor-footer {
-  display: flex;
+.access-frontdoor-badge-row {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
 }
 
 .access-frontdoor-brand {
@@ -789,8 +791,7 @@ h2 {
 }
 
 .access-frontdoor-core {
-  width: min(640px, 100%);
-  margin: auto;
+  width: min(560px, 100%);
   text-align: center;
 }
 
@@ -827,21 +828,25 @@ h2 {
 }
 
 .access-frontdoor-note {
-  max-width: 38rem;
-  margin: 1.15rem auto 0;
+  max-width: 33rem;
+  margin: 1.05rem auto 0;
   color: rgba(255, 255, 255, 0.48);
-  font-size: 0.92rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
-.access-frontdoor-footer {
-  padding-top: 0.5rem;
+.access-frontdoor-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: 1.9rem;
 }
 
 .access-frontdoor-detail {
   min-width: 0;
   padding: 0.95rem 1rem;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.03);
 }
@@ -1648,9 +1653,8 @@ h2 {
     min-height: auto;
   }
 
-  .access-frontdoor-footer {
-    flex-direction: column;
-    align-items: stretch;
+  .access-frontdoor-meta {
+    grid-template-columns: 1fr;
   }
 
   .gateway-hero,
@@ -1725,9 +1729,10 @@ h2 {
   }
 
   .access-frontdoor-card {
-    padding: 1rem;
-    border-radius: 18px;
-    gap: 1.05rem;
+    min-height: auto;
+    padding: 1.2rem;
+    border-radius: 16px;
+    gap: 1.2rem;
   }
 
   .access-frontdoor-title {
