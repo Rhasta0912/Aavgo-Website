@@ -7,6 +7,7 @@ const AAVGO_DEFAULT_BASE_URL = 'https://www.aavgodesk.xyz';
 const AAVGO_REQUIRED_SCOPES = 'identify guilds.members.read';
 const AAVGO_API_BASE = 'https://discord.com/api/v10';
 const AAVGO_WEBSITE_API_TIMEOUT = 20;
+const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
@@ -111,6 +112,7 @@ function aavgo_load_config(): array
         'base_url' => rtrim(getenv('AAVGO_BASE_URL') ?: AAVGO_DEFAULT_BASE_URL, '/'),
         'website_api_url' => rtrim((string) (getenv('AAVGO_WEBSITE_API_URL') ?: ''), '/'),
         'website_api_token' => trim((string) (getenv('AAVGO_WEBSITE_API_TOKEN') ?: '')),
+        'hours_snapshot_path' => trim((string) (getenv('AAVGO_HOURS_SNAPSHOT_PATH') ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH)),
         'role_ids' => $roleIds,
         'admin_user_ids' => $adminUserIds,
     ];
@@ -118,7 +120,7 @@ function aavgo_load_config(): array
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
         $fileConfig = require AAVGO_EXTERNAL_CONFIG;
         if (is_array($fileConfig)) {
-            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token'] as $key) {
+            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token', 'hours_snapshot_path'] as $key) {
                 if (array_key_exists($key, $fileConfig)) {
                     $config[$key] = (string) $fileConfig[$key];
                 }
@@ -139,6 +141,7 @@ function aavgo_load_config(): array
             $config['base_url'] = rtrim((string) ($config['base_url'] ?: AAVGO_DEFAULT_BASE_URL), '/');
             $config['website_api_url'] = rtrim((string) ($config['website_api_url'] ?? ''), '/');
             $config['website_api_token'] = trim((string) ($config['website_api_token'] ?? ''));
+            $config['hours_snapshot_path'] = trim((string) ($config['hours_snapshot_path'] ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH));
         }
     }
 
@@ -181,6 +184,12 @@ function aavgo_get_website_api_token(): string
     return aavgo_get_config_string('website_api_token');
 }
 
+function aavgo_get_hours_snapshot_path(): string
+{
+    $path = trim((string) aavgo_get_config('hours_snapshot_path'));
+    return $path !== '' ? $path : AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH;
+}
+
 function aavgo_get_admin_user_ids(): array
 {
     return aavgo_parse_id_list(aavgo_get_config('admin_user_ids') ?? []);
@@ -208,6 +217,40 @@ function aavgo_is_fully_configured(): bool
 function aavgo_has_hours_bridge(): bool
 {
     return aavgo_get_website_api_url() !== '' && aavgo_get_website_api_token() !== '';
+}
+
+function aavgo_has_hours_sync_token(): bool
+{
+    return aavgo_get_website_api_token() !== '';
+}
+
+function aavgo_read_pushed_hours_snapshot_payload(): ?array
+{
+    $path = aavgo_get_hours_snapshot_path();
+    if ($path === '' || !is_file($path)) {
+        return null;
+    }
+
+    $raw = @file_get_contents($path);
+    if ($raw === false || trim($raw) === '') {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'The pushed hours snapshot could not be read.',
+        ];
+    }
+
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded) || !is_array($decoded['data'] ?? null)) {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'The pushed hours snapshot is invalid.',
+        ];
+    }
+
+    $decoded['configured'] = true;
+    return $decoded;
 }
 
 function aavgo_redirect(string $location): void
@@ -552,6 +595,19 @@ HTML;
 
 function aavgo_fetch_hours_bridge_payload(): array
 {
+    $snapshotPayload = aavgo_read_pushed_hours_snapshot_payload();
+    if ($snapshotPayload !== null) {
+        return $snapshotPayload;
+    }
+
+    if (aavgo_has_hours_sync_token()) {
+        return [
+            'ok' => false,
+            'configured' => true,
+            'error' => 'Waiting for the bot to push the first live hours snapshot to the website.',
+        ];
+    }
+
     if (!aavgo_has_hours_bridge()) {
         return [
             'ok' => false,

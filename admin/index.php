@@ -9,10 +9,9 @@ $displayName = aavgo_display_name($user);
 $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A'), ENT_QUOTES, 'UTF-8');
 $hoursPayload = aavgo_fetch_hours_bridge_payload();
-$hoursBridgeConfigured = aavgo_has_hours_bridge();
-$hoursBridgeBaseUrl = aavgo_get_website_api_url();
-$hoursBridgeEndpoint = $hoursBridgeBaseUrl !== '' ? $hoursBridgeBaseUrl . '/api/website/admin-hours' : '';
-$safeHoursBridgeEndpoint = htmlspecialchars($hoursBridgeEndpoint, ENT_QUOTES, 'UTF-8');
+$hoursSyncUrl = rtrim(aavgo_get_config_string('base_url'), '/') . '/api/admin-hours-sync/';
+$safeHoursSyncUrl = htmlspecialchars($hoursSyncUrl, ENT_QUOTES, 'UTF-8');
+$safeSnapshotPath = htmlspecialchars(aavgo_get_hours_snapshot_path(), ENT_QUOTES, 'UTF-8');
 $safeExternalConfigPath = htmlspecialchars(AAVGO_EXTERNAL_CONFIG, ENT_QUOTES, 'UTF-8');
 $hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : null;
 $summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
@@ -178,21 +177,15 @@ $bootstrapJson = json_encode(
                 <div class="dashboard-setup-list">
                   <div class="dashboard-setup-item">
                     <strong>1. Bot host</strong>
-                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> on the bot host. Optional if needed: <code>AAVGO_WEBSITE_API_HOST=0.0.0.0</code> and <code>AAVGO_WEBSITE_API_PORT=3000</code>. Restart the bot after saving.</p>
+                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> and <code>AAVGO_WEBSITE_SYNC_URL=<?php echo $safeHoursSyncUrl; ?></code> on the bot host, then restart the bot. Keep <code>AAVGO_WEBSITE_API_HOST</code> and <code>AAVGO_WEBSITE_API_PORT</code> only if you still want the direct health endpoint.</p>
                   </div>
                   <div class="dashboard-setup-item">
                     <strong>2. Website config</strong>
-                    <p>Open <code><?php echo $safeExternalConfigPath; ?></code> and add matching <code>website_api_url</code> and <code>website_api_token</code> values.</p>
+                    <p>Open <code><?php echo $safeExternalConfigPath; ?></code> and keep the same shared value in <code>website_api_token</code>. The website will accept secure bot uploads with that token.</p>
                   </div>
                   <div class="dashboard-setup-item">
-                    <strong>3. Bridge target</strong>
-                    <p>
-                      <?php if ($hoursBridgeConfigured && $hoursBridgeEndpoint !== ''): ?>
-                        The website is currently trying <code><?php echo $safeHoursBridgeEndpoint; ?></code>.
-                      <?php else: ?>
-                        Point <code>website_api_url</code> to your bot host, for example <code>http://YOUR-BOT-IP:3000</code>.
-                      <?php endif; ?>
-                    </p>
+                    <strong>3. Local snapshot</strong>
+                    <p>The pushed snapshot is stored on the website at <code><?php echo $safeSnapshotPath; ?></code>. Once the bot posts the first sync, this board will read from that local file instead of calling the bot port directly.</p>
                   </div>
                 </div>
               </div>
