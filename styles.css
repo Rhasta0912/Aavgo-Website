@@ -703,8 +703,8 @@ h2 {
   --workspace-accent-soft: rgba(216, 176, 95, 0.16);
   --workspace-secondary: #6d78ff;
   background:
-    radial-gradient(circle at 12% 8%, rgba(109, 120, 255, 0.12), transparent 22%),
-    radial-gradient(circle at 85% 12%, rgba(216, 176, 95, 0.1), transparent 24%),
+    radial-gradient(circle at 12% 8%, rgba(109, 120, 255, 0.07), transparent 22%),
+    radial-gradient(circle at 85% 12%, rgba(216, 176, 95, 0.07), transparent 24%),
     linear-gradient(180deg, #0c0d11 0%, #121318 54%, #16171c 100%);
 }
 
@@ -713,8 +713,8 @@ h2 {
   --workspace-accent-soft: rgba(120, 179, 161, 0.16);
   --workspace-secondary: #8093ff;
   background:
-    radial-gradient(circle at 10% 8%, rgba(120, 179, 161, 0.12), transparent 24%),
-    radial-gradient(circle at 84% 12%, rgba(128, 147, 255, 0.12), transparent 22%),
+    radial-gradient(circle at 10% 8%, rgba(120, 179, 161, 0.07), transparent 24%),
+    radial-gradient(circle at 84% 12%, rgba(128, 147, 255, 0.07), transparent 22%),
     linear-gradient(180deg, #0c0f12 0%, #12161a 54%, #15181d 100%);
 }
 
@@ -2159,20 +2159,14 @@ h2 {
   border-left: none;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(circle at top left, rgba(109, 120, 255, 0.16), transparent 30%),
+    radial-gradient(circle at top left, rgba(109, 120, 255, 0.08), transparent 30%),
     linear-gradient(180deg, rgba(20, 22, 29, 0.98) 0%, rgba(14, 16, 21, 0.98) 100%);
   overflow: hidden;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin::before,
 .workspace-dashboard .dashboard-sidebar-user::before {
-  content: "";
-  position: absolute;
-  inset: 1.1rem auto 1.1rem 0.55rem;
-  width: 3px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(216, 176, 95, 0.92) 0%, rgba(109, 120, 255, 0.62) 100%);
-  opacity: 0.9;
+  display: none;
 }
 
 .workspace-dashboard .dashboard-sidebar-glow {
@@ -2180,8 +2174,8 @@ h2 {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at top right, rgba(216, 176, 95, 0.16), transparent 30%),
-    radial-gradient(circle at bottom left, rgba(109, 120, 255, 0.14), transparent 34%);
+    radial-gradient(circle at top right, rgba(216, 176, 95, 0.08), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(109, 120, 255, 0.07), transparent 34%);
 }
 
 .workspace-dashboard .dashboard-sidebar > * {
@@ -2239,11 +2233,11 @@ h2 {
   padding: 0 1rem;
   border-radius: 14px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .workspace-dashboard .dashboard-nav-link.is-active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.035) 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
@@ -2788,8 +2782,8 @@ h2 {
 
 .workspace-page-access {
   background:
-    radial-gradient(circle at 14% 8%, rgba(109, 120, 255, 0.14), transparent 26%),
-    radial-gradient(circle at 84% 10%, rgba(216, 176, 95, 0.13), transparent 24%),
+    radial-gradient(circle at 14% 8%, rgba(109, 120, 255, 0.08), transparent 26%),
+    radial-gradient(circle at 84% 10%, rgba(216, 176, 95, 0.08), transparent 24%),
     linear-gradient(180deg, #090b10 0%, #111318 54%, #15181f 100%);
   color: #fff8ef;
 }
@@ -2819,7 +2813,7 @@ h2 {
 .workspace-message-main {
   padding: clamp(1.8rem, 4vw, 2.8rem);
   background:
-    radial-gradient(circle at top left, rgba(109, 120, 255, 0.12), transparent 28%),
+    radial-gradient(circle at top left, rgba(109, 120, 255, 0.07), transparent 28%),
     linear-gradient(180deg, rgba(18, 19, 24, 0.98) 0%, rgba(14, 15, 20, 0.98) 100%);
 }
 
@@ -2829,7 +2823,7 @@ h2 {
   gap: 0.95rem;
   padding: 1.4rem;
   background:
-    radial-gradient(circle at top right, rgba(216, 176, 95, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(216, 176, 95, 0.08), transparent 26%),
     linear-gradient(180deg, rgba(18, 19, 24, 0.98) 0%, rgba(12, 13, 18, 0.98) 100%);
 }
 

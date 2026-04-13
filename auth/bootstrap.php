@@ -864,12 +864,17 @@ function aavgo_user_role_summary(array $user): string
 
 function aavgo_find_hours_person_for_user(array $user): ?array
 {
+    $userId = trim((string) ($user['id'] ?? ''));
+    return $userId !== '' ? aavgo_find_hours_person_by_discord_id($userId) : null;
+}
+
+function aavgo_find_hours_person_by_discord_id(string $userId): ?array
+{
     $payload = aavgo_fetch_hours_bridge_payload();
     if (!($payload['ok'] ?? false) || !is_array($payload['data']['people'] ?? null)) {
         return null;
     }
 
-    $userId = trim((string) ($user['id'] ?? ''));
     foreach ($payload['data']['people'] as $person) {
         if (!is_array($person)) {
             continue;
@@ -881,6 +886,71 @@ function aavgo_find_hours_person_for_user(array $user): ?array
     }
 
     return null;
+}
+
+function aavgo_role_ids_from_snapshot_person(array $person): array
+{
+    $labels = [];
+
+    if (is_array($person['roleLabels'] ?? null)) {
+        foreach ($person['roleLabels'] as $label) {
+            $text = trim((string) $label);
+            if ($text !== '') {
+                $labels[] = $text;
+            }
+        }
+    }
+
+    $singleRole = trim((string) ($person['role'] ?? ''));
+    if ($singleRole !== '') {
+        $labels[] = $singleRole;
+    }
+
+    $ids = [];
+    foreach ($labels as $label) {
+        switch (strtolower($label)) {
+            case 'developer':
+                $ids[AAVGO_DEVELOPER_ROLE_ID] = AAVGO_DEVELOPER_ROLE_ID;
+                break;
+            case 'operations manager':
+                $ids[AAVGO_OPERATIONS_MANAGER_ROLE_ID] = AAVGO_OPERATIONS_MANAGER_ROLE_ID;
+                break;
+            case 'team leader':
+                $ids[AAVGO_TEAM_LEADER_ROLE_ID] = AAVGO_TEAM_LEADER_ROLE_ID;
+                break;
+            case 'sme':
+                $ids[AAVGO_SME_ROLE_ID] = AAVGO_SME_ROLE_ID;
+                break;
+            case 'trainee':
+                $ids[AAVGO_TRAINEE_ROLE_ID] = AAVGO_TRAINEE_ROLE_ID;
+                break;
+            case 'agent':
+                $ids[AAVGO_AGENT_ROLE_ID] = AAVGO_AGENT_ROLE_ID;
+                break;
+        }
+    }
+
+    return array_values($ids);
+}
+
+function aavgo_build_session_user_from_snapshot(array $discordUser, array $person): ?array
+{
+    $roleIds = aavgo_role_ids_from_snapshot_person($person);
+    $accessLevel = aavgo_resolve_access_level($discordUser, $roleIds);
+    if ($accessLevel === null) {
+        return null;
+    }
+
+    return [
+        'id' => (string) ($discordUser['id'] ?? ''),
+        'username' => (string) ($discordUser['username'] ?? 'Unknown User'),
+        'avatar' => (string) ($discordUser['avatar'] ?? ''),
+        'global_name' => (string) ($discordUser['global_name'] ?? ''),
+        'nickname' => (string) ($person['displayName'] ?? $person['username'] ?? ''),
+        'role_ids' => $roleIds,
+        'access_level' => $accessLevel,
+        'snapshot_fallback' => true,
+    ];
 }
 
 function aavgo_login_url(): string

@@ -59,6 +59,24 @@ try {
     $user = aavgo_fetch_user($accessToken);
     $member = aavgo_fetch_current_member($accessToken);
 } catch (Throwable $exception) {
+    if (isset($user) && is_array($user)) {
+        $snapshotPerson = aavgo_find_hours_person_for_user($user);
+        $snapshotSessionUser = is_array($snapshotPerson) ? aavgo_build_session_user_from_snapshot($user, $snapshotPerson) : null;
+
+        if (is_array($snapshotSessionUser)) {
+            session_regenerate_id(true);
+            $_SESSION['aavgo_user'] = $snapshotSessionUser;
+
+            $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
+            if ($afterLogin === '' && is_array($validatedState)) {
+                $afterLogin = (string) ($validatedState['after_login'] ?? '');
+            }
+            unset($_SESSION['aavgo_after_login']);
+
+            aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
+        }
+    }
+
     if ((int) $exception->getCode() === 404) {
         aavgo_logout();
         http_response_code(403);
@@ -74,7 +92,7 @@ try {
     http_response_code(502);
     aavgo_render_message_page(
         'Discord login failed.',
-        'Discord could not finish the secure role check for this website. Confirm the redirect URL and private auth config, then try again.',
+        'Discord could not finish the secure role check for this website. If the Discord app opened separately, start the sign-in again from the website so the handoff stays in one lane.',
         'Try Again',
         '/auth/discord/login/'
     );
