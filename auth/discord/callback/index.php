@@ -55,27 +55,57 @@ try {
     if ($accessToken === '') {
         throw new RuntimeException('Discord did not return an access token.');
     }
+} catch (Throwable $exception) {
+    aavgo_log_auth_failure('token_exchange', $exception, [
+        'has_code' => true,
+    ]);
 
+    http_response_code(502);
+    aavgo_render_message_page(
+        'Discord login failed.',
+        'Discord could not finish the secure login handoff for this website. If the app opened separately, return to the website and start the sign-in again from here.',
+        'Try Again',
+        '/auth/discord/login/'
+    );
+    exit;
+}
+
+try {
     $user = aavgo_fetch_user($accessToken);
+} catch (Throwable $exception) {
+    aavgo_log_auth_failure('fetch_user', $exception, []);
+
+    http_response_code(502);
+    aavgo_render_message_page(
+        'Discord login failed.',
+        'Discord finished authorization, but the website could not recover your identity from the callback. Please start the sign-in again from the website.',
+        'Try Again',
+        '/auth/discord/login/'
+    );
+    exit;
+}
+
+try {
     $member = aavgo_fetch_current_member($accessToken);
 } catch (Throwable $exception) {
-    if (isset($user) && is_array($user)) {
-        $snapshotPerson = aavgo_find_hours_person_for_user($user);
-        $snapshotSessionUser = is_array($snapshotPerson) ? aavgo_build_session_user_from_snapshot($user, $snapshotPerson) : null;
+    $fallbackSessionUser = aavgo_build_identity_fallback_session_user($user);
+    if (is_array($fallbackSessionUser)) {
+        session_regenerate_id(true);
+        $_SESSION['aavgo_user'] = $fallbackSessionUser;
 
-        if (is_array($snapshotSessionUser)) {
-            session_regenerate_id(true);
-            $_SESSION['aavgo_user'] = $snapshotSessionUser;
-
-            $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
-            if ($afterLogin === '' && is_array($validatedState)) {
-                $afterLogin = (string) ($validatedState['after_login'] ?? '');
-            }
-            unset($_SESSION['aavgo_after_login']);
-
-            aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
+        $afterLogin = (string) ($_SESSION['aavgo_after_login'] ?? '');
+        if ($afterLogin === '' && is_array($validatedState)) {
+            $afterLogin = (string) ($validatedState['after_login'] ?? '');
         }
+        unset($_SESSION['aavgo_after_login']);
+
+        aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));
     }
+
+    aavgo_log_auth_failure('fetch_current_member', $exception, [
+        'user_id' => (string) ($user['id'] ?? ''),
+        'username' => (string) ($user['username'] ?? ''),
+    ]);
 
     if ((int) $exception->getCode() === 404) {
         aavgo_logout();

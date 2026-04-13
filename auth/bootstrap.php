@@ -10,6 +10,7 @@ const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
 const AAVGO_DEFAULT_COMMAND_QUEUE_PATH = '/home/aavgodes/admin-command-queue.json';
 const AAVGO_DEFAULT_AUDIT_LOG_PATH = '/home/aavgodes/admin-audit-log.json';
+const AAVGO_DEFAULT_AUTH_ERROR_LOG_PATH = '/home/aavgodes/discord-auth-errors.log';
 const AAVGO_DEVELOPER_ROLE_ID = '1482312134875418737';
 const AAVGO_OPERATIONS_MANAGER_ROLE_ID = '1482226842047090809';
 const AAVGO_TEAM_LEADER_ROLE_ID = '1482732583660818636';
@@ -213,6 +214,11 @@ function aavgo_get_audit_log_path(): string
 {
     $path = trim((string) aavgo_get_config('audit_log_path'));
     return $path !== '' ? $path : AAVGO_DEFAULT_AUDIT_LOG_PATH;
+}
+
+function aavgo_get_auth_error_log_path(): string
+{
+    return AAVGO_DEFAULT_AUTH_ERROR_LOG_PATH;
 }
 
 function aavgo_get_admin_user_ids(): array
@@ -871,17 +877,27 @@ function aavgo_find_hours_person_for_user(array $user): ?array
 function aavgo_find_hours_person_by_discord_id(string $userId): ?array
 {
     $payload = aavgo_fetch_hours_bridge_payload();
-    if (!($payload['ok'] ?? false) || !is_array($payload['data']['people'] ?? null)) {
+    if (!($payload['ok'] ?? false) || !is_array($payload['data'] ?? null)) {
         return null;
     }
 
-    foreach ($payload['data']['people'] as $person) {
-        if (!is_array($person)) {
-            continue;
-        }
+    $collections = [];
+    if (is_array($payload['data']['people'] ?? null)) {
+        $collections[] = $payload['data']['people'];
+    }
+    if (is_array($payload['data']['authRoster'] ?? null)) {
+        $collections[] = $payload['data']['authRoster'];
+    }
 
-        if (trim((string) ($person['discordId'] ?? '')) === $userId) {
-            return $person;
+    foreach ($collections as $collection) {
+        foreach ($collection as $person) {
+            if (!is_array($person)) {
+                continue;
+            }
+
+            if (trim((string) ($person['discordId'] ?? '')) === $userId) {
+                return $person;
+            }
         }
     }
 
@@ -951,6 +967,67 @@ function aavgo_build_session_user_from_snapshot(array $discordUser, array $perso
         'access_level' => $accessLevel,
         'snapshot_fallback' => true,
     ];
+}
+
+function aavgo_build_allowlist_session_user(array $discordUser): ?array
+{
+    $userId = trim((string) ($discordUser['id'] ?? ''));
+    if ($userId === '' || !in_array($userId, aavgo_get_admin_user_ids(), true)) {
+        return null;
+    }
+
+    return [
+        'id' => $userId,
+        'username' => (string) ($discordUser['username'] ?? 'Unknown User'),
+        'avatar' => (string) ($discordUser['avatar'] ?? ''),
+        'global_name' => (string) ($discordUser['global_name'] ?? ''),
+        'nickname' => (string) ($discordUser['global_name'] ?? $discordUser['username'] ?? ''),
+        'role_ids' => [AAVGO_DEVELOPER_ROLE_ID],
+        'access_level' => 'admin',
+        'snapshot_fallback' => true,
+        'allowlist_fallback' => true,
+    ];
+}
+
+function aavgo_build_identity_fallback_session_user(array $discordUser): ?array
+{
+    $snapshotPerson = aavgo_find_hours_person_for_user($discordUser);
+    if (is_array($snapshotPerson)) {
+        $snapshotSessionUser = aavgo_build_session_user_from_snapshot($discordUser, $snapshotPerson);
+        if (is_array($snapshotSessionUser)) {
+            return $snapshotSessionUser;
+        }
+    }
+
+    return aavgo_build_allowlist_session_user($discordUser);
+}
+
+function aavgo_log_auth_failure(string $stage, Throwable $exception, array $context = []): void
+{
+    $path = aavgo_get_auth_error_log_path();
+    if ($path === '') {
+        return;
+    }
+
+    $directory = dirname($path);
+    if ($directory !== '' && !is_dir($directory)) {
+        @mkdir($directory, 0775, true);
+    }
+
+    $entry = [
+        'time' => gmdate('c'),
+        'stage' => $stage,
+        'code' => (int) $exception->getCode(),
+        'message' => $exception->getMessage(),
+        'context' => $context,
+    ];
+
+    $encoded = json_encode($entry, JSON_UNESCAPED_SLASHES);
+    if (!is_string($encoded)) {
+        return;
+    }
+
+    @file_put_contents($path, $encoded . PHP_EOL, FILE_APPEND | LOCK_EX);
 }
 
 function aavgo_login_url(): string
