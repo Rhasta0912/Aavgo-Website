@@ -728,6 +728,141 @@ h2 {
     linear-gradient(180deg, #090b10 0%, #101219 54%, #14171c 100%);
 }
 
+.access-frontdoor {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+}
+
+.access-frontdoor-card {
+  position: relative;
+  overflow: hidden;
+  width: min(980px, 100%);
+  min-height: min(46rem, calc(100vh - 2.4rem));
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1.4rem;
+  padding: 1.45rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 16% 18%, rgba(109, 120, 255, 0.12), transparent 24%),
+    radial-gradient(circle at 84% 18%, rgba(216, 176, 95, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(14, 16, 22, 0.98) 0%, rgba(11, 13, 18, 0.98) 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+}
+
+.access-frontdoor-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 0.72px, transparent 0.72px);
+  background-size: 16px 16px;
+  opacity: 0.16;
+  mask: linear-gradient(180deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.access-frontdoor-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.access-frontdoor-header,
+.access-frontdoor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.access-frontdoor-brand {
+  font-size: 1.65rem;
+}
+
+.access-frontdoor-chip {
+  padding-inline: 1rem;
+  color: #fff9ee;
+  background: rgba(216, 176, 95, 0.14);
+  border-color: rgba(216, 176, 95, 0.18);
+}
+
+.access-frontdoor-core {
+  width: min(640px, 100%);
+  margin: auto;
+  text-align: center;
+}
+
+.access-frontdoor-breadcrumb {
+  justify-content: center;
+}
+
+.access-frontdoor-title {
+  margin: 1rem 0 0;
+  color: #fff8ef;
+  font-size: clamp(4.3rem, 13vw, 8.4rem);
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+}
+
+.access-frontdoor-copy {
+  max-width: 34rem;
+  margin: 1.25rem auto 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.access-frontdoor-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.access-frontdoor-button {
+  min-width: 18rem;
+  min-height: 3.5rem;
+  font-size: 1rem;
+}
+
+.access-frontdoor-note {
+  max-width: 38rem;
+  margin: 1.15rem auto 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.access-frontdoor-footer {
+  padding-top: 0.5rem;
+}
+
+.access-frontdoor-detail {
+  min-width: 0;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.access-frontdoor-detail span {
+  display: block;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.access-frontdoor-detail strong {
+  display: block;
+  margin-top: 0.42rem;
+  color: #fff8ef;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
 .dashboard-shell {
   width: min(1600px, calc(100% - 1.6rem));
   min-height: 100vh;
@@ -1509,6 +1644,15 @@ h2 {
 }
 
 @media (max-width: 1024px) {
+  .access-frontdoor-card {
+    min-height: auto;
+  }
+
+  .access-frontdoor-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .gateway-hero,
   .workspace-hero,
   .login-stage,
@@ -1576,6 +1720,25 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  .access-frontdoor {
+    padding: 0.85rem;
+  }
+
+  .access-frontdoor-card {
+    padding: 1rem;
+    border-radius: 18px;
+    gap: 1.05rem;
+  }
+
+  .access-frontdoor-title {
+    font-size: clamp(3.2rem, 20vw, 4.6rem);
+  }
+
+  .access-frontdoor-button {
+    width: 100%;
+    min-width: 0;
+  }
+
   .site-shell {
     width: min(100% - 1rem, 1320px);
   }
