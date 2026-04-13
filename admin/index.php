@@ -9,6 +9,11 @@ $displayName = aavgo_display_name($user);
 $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $safeAvatarLetter = htmlspecialchars(strtoupper(substr($displayName, 0, 1) ?: 'A'), ENT_QUOTES, 'UTF-8');
 $hoursPayload = aavgo_fetch_hours_bridge_payload();
+$hoursBridgeConfigured = aavgo_has_hours_bridge();
+$hoursBridgeBaseUrl = aavgo_get_website_api_url();
+$hoursBridgeEndpoint = $hoursBridgeBaseUrl !== '' ? $hoursBridgeBaseUrl . '/api/website/admin-hours' : '';
+$safeHoursBridgeEndpoint = htmlspecialchars($hoursBridgeEndpoint, ENT_QUOTES, 'UTF-8');
+$safeExternalConfigPath = htmlspecialchars(AAVGO_EXTERNAL_CONFIG, ENT_QUOTES, 'UTF-8');
 $hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : null;
 $summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
 $teams = is_array($hoursData['teams'] ?? null) ? $hoursData['teams'] : [];
@@ -170,6 +175,26 @@ $bootstrapJson = json_encode(
               <div class="dashboard-inline-notice">
                 <strong>Live hours are not connected yet.</strong>
                 <p><?php echo aavgo_admin_text($hoursPayload['error'] ?? 'The admin hours bridge is not configured yet.'); ?></p>
+                <div class="dashboard-setup-list">
+                  <div class="dashboard-setup-item">
+                    <strong>1. Bot host</strong>
+                    <p>Set <code>AAVGO_WEBSITE_API_TOKEN</code> on the bot host. Optional if needed: <code>AAVGO_WEBSITE_API_HOST=0.0.0.0</code> and <code>AAVGO_WEBSITE_API_PORT=3000</code>. Restart the bot after saving.</p>
+                  </div>
+                  <div class="dashboard-setup-item">
+                    <strong>2. Website config</strong>
+                    <p>Open <code><?php echo $safeExternalConfigPath; ?></code> and add matching <code>website_api_url</code> and <code>website_api_token</code> values.</p>
+                  </div>
+                  <div class="dashboard-setup-item">
+                    <strong>3. Bridge target</strong>
+                    <p>
+                      <?php if ($hoursBridgeConfigured && $hoursBridgeEndpoint !== ''): ?>
+                        The website is currently trying <code><?php echo $safeHoursBridgeEndpoint; ?></code>.
+                      <?php else: ?>
+                        Point <code>website_api_url</code> to your bot host, for example <code>http://YOUR-BOT-IP:3000</code>.
+                      <?php endif; ?>
+                    </p>
+                  </div>
+                </div>
               </div>
             <?php endif; ?>
           </div>
