@@ -92,22 +92,19 @@ jobs:
             fi
 
             if [ "$EXISTS" = "true" ]; then
-              TARGET_SLUG="$(printf '%s' "$TARGET" | sed 's#[^A-Za-z0-9._-]#_#g')"
-              if [ -z "$TARGET_SLUG" ] || [ "$TARGET_SLUG" = "_" ]; then
-                TARGET_SLUG="root"
-              fi
-              printf "sha=%s\nbuilt_at=%s\ntarget=%s\n" "$GITHUB_SHA" "$BUILT_AT" "$TARGET" > deploy/_aavgo_target.txt
+              TARGET_DEPLOY_DIR="$(mktemp -d)"
+              cp -R deploy/. "$TARGET_DEPLOY_DIR"/
+              printf "sha=%s\nbuilt_at=%s\ntarget=%s\n" "$GITHUB_SHA" "$BUILT_AT" "$TARGET" > "$TARGET_DEPLOY_DIR/_aavgo_target.txt"
 
               lftp -u "$CPANEL_FTP_USERNAME","$CPANEL_FTP_PASSWORD" -p "$CPANEL_FTP_PORT" "$CPANEL_FTP_HOST" -e "
               set cmd:fail-exit yes
               set ftp:ssl-force true
               set ftp:ssl-protect-data true
               set ssl:verify-certificate no
-              mirror -R --verbose deploy/ \"$TARGET\"
-              put -O \"$TARGET\" -o _aavgo_target_${TARGET_SLUG}.txt deploy/_aavgo_target.txt
-              put -O \"$TARGET\" -o _aavgo_target.txt deploy/_aavgo_target.txt
+              mirror -R --verbose \"$TARGET_DEPLOY_DIR/\" \"$TARGET\"
               bye
               "
+              rm -rf "$TARGET_DEPLOY_DIR"
               DEPLOYED_ANY="true"
             fi
           done
