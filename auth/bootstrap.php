@@ -1304,7 +1304,10 @@ function aavgo_api_request(string $method, string $endpoint, array $headers = []
     }
 
     if ($httpCode >= 400) {
-        $message = $decoded['error_description'] ?? $decoded['message'] ?? 'Unknown Discord error.';
+        $message = $decoded['error_description']
+            ?? $decoded['message']
+            ?? $decoded['error']
+            ?? 'Unknown Discord error.';
         throw new RuntimeException('Discord error: ' . $message, $httpCode);
     }
 
