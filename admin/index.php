@@ -118,7 +118,6 @@ $bootstrapJson = json_encode(
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <button class="dashboard-toolbar-link dashboard-toolbar-toggle" type="button" data-sidebar-toggle>Menu</button>
           <div class="dashboard-toolbar-menu" data-toolbar-menu>
             <button class="dashboard-toolbar-link dashboard-toolbar-profile" type="button" data-toolbar-menu-toggle aria-expanded="false" aria-haspopup="true">
               <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>

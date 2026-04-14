@@ -148,7 +148,6 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <button class="dashboard-toolbar-link dashboard-toolbar-toggle" type="button" data-sidebar-toggle>Menu</button>
           <?php if ($showAdminLink): ?>
             <a class="dashboard-toolbar-link" href="/admin/">Leadership board</a>
           <?php endif; ?>

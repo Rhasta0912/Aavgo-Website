@@ -71,7 +71,6 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <p class="dashboard-subtitle">This workspace is for actual dev planning: what is being built, who owns it, when it should happen, what is urgent, and what is blocked.</p>
         </div>
         <div class="dashboard-toolbar">
-          <button class="dashboard-toolbar-link dashboard-toolbar-toggle" type="button" data-sidebar-toggle>Menu</button>
           <div class="dashboard-toolbar-menu" data-toolbar-menu>
             <button class="dashboard-toolbar-link dashboard-toolbar-profile" type="button" data-toolbar-menu-toggle aria-expanded="false" aria-haspopup="true">
               <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
@@ -108,13 +107,13 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Developer board</p>
-              <h2>Everything first, then the add form at the bottom.</h2>
+              <h2>Trello-style roadmap with To Do, Doing, and Done.</h2>
             </div>
-            <span class="dashboard-chip dashboard-chip-accent">Backlog / in progress / done</span>
+            <span class="dashboard-chip dashboard-chip-accent">To Do / Doing / Done</span>
           </div>
 
           <div class="dashboard-panel-meta">
-            <p class="dashboard-panel-copy">Use this as a real roadmap workspace: backlog, planned, in progress, blocked, ready to deploy, done, and completed logs all stay visible.</p>
+            <p class="dashboard-panel-copy">Use this as a real roadmap workspace: every task lands in one of three lanes, and the add form stays at the bottom so the board comes first.</p>
           </div>
 
           <div class="dashboard-developer-task-list" id="developer-task-list">
@@ -161,20 +160,16 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <label class="dashboard-control-field">
                 <span>Status</span>
                 <select id="developer-task-status">
-                  <option value="Backlog">Backlog</option>
-                  <option value="Planned">Planned</option>
-                  <option value="In progress">In progress</option>
-                  <option value="Blocked">Blocked</option>
-                  <option value="Ready to deploy">Ready to deploy</option>
+                  <option value="To Do">To Do</option>
+                  <option value="Doing">Doing</option>
                   <option value="Done">Done</option>
-                  <option value="Completed logs">Completed logs</option>
                 </select>
               </label>
               <label class="dashboard-control-field dashboard-control-field-wide">
                 <span>Notes</span>
                 <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
               </label>
-              <p class="dashboard-panel-copy" id="developer-task-feedback">Add the task to the board, then use the card controls to move it across the backlog.</p>
+              <p class="dashboard-panel-copy" id="developer-task-feedback">Add the task to the board, then move it through To Do, Doing, and Done as it changes.</p>
               <div class="dashboard-control-row">
                 <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
                 <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>

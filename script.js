@@ -2159,14 +2159,22 @@ function initializeDeveloperWorkspace() {
   const formShell = document.querySelector(".dashboard-developer-form-shell");
   const STORAGE_KEY = "aavgo_developer_tasks";
   const STATUS_ORDER = [
-    "Backlog",
-    "Planned",
-    "In progress",
-    "Blocked",
-    "Ready to deploy",
-    "Done",
-    "Completed logs"
+    "To Do",
+    "Doing",
+    "Done"
   ];
+  const STATUS_ALIAS_MAP = new Map([
+    ["backlog", "To Do"],
+    ["planned", "To Do"],
+    ["to do", "To Do"],
+    ["todo", "To Do"],
+    ["doing", "Doing"],
+    ["in progress", "Doing"],
+    ["blocked", "Doing"],
+    ["ready to deploy", "Doing"],
+    ["done", "Done"],
+    ["completed logs", "Done"]
+  ]);
 
   const createTaskId = () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -2177,7 +2185,8 @@ function initializeDeveloperWorkspace() {
 
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
-    return STATUS_ORDER.includes(value) ? value : "Backlog";
+    const normalized = STATUS_ALIAS_MAP.get(value.toLowerCase()) || value;
+    return STATUS_ORDER.includes(normalized) ? normalized : "To Do";
   };
 
   const normalizeTask = (item = {}) => ({
@@ -2239,7 +2248,7 @@ function initializeDeveloperWorkspace() {
         <button type="button" data-developer-task-remove="${escapeHtml(item.id)}">Remove</button>
       </div>
       <div class="dashboard-broadcast-meta">
-        <span class="dashboard-chip">${escapeHtml(item.status || "Backlog")}</span>
+        <span class="dashboard-chip">${escapeHtml(item.status || "To Do")}</span>
         <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
         <span class="dashboard-chip">${item.startDate ? `Start ${escapeHtml(item.startDate)}` : "Start anytime"}</span>
         <span class="dashboard-chip">${item.deadlineDate ? `Deadline ${escapeHtml(item.deadlineDate)}` : "No deadline"}</span>
@@ -2256,12 +2265,18 @@ function initializeDeveloperWorkspace() {
 
   const renderTaskLane = (status, items) => {
     const groupItems = items.filter(item => normalizeStatus(item.status) === status);
+    const laneCopy = status === "To Do"
+      ? "Ready to start."
+      : status === "Doing"
+        ? "Work in motion."
+        : "Finished and ready to archive.";
     return `
       <section class="dashboard-developer-lane" data-developer-lane="${escapeHtml(status)}">
         <header class="dashboard-developer-lane-head">
           <div>
             <p class="dashboard-kicker">${escapeHtml(status)}</p>
             <h3>${escapeHtml(status)} (${groupItems.length})</h3>
+            <p class="dashboard-developer-lane-copy">${escapeHtml(laneCopy)}</p>
           </div>
           <button
             type="button"
@@ -2284,21 +2299,22 @@ function initializeDeveloperWorkspace() {
 
   const render = (items) => {
     const sorted = sortTasks(items.map(normalizeTask));
-    if (!sorted.length) {
-      list.innerHTML = `
-        <div class="dashboard-empty-state">
-          <strong>No developer tasks yet.</strong>
-          <p>Add the first roadmap item, owner, deadline, and urgency.</p>
-        </div>
-      `;
-      return;
-    }
-
     list.innerHTML = `
       <div class="dashboard-developer-board">
         ${STATUS_ORDER.map(status => renderTaskLane(status, sorted)).join("")}
       </div>
     `;
+    if (!sorted.length) {
+      const emptyBoard = list.querySelector(".dashboard-developer-board");
+      if (emptyBoard) {
+        emptyBoard.insertAdjacentHTML("beforebegin", `
+          <div class="dashboard-empty-state">
+            <strong>No developer tasks yet.</strong>
+            <p>Add the first roadmap item, owner, deadline, and urgency.</p>
+          </div>
+        `);
+      }
+    }
   };
 
   const save = (items) => {
@@ -2339,7 +2355,7 @@ function initializeDeveloperWorkspace() {
       startDate: String(fields.start?.value || "").trim(),
       deadlineDate,
       priority: String(fields.priority?.value || "Normal").trim(),
-      status: normalizeStatus(fields.status?.value || "Backlog"),
+      status: normalizeStatus(fields.status?.value || "To Do"),
       notes: String(fields.notes?.value || "").trim()
     });
     Object.values(fields).forEach(field => {
@@ -2347,7 +2363,7 @@ function initializeDeveloperWorkspace() {
       if ("value" in field) field.value = "";
     });
     if (fields.priority) fields.priority.value = "Normal";
-    if (fields.status) fields.status.value = "Backlog";
+    if (fields.status) fields.status.value = "To Do";
     if (fields.deadline) fields.deadline.value = "";
     setFeedback("Task added to the board.", false);
     save(items);
