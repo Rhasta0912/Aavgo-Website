@@ -103,10 +103,18 @@ if (is_array($personalHours['activeSession'] ?? null)) {
 
       <div class="dashboard-sidebar-meta">
         <?php foreach ($roleLabels as $roleLabel): ?>
-          <span class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>">
+          <?php $roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleLabel)); ?>
+          <span
+            class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>"
+            data-role="<?php echo htmlspecialchars($roleKey, ENT_QUOTES, 'UTF-8'); ?>"
+          >
             <?php echo htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8'); ?>
           </span>
         <?php endforeach; ?>
+      </div>
+
+      <div class="dashboard-theme-toggle">
+        <button class="dashboard-theme-button" type="button" data-theme-toggle>Light mode</button>
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">

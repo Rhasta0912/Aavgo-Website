@@ -74,10 +74,18 @@ $bootstrapJson = json_encode(
 
       <div class="dashboard-sidebar-meta">
         <?php foreach ($roleLabels as $roleLabel): ?>
-          <span class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>">
+          <?php $roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleLabel)); ?>
+          <span
+            class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>"
+            data-role="<?php echo htmlspecialchars($roleKey, ENT_QUOTES, 'UTF-8'); ?>"
+          >
             <?php echo htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8'); ?>
           </span>
         <?php endforeach; ?>
+      </div>
+
+      <div class="dashboard-theme-toggle">
+        <button class="dashboard-theme-button" type="button" data-theme-toggle>Light mode</button>
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
@@ -377,19 +385,29 @@ $bootstrapJson = json_encode(
             <p class="dashboard-panel-copy">This closes active sessions for the selected hotel and lets the bot clean up Discord status on the same pass.</p>
           </article>
 
-          <article class="dashboard-panel" id="developer-tool-panel" <?php echo $isDeveloper ? '' : 'hidden'; ?>>
-            <div class="dashboard-panel-heading">
-              <div>
-                <p class="dashboard-kicker">Developer tools</p>
-                <h2>Role-sync and snapshot utilities</h2>
+            <article class="dashboard-panel" id="developer-tool-panel" <?php echo $isDeveloper ? '' : 'hidden'; ?>>
+              <div class="dashboard-panel-heading">
+                <div>
+                  <p class="dashboard-kicker">Developer tools</p>
+                  <h2>Role-sync and snapshot utilities</h2>
+                </div>
               </div>
-            </div>
-            <div class="dashboard-control-stack">
-              <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
-              <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
-            </div>
-            <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
-          </article>
+              <div class="dashboard-control-stack">
+                <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
+                <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+              </div>
+              <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
+              <div class="dashboard-dev-todo">
+                <p class="dashboard-kicker">Developer to-do</p>
+                <div class="dashboard-dev-todo-input">
+                  <input id="dev-todo-input" type="text" maxlength="120" placeholder="Add a quick task for the dev lane">
+                  <button class="button button-secondary dashboard-inline-button" id="dev-todo-add" type="button">Add task</button>
+                </div>
+                <ul class="dashboard-dev-todo-list" id="dev-todo-list">
+                  <li class="dashboard-dev-todo-empty">No dev tasks yet.</li>
+                </ul>
+              </div>
+            </article>
 
           <article class="dashboard-panel" id="leadership-audit">
             <div class="dashboard-panel-heading">

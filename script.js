@@ -481,6 +481,8 @@ const adminBoardState = {
   actionInFlight: false
 };
 
+const THEME_STORAGE_KEY = "aavgo_theme";
+
 function getAdminPeople() {
   return Array.isArray(adminBoardState?.payload?.data?.people) ? adminBoardState.payload.data.people : [];
 }
@@ -539,6 +541,26 @@ function clearSelectedStaff() {
   setSelectedBulkDiscordIds([]);
 }
 
+function applyTheme(mode) {
+  const nextMode = mode === "light" ? "light" : "dark";
+  document.body.classList.toggle("theme-light", nextMode === "light");
+  document.querySelectorAll("[data-theme-toggle]").forEach(node => {
+    node.textContent = nextMode === "light" ? "Dark mode" : "Light mode";
+  });
+  localStorage.setItem(THEME_STORAGE_KEY, nextMode);
+}
+
+function initializeThemeToggle() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  applyTheme(stored === "light" ? "light" : "dark");
+  document.querySelectorAll("[data-theme-toggle]").forEach(node => {
+    node.addEventListener("click", () => {
+      const nextMode = document.body.classList.contains("theme-light") ? "dark" : "light";
+      applyTheme(nextMode);
+    });
+  });
+}
+
 function getSelectedBulkStaff(allPeople) {
   const selectedIds = new Set(getSelectedBulkDiscordIds());
   return (Array.isArray(allPeople) ? allPeople : []).filter(person => selectedIds.has(String(person?.discordId || "")));
@@ -572,33 +594,43 @@ function setAdminView(nextView) {
   });
 }
 
+function setActiveNavLink(hash) {
+  if (!hash) return;
+  document.querySelectorAll(".dashboard-nav-link").forEach(link => {
+    link.classList.toggle("is-active", link.getAttribute("href") === hash || link.getAttribute("href") === "/admin/");
+  });
+}
+
 function filterAdminPeople(people) {
   const filters = getAdminFilters();
+  const roleFilter = normalizeForSearch(filters.role);
+  const teamFilter = normalizeForSearch(filters.team);
+  const hotelFilter = normalizeForSearch(filters.hotel);
 
   return (Array.isArray(people) ? people : []).filter(person => {
     if (filters.search && !getSearchHaystack(person).includes(filters.search)) {
       return false;
     }
 
-    if (filters.role) {
+    if (roleFilter) {
       const roleValues = new Set(
         [person?.role, ...(Array.isArray(person?.roleLabels) ? person.roleLabels : [])]
-          .map(value => String(value || "").trim())
+          .map(value => normalizeForSearch(value))
           .filter(Boolean)
       );
-      if (!roleValues.has(filters.role)) {
+      if (!roleValues.has(roleFilter)) {
         return false;
       }
     }
 
-    if (filters.team && String(person?.team || "") !== filters.team) {
+    if (teamFilter && normalizeForSearch(person?.team) !== teamFilter) {
       return false;
     }
 
-    if (filters.hotel) {
-      const personHotelId = getPrimaryHotelId(person);
-      const personHotelLabel = getPrimaryHotelLabel(person);
-      if (filters.hotel !== personHotelId && filters.hotel !== personHotelLabel) {
+    if (hotelFilter) {
+      const personHotelId = normalizeForSearch(getPrimaryHotelId(person));
+      const personHotelLabel = normalizeForSearch(getPrimaryHotelLabel(person));
+      if (hotelFilter !== personHotelId && hotelFilter !== personHotelLabel) {
         return false;
       }
     }
@@ -878,7 +910,9 @@ function renderFullHoursRows(people) {
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
-          return `<td class="${className}">${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}</td>`;
+          return `<td class="${className}" data-day="${day}" data-hours="${hours}">
+            ${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}
+          </td>`;
         }).join("")}
         <td>${formatHours(person?.payPeriods?.firstHalf?.totalHours)}</td>
         <td>${formatHours(person?.payPeriods?.secondHalf?.totalHours)}</td>
@@ -1000,14 +1034,14 @@ function renderAuditLog(entries) {
 function renderPeriodDays(days) {
   const items = (Array.isArray(days) ? days : [])
     .filter(day => Number(day?.totalHours || 0) > 0)
-    .slice(0, 4);
+    .sort((left, right) => Number(left?.day || 0) - Number(right?.day || 0));
 
   if (items.length === 0) {
     return '<p class="dashboard-period-copy">No tracked days yet in this cut.</p>';
   }
 
   return `
-    <ul class="dashboard-inline-list">
+    <ul class="dashboard-inline-list dashboard-period-days">
       ${items.map(day => `
         <li>
           <span>Day ${escapeHtml(day?.day ?? "-")}</span>
@@ -1055,8 +1089,7 @@ function renderSelectedHistory(person) {
 
   const monthDays = (Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days : [])
     .filter(day => Number(day?.totalHours || 0) > 0)
-    .slice(-6)
-    .reverse();
+    .sort((left, right) => Number(left?.day || 0) - Number(right?.day || 0));
   const recentMonths = Array.isArray(person?.recentMonths) ? person.recentMonths : [];
 
   container.innerHTML = `
@@ -1069,7 +1102,7 @@ function renderSelectedHistory(person) {
     </div>
     ${
       monthDays.length > 0
-        ? `<ul class="dashboard-inline-list">
+        ? `<ul class="dashboard-inline-list dashboard-history-days">
             ${monthDays.map(day => `
               <li>
                 <span>Day ${escapeHtml(day?.day ?? "-")}</span>
@@ -1389,6 +1422,24 @@ function initializeAdminBoard() {
     });
   });
 
+  document.querySelectorAll(".dashboard-nav-link, .dashboard-toolbar-link").forEach(link => {
+    link.addEventListener("click", event => {
+      const href = link.getAttribute("href") || "";
+      if (!href.startsWith("#")) return;
+      event.preventDefault();
+      if (href === "#leadership-full-hours") {
+        setAdminView("full-hours");
+      } else if (href.startsWith("#leadership-")) {
+        setAdminView("board");
+      }
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setActiveNavLink(href);
+    });
+  });
+
   document.getElementById("hours-board-rows")?.addEventListener("click", event => {
     const row = event.target.closest("tr[data-discord-id]");
     if (!row) return;
@@ -1404,6 +1455,35 @@ function initializeAdminBoard() {
   });
 
   document.getElementById("hours-full-board-rows")?.addEventListener("click", event => {
+    const cell = event.target.closest("td[data-day]");
+    if (cell) {
+      const row = cell.closest("tr[data-full-hours-row]");
+      const discordId = String(row?.getAttribute("data-full-hours-row") || "");
+      const day = Number(cell.getAttribute("data-day") || 0);
+      const hours = Number(cell.getAttribute("data-hours") || 0);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const maxDay = new Date(year, month + 1, 0).getDate();
+      const safeDay = Math.min(Math.max(day, 1), maxDay);
+      const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+
+      if (discordId) {
+        adminBoardState.selectedDiscordId = discordId;
+        toggleSelectedBulkDiscordId(discordId, true);
+      }
+
+      const editorDate = document.getElementById("hours-editor-date");
+      if (editorDate) editorDate.value = dateValue;
+      const removeDate = document.getElementById("hours-remove-date");
+      if (removeDate) removeDate.value = dateValue;
+      const removeHours = document.getElementById("hours-remove-hours");
+      if (removeHours && hours > 0) removeHours.value = String(hours);
+
+      applyAdminBoardPayload(adminBoardState.payload);
+      return;
+    }
+
     const checkbox = event.target.closest("input[data-full-hours-select]");
     if (checkbox) {
       const discordId = checkbox.getAttribute("data-full-hours-select") || "";
@@ -1646,5 +1726,72 @@ function initializeAdminBoard() {
   adminBoardState.refreshTimer = window.setInterval(refreshAdminBoard, 30000);
 }
 
+function initializeDeveloperTodoList() {
+  const list = document.getElementById("dev-todo-list");
+  const input = document.getElementById("dev-todo-input");
+  const addButton = document.getElementById("dev-todo-add");
+  if (!list || !input || !addButton) return;
+
+  const STORAGE_KEY = "aavgo_dev_todos";
+  const render = (items) => {
+    list.innerHTML = "";
+    if (!items.length) {
+      const empty = document.createElement("li");
+      empty.className = "dashboard-dev-todo-empty";
+      empty.textContent = "No dev tasks yet.";
+      list.appendChild(empty);
+      return;
+    }
+
+    items.forEach((item, index) => {
+      const entry = document.createElement("li");
+      entry.className = "dashboard-dev-todo-item";
+      entry.innerHTML = `
+        <span>${escapeHtml(item)}</span>
+        <button type="button" data-dev-todo-remove="${index}">Remove</button>
+      `;
+      list.appendChild(entry);
+    });
+  };
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const items = raw ? JSON.parse(raw) : [];
+      return Array.isArray(items) ? items : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const save = (items) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    render(items);
+  };
+
+  render(load());
+
+  addButton.addEventListener("click", () => {
+    const value = String(input.value || "").trim();
+    if (!value) return;
+    const items = load();
+    items.push(value);
+    input.value = "";
+    save(items);
+  });
+
+  list.addEventListener("click", event => {
+    const button = event.target.closest("button[data-dev-todo-remove]");
+    if (!button) return;
+    const index = Number(button.getAttribute("data-dev-todo-remove"));
+    const items = load();
+    if (!Number.isFinite(index)) return;
+    items.splice(index, 1);
+    save(items);
+  });
+}
+
 initializeAdminBoard();
 initializeLiveSignals();
+initializeThemeToggle();
+initializeDeveloperTodoList();
