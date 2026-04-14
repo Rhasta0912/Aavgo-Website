@@ -16,29 +16,15 @@ jobs:
 
       - name: Prepare deploy bundle
         run: |
-          mkdir -p deploy/admin
-          mkdir -p deploy/user
-          mkdir -p deploy/api/admin-hours
-          mkdir -p deploy/api/admin-hours-sync
-          mkdir -p deploy/api/admin-command
-          mkdir -p deploy/api/admin-command-sync
-          mkdir -p deploy/auth/discord/login
-          mkdir -p deploy/auth/discord/callback
-          mkdir -p deploy/auth/logout
+          mkdir -p deploy
 
           cp index.html deploy/index.html
           cp styles.css deploy/styles.css
           cp script.js deploy/script.js
-          cp admin/index.php deploy/admin/index.php
-          cp user/index.php deploy/user/index.php
-          cp api/admin-hours/index.php deploy/api/admin-hours/index.php
-          cp api/admin-hours-sync/index.php deploy/api/admin-hours-sync/index.php
-          cp api/admin-command/index.php deploy/api/admin-command/index.php
-          cp api/admin-command-sync/index.php deploy/api/admin-command-sync/index.php
-          cp auth/bootstrap.php deploy/auth/bootstrap.php
-          cp auth/discord/login/index.php deploy/auth/discord/login/index.php
-          cp auth/discord/callback/index.php deploy/auth/discord/callback/index.php
-          cp auth/logout/index.php deploy/auth/logout/index.php
+          cp -R admin deploy/admin
+          cp -R user deploy/user
+          cp -R api deploy/api
+          cp -R auth deploy/auth
           printf "sha=%s\nbuilt_at=%s\n" "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > deploy/_aavgo_deploy.txt
 
       - name: Install lftp
