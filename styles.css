@@ -2159,6 +2159,7 @@ h2 {
 .sidebar-collapsed .dashboard-shell-admin,
 .sidebar-collapsed .dashboard-shell-user {
   grid-template-columns: 0 minmax(0, 1fr);
+  gap: 0;
 }
 
 .sidebar-collapsed .dashboard-sidebar-admin,
@@ -2193,6 +2194,15 @@ h2 {
     radial-gradient(circle at top left, rgba(109, 120, 255, 0.03), transparent 28%),
     linear-gradient(180deg, rgba(17, 18, 24, 0.98) 0%, rgba(12, 14, 19, 0.98) 100%);
   overflow: hidden;
+  transition:
+    width 220ms ease,
+    min-width 220ms ease,
+    margin 220ms ease,
+    padding 220ms ease,
+    border-color 220ms ease,
+    opacity 160ms ease,
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin::before,
@@ -3380,6 +3390,23 @@ h2 {
   display: grid;
   gap: 0.35rem;
   z-index: 25;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
+  transform-origin: top right;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.dashboard-toolbar-menu.is-open .dashboard-toolbar-dropdown {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 .dashboard-toolbar-dropdown-link {
@@ -3581,38 +3608,27 @@ h2 {
   position: sticky;
   left: 0;
   z-index: 3;
-  width: 76px;
-  min-width: 76px;
-  max-width: 76px;
+  width: 84px;
+  min-width: 84px;
+  max-width: 84px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(2),
 .dashboard-hours-sheet tbody td:nth-child(2) {
   position: sticky;
-  left: 76px;
+  left: 84px;
   z-index: 3;
-  width: 260px;
-  min-width: 260px;
-  max-width: 260px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(3),
 .dashboard-hours-sheet tbody td:nth-child(3) {
   position: sticky;
-  left: 336px;
-  z-index: 3;
-  width: 150px;
-  min-width: 150px;
-  max-width: 150px;
-  background: #10131a;
-}
-
-.dashboard-hours-sheet thead th:nth-child(4),
-.dashboard-hours-sheet tbody td:nth-child(4) {
-  position: sticky;
-  left: 486px;
+  left: 324px;
   z-index: 3;
   width: 170px;
   min-width: 170px;
@@ -3620,22 +3636,33 @@ h2 {
   background: #10131a;
 }
 
+.dashboard-hours-sheet thead th:nth-child(4),
+.dashboard-hours-sheet tbody td:nth-child(4) {
+  position: sticky;
+  left: 494px;
+  z-index: 3;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  background: #10131a;
+}
+
 .dashboard-hours-sheet thead th:nth-child(5),
 .dashboard-hours-sheet tbody td:nth-child(5) {
   position: sticky;
-  left: 656px;
+  left: 684px;
   z-index: 3;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
+  width: 230px;
+  min-width: 230px;
+  max-width: 230px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
 .dashboard-hours-sheet tbody td:nth-child(n+6) {
-  width: 72px;
-  min-width: 72px;
-  max-width: 72px;
+  width: 86px;
+  min-width: 86px;
+  max-width: 86px;
 }
 
 .dashboard-hours-sheet thead th:nth-child(1),
@@ -4043,7 +4070,7 @@ h2 {
 
 .theme-light .dashboard-toolbar-dropdown {
   border-color: rgba(24, 32, 44, 0.08);
-  background: linear-gradient(180deg, rgba(248, 243, 236, 0.98) 0%, rgba(241, 234, 225, 0.96) 100%);
+  background: linear-gradient(180deg, rgba(248, 245, 240, 0.99) 0%, rgba(236, 229, 219, 0.96) 100%);
 }
 
 .theme-light .dashboard-toolbar-dropdown-link:hover,
@@ -4068,8 +4095,8 @@ h2 {
 .theme-light .dashboard-hours-sheet thead th,
 .theme-light .dashboard-hours-sheet thead th:nth-child(-n+5),
 .theme-light .dashboard-hours-sheet tbody td:nth-child(-n+5) {
-  background: #ebe4d7;
-  color: rgba(24, 32, 44, 0.82);
+  background: #e8e1d4;
+  color: rgba(24, 32, 44, 0.9);
 }
 
 .theme-light .dashboard-hours-sheet tbody tr:nth-child(even) {
@@ -4087,7 +4114,7 @@ h2 {
 }
 
 .theme-light .dashboard-hours-cell {
-  color: rgba(24, 32, 44, 0.56);
+  color: rgba(24, 32, 44, 0.66);
 }
 
 .theme-light .dashboard-hours-cell.has-hours {
@@ -4118,8 +4145,9 @@ h2 {
 .dashboard-hours-cell {
   text-align: center;
   color: rgba(255, 255, 255, 0.42);
-  font-size: 0.82rem;
-  line-height: 1.15;
+  font-size: 0.78rem;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-hours-cell[data-day] {

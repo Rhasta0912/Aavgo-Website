@@ -612,10 +612,32 @@ function initializeToolbarMenu() {
   const panel = document.querySelector("[data-toolbar-menu-panel]");
   if (!shell || !toggle || !panel) return;
 
+  let hideTimer = null;
+
   const setOpen = (open) => {
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+
     shell.classList.toggle("is-open", open);
-    panel.hidden = !open;
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    panel.setAttribute("aria-hidden", open ? "false" : "true");
+
+    if (open) {
+      panel.hidden = false;
+      window.requestAnimationFrame(() => {
+        shell.classList.add("is-open");
+      });
+      return;
+    }
+
+    shell.classList.remove("is-open");
+    hideTimer = window.setTimeout(() => {
+      if (!shell.classList.contains("is-open")) {
+        panel.hidden = true;
+      }
+    }, 210);
   };
 
   toggle.addEventListener("click", event => {
@@ -641,7 +663,9 @@ function initializeToolbarMenu() {
     }
   });
 
-  setOpen(false);
+  panel.hidden = true;
+  panel.setAttribute("aria-hidden", "true");
+  toggle.setAttribute("aria-expanded", "false");
 }
 
 function setHoursEditorOpen(open) {
@@ -1617,6 +1641,11 @@ async function sendAdminCommand(action, payload = {}, options = {}) {
         ...adminBoardState.payload,
         management: data.management
       });
+    }
+
+    const shouldClearSelection = action.startsWith("bulk_");
+    if (shouldClearSelection) {
+      clearSelectedStaff();
     }
 
     applyAdminBoardPayload(adminBoardState.payload);
