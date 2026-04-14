@@ -4418,6 +4418,19 @@ h2 {
   gap: 0;
 }
 
+body.sidebar-collapsed .dashboard-sidebar-admin,
+body.sidebar-collapsed .dashboard-sidebar-user {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.sidebar-collapsed .dashboard-shell-admin,
+body.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: 0 minmax(0, 1fr) !important;
+  gap: 0 !important;
+}
+
 .workspace-dashboard .dashboard-sidebar .dashboard-theme-toggle {
   display: none;
 }

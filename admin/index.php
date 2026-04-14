@@ -494,6 +494,7 @@ $bootstrapJson = json_encode(
 
           <div class="dashboard-hours-sheet-wrap">
             <table class="dashboard-hours-sheet" id="hours-full-board">
+              <colgroup id="hours-full-board-cols"></colgroup>
               <thead id="hours-full-board-head">
                 <tr>
                   <th>Select</th>

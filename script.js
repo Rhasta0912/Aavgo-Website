@@ -806,7 +806,6 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
     if (isEnter) {
       event.preventDefault();
       event.stopPropagation();
-      window.setTimeout(() => finish(true), 0);
       return;
     }
     if (event.key === "Escape") {
@@ -814,6 +813,13 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
       event.stopPropagation();
       finish(false);
     }
+  });
+  input.addEventListener("keyup", event => {
+    const isEnter = event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter" || event.keyCode === 13;
+    if (!isEnter) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.requestAnimationFrame(() => finish(true));
   });
   input.addEventListener("change", () => finish(true));
   input.addEventListener("blur", () => finish(true), { once: true });
@@ -1121,24 +1127,26 @@ function renderHoursRows(people, selectedDiscordId) {
 }
 
 function renderFullHoursRows(people) {
+  const table = document.getElementById("hours-full-board");
+  const cols = document.getElementById("hours-full-board-cols");
   const head = document.getElementById("hours-full-board-head");
   const body = document.getElementById("hours-full-board-rows");
-  if (!head || !body) return;
+  if (!table || !cols || !head || !body) return;
 
   const dayNumbers = getDayNumbersForFullHours(people);
+  cols.innerHTML = `
+      <col style="width:124px">
+      <col style="width:300px">
+      <col style="width:204px">
+      <col style="width:232px">
+      <col style="width:260px">
+      ${dayNumbers.map(() => `<col style="width:132px">`).join("")}
+      <col style="width:140px">
+      <col style="width:140px">
+      <col style="width:140px">
+      <col style="width:140px">
+  `;
   head.innerHTML = `
-    <colgroup>
-      <col style="width:108px">
-      <col style="width:250px">
-      <col style="width:176px">
-      <col style="width:210px">
-      <col style="width:238px">
-      ${dayNumbers.map(() => `<col style="width:118px">`).join("")}
-      <col style="width:128px">
-      <col style="width:128px">
-      <col style="width:128px">
-      <col style="width:128px">
-    </colgroup>
     <tr>
       <th>Select</th>
       <th>Staff</th>
