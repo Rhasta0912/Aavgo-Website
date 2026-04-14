@@ -122,6 +122,8 @@ function normalizeAnnouncement(announcement) {
   if (!id || !message) return null;
 
   const actor = announcement.actor && typeof announcement.actor === "object" ? announcement.actor : {};
+  const target = announcement.target && typeof announcement.target === "object" ? announcement.target : null;
+  const targetDiscordId = target ? String(target.discordId || "").trim() : "";
   return {
     id,
     message,
@@ -129,7 +131,9 @@ function normalizeAnnouncement(announcement) {
     createdAt: String(announcement.createdAt || ""),
     updatedAt: String(announcement.updatedAt || announcement.createdAt || ""),
     actorName: String(actor.name || "Leadership"),
-    actorRole: String(actor.roleSummary || "Leadership")
+    actorRole: String(actor.roleSummary || "Leadership"),
+    targetDiscordId,
+    targetName: targetDiscordId ? String(target.name || "Selected staff") : ""
   };
 }
 
@@ -274,7 +278,11 @@ function renderLiveSignalBanner(announcement) {
     liveSignalState.meta.textContent = parts.join(" - ");
   }
   if (liveSignalState.chip) {
-    liveSignalState.chip.textContent = normalized.tone === "urgent" ? "Urgent broadcast" : "Leadership alert";
+    if (normalized.targetDiscordId) {
+      liveSignalState.chip.textContent = normalized.tone === "urgent" ? "Urgent direct alert" : "Direct alert";
+    } else {
+      liveSignalState.chip.textContent = normalized.tone === "urgent" ? "Urgent broadcast" : "Leadership alert";
+    }
   }
 
   if (normalized.id !== liveSignalState.lastPlayedId) {
@@ -379,6 +387,22 @@ function syncSelectOptions(selectId, options, placeholder, currentValue = "") {
   select.innerHTML = selectOptionsMarkup(options, placeholder, currentValue);
 }
 
+function syncBroadcastTargets(people) {
+  const select = document.getElementById("broadcast-target-select");
+  if (!select) return;
+
+  const currentValue = String(select.value || "").trim();
+  const options = (Array.isArray(people) ? people : [])
+    .map(person => ({
+      id: String(person?.discordId || "").trim(),
+      name: String(person?.displayName || person?.username || "Unknown")
+    }))
+    .filter(option => option.id);
+
+  options.sort((left, right) => left.name.localeCompare(right.name));
+  syncSelectOptions("broadcast-target-select", options, "Website-wide (all staff)", currentValue);
+}
+
 function deriveTeamCards(people) {
   const buckets = new Map();
 
@@ -478,10 +502,12 @@ const adminBoardState = {
   selectedDiscordIds: [],
   view: "board",
   refreshTimer: null,
-  actionInFlight: false
+  actionInFlight: false,
+  allowEmptySelection: false
 };
 
 const THEME_STORAGE_KEY = "aavgo_theme";
+const SIDEBAR_STORAGE_KEY = "aavgo_sidebar";
 
 function getAdminPeople() {
   return Array.isArray(adminBoardState?.payload?.data?.people) ? adminBoardState.payload.data.people : [];
@@ -539,6 +565,7 @@ function toggleSelectedBulkDiscordId(discordId, checked) {
 function clearSelectedStaff() {
   adminBoardState.selectedDiscordId = "";
   setSelectedBulkDiscordIds([]);
+  adminBoardState.allowEmptySelection = true;
 }
 
 function applyTheme(mode) {
@@ -559,6 +586,101 @@ function initializeThemeToggle() {
       applyTheme(nextMode);
     });
   });
+}
+
+function applySidebarState(state) {
+  const isCollapsed = state === "collapsed";
+  document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+}
+
+function initializeSidebarToggle() {
+  const stored = safeLocalStorageGet(SIDEBAR_STORAGE_KEY);
+  applySidebarState(stored === "collapsed" ? "collapsed" : "expanded");
+
+  document.querySelectorAll("[data-sidebar-toggle]").forEach(node => {
+    node.addEventListener("click", () => {
+      const nextState = document.body.classList.contains("sidebar-collapsed") ? "expanded" : "collapsed";
+      applySidebarState(nextState);
+      safeLocalStorageSet(SIDEBAR_STORAGE_KEY, nextState);
+    });
+  });
+}
+
+function initializeToolbarMenu() {
+  const shell = document.querySelector("[data-toolbar-menu]");
+  const toggle = document.querySelector("[data-toolbar-menu-toggle]");
+  const panel = document.querySelector("[data-toolbar-menu-panel]");
+  if (!shell || !toggle || !panel) return;
+
+  const setOpen = (open) => {
+    shell.classList.toggle("is-open", open);
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  toggle.addEventListener("click", event => {
+    event.stopPropagation();
+    setOpen(!shell.classList.contains("is-open"));
+  });
+
+  panel.addEventListener("click", event => {
+    if (event.target.closest("a, button")) {
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener("click", event => {
+    if (!shell.contains(event.target)) {
+      setOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      setOpen(false);
+    }
+  });
+}
+
+function setHoursEditorOpen(open) {
+  const modal = document.getElementById("hours-editor-modal");
+  if (!modal) return;
+  modal.hidden = !open;
+  document.body.classList.toggle("dashboard-modal-open", open);
+}
+
+function openHoursEditorModal(person = null, options = {}) {
+  if (person?.discordId) {
+    adminBoardState.selectedDiscordId = String(person.discordId);
+    adminBoardState.allowEmptySelection = false;
+  }
+
+  const shiftDate = String(options.shiftDate || "").trim();
+  const hours = Number(options.hours || 0);
+  const loginTime = String(options.loginTime || "").trim();
+  const logoutTime = String(options.logoutTime || "").trim();
+  const mode = String(options.mode || "shift").trim() === "training" ? "training" : "shift";
+
+  const editorDate = document.getElementById("hours-editor-date");
+  const removeDate = document.getElementById("hours-remove-date");
+  const editorMode = document.getElementById("hours-editor-mode");
+  const removeMode = document.getElementById("hours-remove-mode");
+  const editorLogin = document.getElementById("hours-editor-login");
+  const editorLogout = document.getElementById("hours-editor-logout");
+  const removeHours = document.getElementById("hours-remove-hours");
+
+  if (shiftDate) {
+    if (editorDate) editorDate.value = shiftDate;
+    if (removeDate) removeDate.value = shiftDate;
+  }
+  if (editorMode) editorMode.value = mode;
+  if (removeMode) removeMode.value = mode;
+  if (editorLogin) editorLogin.value = loginTime;
+  if (editorLogout) editorLogout.value = logoutTime;
+  if (removeHours && hours > 0) removeHours.value = String(Math.round(hours * 10) / 10);
+
+  applyAdminBoardPayload(adminBoardState.payload);
+  setHoursEditorOpen(true);
 }
 
 function getSelectedBulkStaff(allPeople) {
@@ -647,6 +769,9 @@ function filterAdminPeople(people) {
 }
 
 function getSelectedStaff(allPeople, visiblePeople) {
+  if (!adminBoardState.selectedDiscordId && adminBoardState.allowEmptySelection) {
+    return null;
+  }
   const selectedVisible = visiblePeople.find(
     person => String(person?.discordId || "") === String(adminBoardState.selectedDiscordId || "")
   );
@@ -663,6 +788,7 @@ function getSelectedStaff(allPeople, visiblePeople) {
 
   const nextStaff = visiblePeople[0] || allPeople[0] || null;
   adminBoardState.selectedDiscordId = String(nextStaff?.discordId || "");
+  adminBoardState.allowEmptySelection = false;
   return nextStaff;
 }
 
@@ -729,6 +855,7 @@ function renderBroadcastComposer(announcement) {
   const preview = document.getElementById("broadcast-preview");
   const clearButton = document.getElementById("broadcast-clear");
   const toneSelect = document.getElementById("broadcast-tone-select");
+  const targetSelect = document.getElementById("broadcast-target-select");
   const textarea = document.getElementById("broadcast-message");
   const normalized = normalizeAnnouncement(announcement);
 
@@ -753,15 +880,21 @@ function renderBroadcastComposer(announcement) {
     if (toneSelect && !adminBoardState.actionInFlight) {
       toneSelect.value = "standard";
     }
+    if (targetSelect && !adminBoardState.actionInFlight) {
+      targetSelect.value = "";
+    }
     return;
   }
 
   preview.innerHTML = `
-    <span class="dashboard-chip ${normalized.tone === "urgent" ? "dashboard-chip-accent" : ""}">
-      ${escapeHtml(normalized.tone === "urgent" ? "Urgent" : "Standard")}
-    </span>
+    <div class="dashboard-broadcast-meta">
+      <span class="dashboard-chip ${normalized.tone === "urgent" ? "dashboard-chip-accent" : ""}">
+        ${escapeHtml(normalized.tone === "urgent" ? "Urgent" : "Standard")}
+      </span>
+      ${normalized.targetDiscordId ? `<span class="dashboard-chip">Target: ${escapeHtml(normalized.targetName || "Selected staff")}</span>` : ""}
+    </div>
     <strong>${escapeHtml(normalized.message)}</strong>
-    <p>${escapeHtml(normalized.actorName)} · ${escapeHtml(formatAuditLabel(normalized.createdAt))}</p>
+    <p>${escapeHtml(normalized.actorName)} - ${escapeHtml(formatAuditLabel(normalized.createdAt))}</p>
   `;
 
   if (toneSelect && !adminBoardState.actionInFlight) {
@@ -770,6 +903,10 @@ function renderBroadcastComposer(announcement) {
 
   if (textarea && !adminBoardState.actionInFlight && textarea.value.trim() === "") {
     textarea.value = normalized.message;
+  }
+
+  if (targetSelect && !adminBoardState.actionInFlight && normalized.targetDiscordId) {
+    targetSelect.value = normalized.targetDiscordId;
   }
 
   renderLiveSignalBanner(normalized);
@@ -1166,6 +1303,10 @@ function syncHoursEditorState(person) {
     ? `${person.displayName} · ${getRoleSummary(person)}`
     : "Pick a staff row to edit hours.");
 
+  setText("hours-editor-summary-selected", person?.displayName
+    ? `${person.displayName} · ${getRoleSummary(person)}`
+    : "Pick a staff row to edit hours.");
+
   renderAdjustmentLog(person);
 
   if (!person) {
@@ -1264,6 +1405,10 @@ function applyAdminBoardPayload(payload) {
 
   const validIds = new Set(allPeople.map(person => String(person?.discordId || "")));
   setSelectedBulkDiscordIds(getSelectedBulkDiscordIds().filter(discordId => validIds.has(discordId)));
+  if (adminBoardState.selectedDiscordId && !validIds.has(String(adminBoardState.selectedDiscordId || ""))) {
+    adminBoardState.selectedDiscordId = "";
+    adminBoardState.allowEmptySelection = true;
+  }
 
   syncSelectOptions("hours-filter-role", roleOptions, "All roles", document.getElementById("hours-filter-role")?.value || "");
   syncSelectOptions("hours-filter-team", meta.teams || [], "All teams", document.getElementById("hours-filter-team")?.value || "");
@@ -1275,6 +1420,7 @@ function applyAdminBoardPayload(payload) {
 
   const visiblePeople = filterAdminPeople(allPeople);
   const selectedStaff = getSelectedStaff(allPeople, visiblePeople);
+  syncBroadcastTargets(allPeople);
   const selectedBulkPeople = getSelectedBulkStaff(visiblePeople);
   const summary = aggregateHoursSummary(visiblePeople);
 
@@ -1422,7 +1568,7 @@ function initializeAdminBoard() {
     });
   });
 
-  document.querySelectorAll(".dashboard-nav-link, .dashboard-toolbar-link").forEach(link => {
+  document.querySelectorAll(".dashboard-nav-link, .dashboard-toolbar-link, .dashboard-toolbar-dropdown-link").forEach(link => {
     link.addEventListener("click", event => {
       const href = link.getAttribute("href") || "";
       if (!href.startsWith("#")) return;
@@ -1449,6 +1595,7 @@ function initializeAdminBoard() {
       clearSelectedStaff();
     } else {
       adminBoardState.selectedDiscordId = discordId;
+      adminBoardState.allowEmptySelection = false;
       toggleSelectedBulkDiscordId(discordId, true);
     }
     applyAdminBoardPayload(adminBoardState.payload);
@@ -1470,6 +1617,7 @@ function initializeAdminBoard() {
 
       if (discordId) {
         adminBoardState.selectedDiscordId = discordId;
+        adminBoardState.allowEmptySelection = false;
         toggleSelectedBulkDiscordId(discordId, true);
       }
 
@@ -1489,6 +1637,7 @@ function initializeAdminBoard() {
       const discordId = checkbox.getAttribute("data-full-hours-select") || "";
       toggleSelectedBulkDiscordId(discordId, checkbox.checked);
       adminBoardState.selectedDiscordId = checkbox.checked ? String(discordId) : adminBoardState.selectedDiscordId;
+      adminBoardState.allowEmptySelection = !checkbox.checked;
       if (!checkbox.checked && adminBoardState.selectedDiscordId === String(discordId)) {
         adminBoardState.selectedDiscordId = "";
       }
@@ -1503,11 +1652,31 @@ function initializeAdminBoard() {
     if (isAlreadySelected) {
       toggleSelectedBulkDiscordId(discordId, false);
       adminBoardState.selectedDiscordId = "";
+      adminBoardState.allowEmptySelection = true;
     } else {
       adminBoardState.selectedDiscordId = discordId;
+      adminBoardState.allowEmptySelection = false;
       toggleSelectedBulkDiscordId(discordId, true);
     }
     applyAdminBoardPayload(adminBoardState.payload);
+  });
+
+  document.getElementById("hours-full-board-rows")?.addEventListener("dblclick", event => {
+    const cell = event.target.closest("td[data-day]");
+    const row = event.target.closest("tr[data-full-hours-row]");
+    if (!cell || !row) return;
+
+    const discordId = String(row.getAttribute("data-full-hours-row") || "");
+    const person = getAdminPeople().find(entry => String(entry?.discordId || "") === discordId) || null;
+    const day = Number(cell.getAttribute("data-day") || 0);
+    const hours = Number(cell.getAttribute("data-hours") || 0);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const maxDay = new Date(year, month + 1, 0).getDate();
+    const safeDay = Math.min(Math.max(day, 1), maxDay);
+    const shiftDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+    openHoursEditorModal(person, { shiftDate, hours });
   });
 
   ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
@@ -1532,6 +1701,7 @@ function initializeAdminBoard() {
     setSelectedBulkDiscordIds(visiblePeople.map(person => String(person?.discordId || "")));
     if (visiblePeople[0]?.discordId) {
       adminBoardState.selectedDiscordId = String(visiblePeople[0].discordId);
+      adminBoardState.allowEmptySelection = false;
     }
     setBulkFeedback(`${visiblePeople.length} visible staff row(s) selected.`, false);
     applyAdminBoardPayload(adminBoardState.payload);
@@ -1543,16 +1713,37 @@ function initializeAdminBoard() {
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
+  const openEditor = () => {
+    const person = findSelectedStaff();
+    if (!person) {
+      setEditorFeedback("Pick a staff row first, then open the editor.", true);
+      return;
+    }
+    openHoursEditorModal(person);
+  };
+
+  document.getElementById("hours-open-editor")?.addEventListener("click", openEditor);
+  document.getElementById("hours-open-editor-secondary")?.addEventListener("click", openEditor);
+
+  document.querySelectorAll("[data-hours-modal-close]").forEach(node => {
+    node.addEventListener("click", () => setHoursEditorOpen(false));
+  });
+
   document.getElementById("broadcast-send")?.addEventListener("click", () => {
     const message = String(document.getElementById("broadcast-message")?.value || "").trim();
     const tone = String(document.getElementById("broadcast-tone-select")?.value || "standard").trim();
+    const targetDiscordId = String(document.getElementById("broadcast-target-select")?.value || "").trim();
 
     if (!message) {
       setBroadcastFeedback("Write the announcement before sending it.", true);
       return;
     }
 
-    sendAdminCommand("broadcast_announcement", { message, tone });
+    sendAdminCommand("broadcast_announcement", {
+      message,
+      tone,
+      targetDiscordId: targetDiscordId || ""
+    });
   });
 
   document.getElementById("broadcast-clear")?.addEventListener("click", () => {
@@ -1794,4 +1985,6 @@ function initializeDeveloperTodoList() {
 initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();
+initializeSidebarToggle();
+initializeToolbarMenu();
 initializeDeveloperTodoList();

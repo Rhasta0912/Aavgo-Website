@@ -63,7 +63,14 @@ $bootstrapJson = json_encode(
   <div class="dashboard-shell dashboard-shell-admin">
     <aside class="dashboard-sidebar dashboard-sidebar-admin reveal reveal-in">
       <div class="dashboard-sidebar-glow"></div>
-      <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+      <div class="dashboard-sidebar-top">
+        <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+        <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
 
       <section class="dashboard-profile-card dashboard-profile-card-plain">
         <div class="dashboard-profile-copy">
@@ -85,18 +92,15 @@ $bootstrapJson = json_encode(
       </div>
 
       <div class="dashboard-theme-toggle">
-        <button class="dashboard-theme-button" type="button" data-theme-toggle>Light mode</button>
+        <button class="dashboard-theme-button" type="button" data-theme-toggle>Switch theme</button>
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
         <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
-        <a class="dashboard-nav-link" href="#leadership-broadcast">Command center</a>
-        <a class="dashboard-nav-link" href="#leadership-filters">Filters</a>
-        <a class="dashboard-nav-link" href="#leadership-hours">Live hours</a>
         <a class="dashboard-nav-link" href="#leadership-full-hours">Full hours</a>
-        <a class="dashboard-nav-link" href="#leadership-actions">Staff controls</a>
-        <a class="dashboard-nav-link" href="#leadership-hotels">Hotel lanes</a>
-        <a class="dashboard-nav-link" href="#leadership-audit">Audit log</a>
+        <?php if ($isDeveloper): ?>
+          <a class="dashboard-nav-link" href="#leadership-developer-lane">Developer lane</a>
+        <?php endif; ?>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
@@ -118,11 +122,26 @@ $bootstrapJson = json_encode(
           </p>
         </div>
         <div class="dashboard-toolbar">
-          <a class="dashboard-toolbar-link" href="#leadership-broadcast">Command center</a>
-          <a class="dashboard-toolbar-link" href="#leadership-actions">Staff controls</a>
-          <a class="dashboard-toolbar-link" href="#leadership-full-hours">Full hours</a>
-          <a class="dashboard-toolbar-link" href="/user/">User workspace</a>
-          <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
+          <button class="dashboard-toolbar-link dashboard-toolbar-toggle" type="button" data-sidebar-toggle>Menu</button>
+          <div class="dashboard-toolbar-menu" data-toolbar-menu>
+            <button class="dashboard-toolbar-link dashboard-toolbar-profile" type="button" data-toolbar-menu-toggle aria-expanded="false" aria-haspopup="true">
+              <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
+              <span class="dashboard-toolbar-profile-copy">
+                <strong><?php echo $safeDisplayName; ?></strong>
+                <small><?php echo $safeRoleSummary; ?></small>
+              </span>
+            </button>
+            <div class="dashboard-toolbar-dropdown" data-toolbar-menu-panel hidden>
+              <button class="dashboard-toolbar-dropdown-link" type="button" data-theme-toggle>Toggle theme</button>
+              <a class="dashboard-toolbar-dropdown-link" href="#leadership-broadcast">Command center</a>
+              <a class="dashboard-toolbar-dropdown-link" href="#leadership-full-hours">Full hours</a>
+              <?php if ($isDeveloper): ?>
+                <a class="dashboard-toolbar-dropdown-link" href="#leadership-developer-lane">Developer lane</a>
+              <?php endif; ?>
+              <a class="dashboard-toolbar-dropdown-link" href="/user/">User workspace</a>
+              <a class="dashboard-toolbar-dropdown-link dashboard-toolbar-dropdown-link-danger" href="/auth/logout/">Log out</a>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -281,6 +300,12 @@ $bootstrapJson = json_encode(
 
               <div class="dashboard-control-row">
                 <label class="dashboard-control-field">
+                  <span>Target</span>
+                  <select id="broadcast-target-select">
+                    <option value="">Website-wide (all staff)</option>
+                  </select>
+                </label>
+                <label class="dashboard-control-field">
                   <span>Tone</span>
                   <select id="broadcast-tone-select">
                     <option value="standard">Standard alert</option>
@@ -385,30 +410,6 @@ $bootstrapJson = json_encode(
             <p class="dashboard-panel-copy">This closes active sessions for the selected hotel and lets the bot clean up Discord status on the same pass.</p>
           </article>
 
-            <article class="dashboard-panel" id="developer-tool-panel" <?php echo $isDeveloper ? '' : 'hidden'; ?>>
-              <div class="dashboard-panel-heading">
-                <div>
-                  <p class="dashboard-kicker">Developer tools</p>
-                  <h2>Role-sync and snapshot utilities</h2>
-                </div>
-              </div>
-              <div class="dashboard-control-stack">
-                <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
-                <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
-              </div>
-              <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
-              <div class="dashboard-dev-todo">
-                <p class="dashboard-kicker">Developer to-do</p>
-                <div class="dashboard-dev-todo-input">
-                  <input id="dev-todo-input" type="text" maxlength="120" placeholder="Add a quick task for the dev lane">
-                  <button class="button button-secondary dashboard-inline-button" id="dev-todo-add" type="button">Add task</button>
-                </div>
-                <ul class="dashboard-dev-todo-list" id="dev-todo-list">
-                  <li class="dashboard-dev-todo-empty">No dev tasks yet.</li>
-                </ul>
-              </div>
-            </article>
-
           <article class="dashboard-panel" id="leadership-audit">
             <div class="dashboard-panel-heading">
               <div>
@@ -460,6 +461,7 @@ $bootstrapJson = json_encode(
             <div class="dashboard-bulk-actions">
               <button class="button button-secondary dashboard-inline-button" id="hours-bulk-select-visible" type="button">Select filtered</button>
               <button class="button button-secondary dashboard-inline-button" id="hours-bulk-clear" type="button">Clear selection</button>
+              <button class="button button-secondary dashboard-inline-button" id="hours-open-editor" type="button">Open editor</button>
             </div>
             <div class="dashboard-bulk-controls">
               <label class="dashboard-control-field">
@@ -479,7 +481,19 @@ $bootstrapJson = json_encode(
               <button class="button button-secondary dashboard-inline-button" id="hours-bulk-hotel-submit" type="button">Update selected hotels</button>
               <button class="button button-primary dashboard-inline-button" id="hours-bulk-logout-submit" type="button">Force logout selected</button>
             </div>
-            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then apply team, hotel, or logout actions in one pass.</p>
+            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then apply team, hotel, or logout actions in one pass. Double-click a day cell to edit that date directly.</p>
+          </div>
+
+          <div class="dashboard-hours-editor-inline" id="hours-editor-summary-card">
+            <div>
+              <p class="dashboard-kicker">Manual edit lane</p>
+              <h3 id="hours-editor-summary-selected">Pick a staff row to edit hours.</h3>
+            </div>
+            <div class="dashboard-hours-editor-inline-actions">
+              <span class="dashboard-chip">Double-click any day cell</span>
+              <button class="button button-secondary dashboard-inline-button" id="hours-open-editor-secondary" type="button">Open hours editor</button>
+            </div>
+            <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
           </div>
 
           <div class="dashboard-hours-sheet-wrap">
@@ -512,87 +526,6 @@ $bootstrapJson = json_encode(
         </article>
 
         <section class="dashboard-admin-grid dashboard-admin-grid-full reveal reveal-delay-2">
-          <article class="dashboard-panel" id="leadership-editor">
-            <div class="dashboard-panel-heading">
-              <div>
-                <p class="dashboard-kicker">Manual hours editor</p>
-                <h2 id="hours-editor-selected">Pick a staff row to edit hours.</h2>
-              </div>
-              <span class="dashboard-chip">Audited</span>
-            </div>
-
-            <div class="dashboard-control-grid dashboard-control-grid-double">
-              <label class="dashboard-control-field">
-                <span>Date</span>
-                <input id="hours-editor-date" type="date">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Mode</span>
-                <select id="hours-editor-mode">
-                  <option value="shift">Live shift</option>
-                  <option value="training">Training</option>
-                </select>
-              </label>
-              <label class="dashboard-control-field">
-                <span>Login</span>
-                <input id="hours-editor-login" type="time">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Logout</span>
-                <input id="hours-editor-logout" type="time">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Hotel (for live shift)</span>
-                <select id="hours-editor-hotel">
-                  <option value="">Use linked hotel</option>
-                </select>
-              </label>
-              <label class="dashboard-control-field dashboard-control-field-wide">
-                <span>Reason</span>
-                <input id="hours-editor-reason" type="text" maxlength="160" placeholder="Why is this correction needed?">
-              </label>
-            </div>
-
-            <div class="dashboard-control-row">
-              <button class="button button-primary dashboard-inline-button" id="hours-editor-add-submit" type="button">Add hours correction</button>
-            </div>
-
-            <div class="dashboard-control-grid dashboard-control-grid-double dashboard-control-grid-separate">
-              <label class="dashboard-control-field">
-                <span>Removal date</span>
-                <input id="hours-remove-date" type="date">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Hours to remove</span>
-                <input id="hours-remove-hours" type="number" min="0.25" step="0.25" placeholder="2.5">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Removal mode</span>
-                <select id="hours-remove-mode">
-                  <option value="shift">Live shift</option>
-                  <option value="training">Training</option>
-                </select>
-              </label>
-              <label class="dashboard-control-field dashboard-control-field-wide">
-                <span>Removal reason</span>
-                <input id="hours-remove-reason" type="text" maxlength="160" placeholder="Why are hours being removed?">
-              </label>
-            </div>
-
-          <div class="dashboard-control-row">
-            <button class="button button-secondary dashboard-inline-button" id="hours-remove-submit" type="button">Remove hours</button>
-          </div>
-
-          <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
-
-            <div class="dashboard-adjustment-log" id="hours-adjustment-log">
-              <div class="dashboard-empty-state">
-                <strong>Waiting for a staff selection.</strong>
-                <p>Recent manual hour adjustments for the selected staff member will show here.</p>
-              </div>
-            </div>
-          </article>
-
           <aside class="dashboard-stack dashboard-stack-admin">
             <article class="dashboard-panel" id="leadership-hotels">
               <div class="dashboard-panel-heading">
@@ -608,10 +541,138 @@ $bootstrapJson = json_encode(
                 </div>
               </div>
             </article>
+
+            <?php if ($isDeveloper): ?>
+              <article class="dashboard-panel dashboard-panel-developer-lane" id="leadership-developer-lane">
+                <div class="dashboard-panel-heading">
+                  <div>
+                    <p class="dashboard-kicker">Developer lane</p>
+                    <h2>Keep the maintenance queue and live sync tools in one calmer place.</h2>
+                  </div>
+                  <span class="dashboard-chip dashboard-chip-accent">Developer only</span>
+                </div>
+
+                <div class="dashboard-developer-lane-grid">
+                  <section class="dashboard-developer-card">
+                    <p class="dashboard-kicker">To-do list</p>
+                    <div class="dashboard-dev-todo-input">
+                      <input id="dev-todo-input" type="text" maxlength="120" placeholder="Add a quick task for the dev lane">
+                      <button class="button button-secondary dashboard-inline-button" id="dev-todo-add" type="button">Add task</button>
+                    </div>
+                    <ul class="dashboard-dev-todo-list" id="dev-todo-list">
+                      <li class="dashboard-dev-todo-empty">No dev tasks yet.</li>
+                    </ul>
+                  </section>
+
+                  <section class="dashboard-developer-card">
+                    <p class="dashboard-kicker">Live maintenance</p>
+                    <div class="dashboard-control-stack">
+                      <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
+                      <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+                    </div>
+                    <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
+                  </section>
+                </div>
+              </article>
+            <?php endif; ?>
           </aside>
         </section>
       </section>
     </main>
+  </div>
+
+  <div class="dashboard-modal" id="hours-editor-modal" hidden>
+    <div class="dashboard-modal-backdrop" data-hours-modal-close></div>
+    <div class="dashboard-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="hours-editor-modal-title">
+      <div class="dashboard-panel-heading">
+        <div>
+          <p class="dashboard-kicker">Manual edit lane</p>
+          <h2 id="hours-editor-modal-title">Edit a specific day clearly.</h2>
+        </div>
+        <button class="dashboard-modal-close" type="button" data-hours-modal-close aria-label="Close hours editor">Close</button>
+      </div>
+
+      <div class="dashboard-hours-modal-grid">
+        <section class="dashboard-hours-modal-card">
+          <p class="dashboard-kicker">Selected staff</p>
+          <strong id="hours-editor-selected">Pick a staff row to edit hours.</strong>
+
+          <div class="dashboard-control-grid dashboard-control-grid-double">
+            <label class="dashboard-control-field">
+              <span>Date</span>
+              <input id="hours-editor-date" type="date">
+            </label>
+            <label class="dashboard-control-field">
+              <span>Mode</span>
+              <select id="hours-editor-mode">
+                <option value="shift">Live shift</option>
+                <option value="training">Training</option>
+              </select>
+            </label>
+            <label class="dashboard-control-field">
+              <span>Login</span>
+              <input id="hours-editor-login" type="time">
+            </label>
+            <label class="dashboard-control-field">
+              <span>Logout</span>
+              <input id="hours-editor-logout" type="time">
+            </label>
+            <label class="dashboard-control-field dashboard-control-field-wide">
+              <span>Hotel</span>
+              <select id="hours-editor-hotel">
+                <option value="">Use linked hotel</option>
+              </select>
+            </label>
+            <label class="dashboard-control-field dashboard-control-field-wide">
+              <span>Reason</span>
+              <input id="hours-editor-reason" type="text" maxlength="140" placeholder="Why are you editing this shift?">
+            </label>
+          </div>
+
+          <div class="dashboard-control-row">
+            <button class="button button-primary dashboard-inline-button" id="hours-editor-add-submit" type="button">Save manual shift</button>
+          </div>
+        </section>
+
+        <section class="dashboard-hours-modal-card">
+          <p class="dashboard-kicker">Remove hours</p>
+          <div class="dashboard-control-grid dashboard-control-grid-double">
+            <label class="dashboard-control-field">
+              <span>Date</span>
+              <input id="hours-remove-date" type="date">
+            </label>
+            <label class="dashboard-control-field">
+              <span>Mode</span>
+              <select id="hours-remove-mode">
+                <option value="shift">Live shift</option>
+                <option value="training">Training</option>
+              </select>
+            </label>
+            <label class="dashboard-control-field">
+              <span>Hours</span>
+              <input id="hours-remove-hours" type="number" min="0.1" step="0.1" placeholder="0.0">
+            </label>
+            <label class="dashboard-control-field dashboard-control-field-wide">
+              <span>Reason</span>
+              <input id="hours-remove-reason" type="text" maxlength="140" placeholder="Why are you removing these hours?">
+            </label>
+          </div>
+          <div class="dashboard-control-row">
+            <button class="button button-secondary dashboard-inline-button" id="hours-remove-submit" type="button">Remove hours</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="dashboard-hours-modal-card">
+        <p class="dashboard-kicker">Recent manual changes</p>
+        <div class="dashboard-adjustment-log" id="hours-adjustment-log">
+          <div class="dashboard-empty-state">
+            <strong>Waiting for a staff selection.</strong>
+            <p>Recent manual hour adjustments for the selected staff member will show here.</p>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script id="admin-board-bootstrap" type="application/json"><?php echo $bootstrapJson ?: '{}'; ?></script>
