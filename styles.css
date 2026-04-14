@@ -3973,18 +3973,18 @@ h2 {
   background:
     radial-gradient(circle at 12% 8%, rgba(120, 179, 161, 0.12), transparent 28%),
     radial-gradient(circle at 84% 12%, rgba(216, 176, 95, 0.12), transparent 25%),
-    linear-gradient(180deg, #f7f2eb 0%, #f0e8dd 44%, #e8decf 100%);
+    linear-gradient(180deg, #f7f1e8 0%, #efe5d7 44%, #e4d8c4 100%);
 }
 
 .theme-light .dashboard-sidebar,
 .theme-light .dashboard-panel,
 .theme-light .dashboard-stat-card,
 .theme-light .dashboard-hero-card {
-  border-color: rgba(21, 27, 38, 0.11);
-  background: linear-gradient(180deg, rgba(252, 249, 244, 0.96) 0%, rgba(242, 235, 226, 0.9) 100%);
+  border-color: rgba(21, 27, 38, 0.12);
+  background: linear-gradient(180deg, rgba(250, 245, 236, 0.98) 0%, rgba(241, 231, 219, 0.94) 100%);
   color: #18202c;
   box-shadow:
-    0 18px 42px rgba(55, 44, 32, 0.08),
+    0 18px 42px rgba(55, 44, 32, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -4067,7 +4067,7 @@ h2 {
 
 .theme-light .workspace-dashboard .dashboard-sidebar-admin,
 .theme-light .workspace-dashboard .dashboard-sidebar-user {
-  background: linear-gradient(180deg, rgba(249, 243, 235, 0.9) 0%, rgba(242, 233, 222, 0.86) 100%);
+  background: linear-gradient(180deg, rgba(250, 244, 235, 0.94) 0%, rgba(242, 232, 219, 0.9) 100%);
   box-shadow:
     12px 18px 42px rgba(62, 52, 42, 0.1),
     inset -1px 0 0 rgba(255, 255, 255, 0.62);
@@ -4082,7 +4082,7 @@ h2 {
 
 .theme-light .dashboard-toolbar-dropdown {
   border-color: rgba(24, 32, 44, 0.1);
-  background: linear-gradient(180deg, rgba(252, 249, 244, 0.99) 0%, rgba(239, 231, 221, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(250, 245, 236, 0.99) 0%, rgba(240, 232, 221, 0.98) 100%);
   box-shadow: 0 18px 44px rgba(55, 44, 32, 0.12);
 }
 
@@ -4095,14 +4095,14 @@ h2 {
 .theme-light .dashboard-hours-editor-inline,
 .theme-light .dashboard-hours-modal-card,
 .theme-light .dashboard-developer-card {
-  background: rgba(250, 245, 238, 0.96);
+  background: rgba(250, 244, 235, 0.98);
   border-color: rgba(24, 32, 44, 0.1);
 }
 
 .theme-light .dashboard-hours-sheet-wrap,
 .theme-light .dashboard-hours-table-wrap {
   border-color: rgba(24, 32, 44, 0.1);
-  background: rgba(250, 245, 239, 0.76);
+  background: rgba(249, 243, 234, 0.82);
 }
 
 .theme-light .dashboard-hours-sheet thead th,
@@ -4132,6 +4132,41 @@ h2 {
 
 .theme-light .dashboard-hours-cell.has-hours {
   color: #172234;
+}
+
+.theme-light .dashboard-brand,
+.theme-light .dashboard-profile-copy strong,
+.theme-light .dashboard-profile-copy p,
+.theme-light .dashboard-side-note h3,
+.theme-light .dashboard-side-note p,
+.theme-light .dashboard-command-box strong,
+.theme-light .dashboard-command-box p,
+.theme-light .dashboard-route-card strong,
+.theme-light .dashboard-route-card p,
+.theme-light .dashboard-stat-card p,
+.theme-light .dashboard-stat-card span,
+.theme-light .dashboard-staff-cell strong,
+.theme-light .dashboard-staff-cell span,
+.theme-light .dashboard-inline-stack strong,
+.theme-light .dashboard-inline-stack span,
+.theme-light .dashboard-hours-cell-copy,
+.theme-light .dashboard-empty-state,
+.theme-light .dashboard-empty-state strong,
+.theme-light .dashboard-empty-state p,
+.theme-light .dashboard-toolbar-avatar,
+.theme-light .dashboard-sidebar-toggle span {
+  color: #18202c;
+}
+
+.theme-light .dashboard-chip,
+.theme-light .dashboard-status-pill {
+  background: rgba(255, 249, 240, 0.94);
+  color: #18202c;
+}
+
+.theme-light .dashboard-hours-sheet tbody td,
+.theme-light .dashboard-hours-sheet thead th {
+  color: #18202c;
 }
 
 .theme-light .dashboard-developer-task-card {

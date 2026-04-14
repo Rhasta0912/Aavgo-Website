@@ -776,7 +776,10 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
   const input = cell.querySelector(".dashboard-hours-inline-input");
   if (!input) return;
 
+  let finished = false;
   const finish = (commit) => {
+    if (finished) return;
+    finished = true;
     const nextValue = Number(input.value || 0);
     cell.classList.remove("is-editing");
     cell.innerHTML = previousMarkup;
@@ -788,7 +791,8 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
   input.focus();
   input.select();
   input.addEventListener("keydown", event => {
-    if (event.key === "Enter" || event.code === "NumpadEnter") {
+    const isEnter = event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter" || event.keyCode === 13;
+    if (isEnter) {
       event.preventDefault();
       event.stopPropagation();
       finish(true);
@@ -799,6 +803,14 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
       finish(false);
     }
   });
+  input.addEventListener("keyup", event => {
+    const isEnter = event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter" || event.keyCode === 13;
+    if (isEnter) {
+      event.preventDefault();
+      finish(true);
+    }
+  });
+  input.addEventListener("change", () => finish(true));
   input.addEventListener("blur", () => finish(true), { once: true });
 }
 
