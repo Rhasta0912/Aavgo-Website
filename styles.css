@@ -4134,6 +4134,17 @@ h2 {
   color: #172234;
 }
 
+.theme-light .dashboard-sidebar *,
+.theme-light .dashboard-panel *,
+.theme-light .dashboard-stat-card *,
+.theme-light .dashboard-hero-card *,
+.theme-light .dashboard-hours-sheet *,
+.theme-light .dashboard-hours-editor-inline *,
+.theme-light .dashboard-developer-card *,
+.theme-light .dashboard-developer-task-card * {
+  color: #18202c;
+}
+
 .theme-light .dashboard-brand,
 .theme-light .dashboard-profile-copy strong,
 .theme-light .dashboard-profile-copy p,
@@ -4160,7 +4171,7 @@ h2 {
 
 .theme-light .dashboard-chip,
 .theme-light .dashboard-status-pill {
-  background: rgba(255, 249, 240, 0.94);
+  background: rgba(255, 249, 240, 0.95);
   color: #18202c;
 }
 

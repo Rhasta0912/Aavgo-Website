@@ -795,7 +795,6 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
     if (isEnter) {
       event.preventDefault();
       event.stopPropagation();
-      finish(true);
     }
     if (event.key === "Escape") {
       event.preventDefault();
@@ -807,6 +806,7 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
     const isEnter = event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter" || event.keyCode === 13;
     if (isEnter) {
       event.preventDefault();
+      event.stopPropagation();
       finish(true);
     }
   });
