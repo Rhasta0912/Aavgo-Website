@@ -2236,30 +2236,28 @@ function initializeDeveloperWorkspace() {
 
   const renderTaskCard = (item) => `
     <article class="dashboard-developer-task-card" data-task-id="${escapeHtml(item.id)}">
+      <div class="dashboard-developer-task-labels">
+        <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.status || "To Do")}</span>
+        <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
+      </div>
       <div class="dashboard-developer-task-top">
         <div>
-          <strong>${escapeHtml(item.title || "Untitled task")}</strong>
+          <strong>${escapeHtml(item.title || "Untitled card")}</strong>
           <p class="dashboard-developer-task-meta">
             Owner: ${escapeHtml(item.owner || "Unassigned")}
             ${item.startDate ? ` &middot; Starts ${escapeHtml(item.startDate)}` : " &middot; Starts anytime"}
             ${item.deadlineDate ? ` &middot; Deadline ${escapeHtml(item.deadlineDate)}` : ""}
           </p>
         </div>
-        <button type="button" data-developer-task-remove="${escapeHtml(item.id)}">Remove</button>
+        <button type="button" class="dashboard-developer-task-remove" data-developer-task-remove="${escapeHtml(item.id)}" aria-label="Remove task">×</button>
       </div>
-      <div class="dashboard-broadcast-meta">
-        <span class="dashboard-chip">${escapeHtml(item.status || "To Do")}</span>
-        <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
-        <span class="dashboard-chip">${item.startDate ? `Start ${escapeHtml(item.startDate)}` : "Start anytime"}</span>
-        <span class="dashboard-chip">${item.deadlineDate ? `Deadline ${escapeHtml(item.deadlineDate)}` : "No deadline"}</span>
-      </div>
+      <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No notes yet.")}</p>
       <label class="dashboard-control-field">
-        <span>Move status</span>
+        <span>Move card</span>
         <select data-developer-task-status-change="${escapeHtml(item.id)}">
           ${STATUS_ORDER.map(status => `<option value="${escapeHtml(status)}"${normalizeStatus(item.status) === status ? " selected" : ""}>${escapeHtml(status)}</option>`).join("")}
         </select>
       </label>
-      <p>${escapeHtml(item.notes || "No notes yet.")}</p>
     </article>
   `;
 
@@ -2274,25 +2272,26 @@ function initializeDeveloperWorkspace() {
       <section class="dashboard-developer-lane" data-developer-lane="${escapeHtml(status)}">
         <header class="dashboard-developer-lane-head">
           <div>
-            <p class="dashboard-kicker">${escapeHtml(status)}</p>
-            <h3>${escapeHtml(status)} (${groupItems.length})</h3>
+            <p class="dashboard-kicker">List</p>
+            <h3>${escapeHtml(status)}</h3>
             <p class="dashboard-developer-lane-copy">${escapeHtml(laneCopy)}</p>
           </div>
-          <button
-            type="button"
-            class="dashboard-chip dashboard-chip-accent dashboard-developer-lane-add"
-            data-developer-task-create-status="${escapeHtml(status)}"
-            aria-label="Add task to ${escapeHtml(status)}"
-          >+</button>
+          <span class="dashboard-chip">${groupItems.length}</span>
         </header>
         <div class="dashboard-developer-task-group-list">
           ${groupItems.length ? groupItems.map(renderTaskCard).join("") : `
             <div class="dashboard-developer-lane-empty">
-              <strong>No tasks here yet.</strong>
-              <p>Use the plus button to prefill this lane.</p>
+              <strong>No cards yet.</strong>
+              <p>Start this list with a card for ${escapeHtml(status)}.</p>
             </div>
           `}
         </div>
+        <button
+          type="button"
+          class="dashboard-developer-lane-add"
+          data-developer-task-create-status="${escapeHtml(status)}"
+          aria-label="Add card to ${escapeHtml(status)}"
+        >+ Add a card</button>
       </section>
     `;
   };

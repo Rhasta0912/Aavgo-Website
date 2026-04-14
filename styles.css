@@ -2166,6 +2166,7 @@ h2 {
 .sidebar-collapsed .dashboard-sidebar-user {
   width: 0;
   min-width: 0;
+  max-width: 0;
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -2174,6 +2175,7 @@ h2 {
   overflow: hidden;
   pointer-events: none;
   transform: translateX(-100%);
+  display: none !important;
 }
 
 .sidebar-collapsed .dashboard-side-section {
@@ -3867,10 +3869,28 @@ h2 {
 .dashboard-developer-task-top button {
   border: none;
   background: transparent;
-  color: rgba(216, 176, 95, 0.92);
+  color: rgba(216, 176, 95, 0.95);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+.dashboard-developer-task-remove {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.dashboard-developer-task-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .dashboard-developer-task-meta {
@@ -3879,7 +3899,7 @@ h2 {
   font-size: 0.92rem;
 }
 
-.dashboard-developer-task-card p {
+.dashboard-developer-task-notes {
   margin: 0;
   color: rgba(255, 255, 255, 0.66);
   line-height: 1.65;
@@ -4422,7 +4442,14 @@ body.sidebar-collapsed .dashboard-sidebar-admin,
 body.sidebar-collapsed .dashboard-sidebar-user {
   display: none !important;
   visibility: hidden !important;
+  max-width: 0 !important;
+  overflow: hidden !important;
   pointer-events: none !important;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-admin > *,
+body.sidebar-collapsed .dashboard-sidebar-user > * {
+  display: none !important;
 }
 
 body.sidebar-collapsed .dashboard-shell-admin,
@@ -4484,21 +4511,24 @@ body.sidebar-collapsed .dashboard-shell-user {
 .dashboard-developer-board {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(300px, 1fr);
-  gap: 1rem;
+  grid-auto-columns: minmax(276px, 276px);
+  gap: 0.9rem;
   overflow-x: auto;
-  padding-bottom: 0.25rem;
+  padding: 0.15rem 0 0.4rem;
+  align-items: start;
 }
 
 .dashboard-developer-lane {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.8rem;
   align-content: start;
-  min-width: 300px;
-  padding: 1.05rem;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.015) 100%);
+  min-width: 276px;
+  padding: 0.85rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(14px);
 }
 
 .dashboard-developer-lane-head {
@@ -4511,7 +4541,7 @@ body.sidebar-collapsed .dashboard-shell-user {
 .dashboard-developer-lane-head h3 {
   margin: 0.1rem 0 0;
   color: #fff8ef;
-  font-size: 1rem;
+  font-size: 1.02rem;
 }
 
 .dashboard-developer-lane-copy {
@@ -4522,12 +4552,25 @@ body.sidebar-collapsed .dashboard-shell-user {
 }
 
 .dashboard-developer-lane-add {
-  border: 0;
+  width: 100%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff8ef;
   cursor: pointer;
-  min-width: 2.3rem;
-  min-height: 2.3rem;
+  min-height: 2.7rem;
   justify-content: center;
-  padding: 0;
+  padding: 0 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.dashboard-developer-lane-add:hover,
+.dashboard-developer-lane-add:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .dashboard-developer-lane-empty {
@@ -4549,7 +4592,14 @@ body.sidebar-collapsed .dashboard-shell-user {
 }
 
 .dashboard-developer-task-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem;
   border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
 .dashboard-developer-task-group-list {
