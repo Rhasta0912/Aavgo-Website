@@ -579,6 +579,8 @@ function aavgo_read_live_signal_store(): array
         }
     }
 
+    $target = is_array($announcement['target'] ?? null) ? $announcement['target'] : null;
+    $targetDiscordId = trim((string) ($target['discordId'] ?? ''));
     $store['announcement'] = [
         'id' => trim((string) ($announcement['id'] ?? '')),
         'message' => trim((string) ($announcement['message'] ?? '')),
@@ -587,6 +589,11 @@ function aavgo_read_live_signal_store(): array
         'updatedAt' => trim((string) ($announcement['updatedAt'] ?? '')) ?: trim((string) ($announcement['createdAt'] ?? '')) ?: gmdate('c'),
         'expiresAt' => $expiresAt,
         'actor' => is_array($announcement['actor'] ?? null) ? $announcement['actor'] : [],
+        'target' => $targetDiscordId !== '' ? [
+            'discordId' => $targetDiscordId,
+            'name' => trim((string) ($target['name'] ?? 'Selected staff')),
+            'roleSummary' => trim((string) ($target['roleSummary'] ?? 'Staff')),
+        ] : null,
     ];
 
     return $store;
@@ -612,7 +619,7 @@ function aavgo_get_active_announcement(): ?array
     return is_array($store['announcement'] ?? null) ? $store['announcement'] : null;
 }
 
-function aavgo_publish_announcement(string $message, string $tone, array $actor): array
+function aavgo_publish_announcement(string $message, string $tone, array $actor, ?array $target = null): array
 {
     $cleanMessage = trim(preg_replace('/\s+/', ' ', $message) ?? '');
     if ($cleanMessage === '') {
@@ -620,6 +627,7 @@ function aavgo_publish_announcement(string $message, string $tone, array $actor)
     }
 
     $normalizedTone = in_array($tone, ['standard', 'urgent'], true) ? $tone : 'standard';
+    $targetDiscordId = trim((string) ($target['discordId'] ?? ''));
     $announcement = [
         'id' => aavgo_create_identifier('alert'),
         'message' => mb_substr($cleanMessage, 0, 280),
@@ -632,16 +640,22 @@ function aavgo_publish_announcement(string $message, string $tone, array $actor)
             'name' => trim((string) ($actor['name'] ?? 'Leadership')),
             'roleSummary' => trim((string) ($actor['roleSummary'] ?? 'Leadership')),
         ],
+        'target' => $targetDiscordId !== '' ? [
+            'discordId' => $targetDiscordId,
+            'name' => trim((string) ($target['name'] ?? 'Selected staff')),
+            'roleSummary' => trim((string) ($target['roleSummary'] ?? 'Staff')),
+        ] : null,
     ];
 
     $store = aavgo_read_live_signal_store();
     $store['announcement'] = $announcement;
     aavgo_write_live_signal_store($store);
 
+    $targetLabel = $targetDiscordId !== '' ? sprintf('Direct alert for %s', $announcement['target']['name'] ?? 'Selected staff') : 'Website-wide broadcast';
     aavgo_append_audit_entry([
         'status' => 'completed',
         'label' => 'Leadership announcement',
-        'target' => 'Website-wide broadcast',
+        'target' => $targetLabel,
         'message' => sprintf(
             '%s alert published by %s.',
             ucfirst($normalizedTone),
@@ -1025,7 +1039,7 @@ function aavgo_build_management_payload(array $user, ?array $hoursPayload = null
         ],
         'meta' => [
             'teams' => array_values(array_filter($meta['teams'] ?? [], 'is_string')),
-            'hotels' => is_array($meta['hotels'] ?? null) ? $meta['hotels'] : [],
+            'hotels' => aavgo_normalize_hotel_options(is_array($meta['hotels'] ?? null) ? $meta['hotels'] : []),
             'roles' => array_values(array_filter($meta['roles'] ?? [], 'is_string')),
         ],
         'queue' => [
@@ -1047,6 +1061,56 @@ function aavgo_build_admin_board_payload(array $user): array
     $hoursPayload = aavgo_fetch_hours_bridge_payload();
     $hoursPayload['management'] = aavgo_build_management_payload($user, $hoursPayload);
     return $hoursPayload;
+}
+
+function aavgo_normalize_hotel_options(array $hotels): array
+{
+    $normalized = [];
+
+    foreach ($hotels as $hotel) {
+        if (!is_array($hotel)) {
+            continue;
+        }
+
+        $name = trim((string) ($hotel['name'] ?? ''));
+        $id = trim((string) ($hotel['id'] ?? ''));
+        if ($name === '' && $id === '') {
+            continue;
+        }
+
+        if ($id === '') {
+            $id = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name) ?: '');
+            $id = trim($id, '-');
+        }
+
+        if ($id === '') {
+            continue;
+        }
+
+        if ($name === '') {
+            $name = $id;
+        }
+
+        $normalized[$id] = [
+            'id' => $id,
+            'name' => $name,
+        ];
+    }
+
+    $defaults = [
+        [
+            'id' => 'thousand-oaks',
+            'name' => 'Thousand Oaks',
+        ],
+    ];
+
+    foreach ($defaults as $hotel) {
+        if (!isset($normalized[$hotel['id']])) {
+            $normalized[$hotel['id']] = $hotel;
+        }
+    }
+
+    return array_values($normalized);
 }
 
 function aavgo_read_pushed_hours_snapshot_payload(): ?array
@@ -1870,10 +1934,20 @@ function aavgo_build_live_signal_payload(?array $user = null): array
         ];
     }
 
+    $announcement = aavgo_get_active_announcement();
+    if (is_array($announcement)) {
+        $target = is_array($announcement['target'] ?? null) ? $announcement['target'] : null;
+        $targetDiscordId = trim((string) ($target['discordId'] ?? ''));
+        $viewerDiscordId = trim((string) ($viewer['id'] ?? ''));
+        if ($targetDiscordId !== '' && $viewerDiscordId !== $targetDiscordId) {
+            $announcement = null;
+        }
+    }
+
     return [
         'ok' => true,
         'authenticated' => true,
-        'announcement' => aavgo_get_active_announcement(),
+        'announcement' => $announcement,
         'viewer' => [
             'displayName' => aavgo_display_name($viewer),
             'roleSummary' => aavgo_user_role_summary($viewer),

@@ -104,73 +104,85 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
       </section>
 
       <section class="dashboard-admin-grid reveal reveal-delay-2">
-        <article class="dashboard-panel dashboard-panel-developer-board">
+        <article class="dashboard-panel dashboard-panel-developer-board dashboard-panel-wide">
           <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Developer queue</p>
-              <h2>Track what is happening, when it matters, and who owns it.</h2>
+              <p class="dashboard-kicker">Developer board</p>
+              <h2>Everything first, then the add form at the bottom.</h2>
             </div>
-            <span class="dashboard-chip dashboard-chip-accent">Detailed to-do</span>
+            <span class="dashboard-chip dashboard-chip-accent">Backlog / in progress / done</span>
           </div>
 
-          <div class="dashboard-developer-form-grid">
-            <label class="dashboard-control-field dashboard-control-field-wide">
-              <span>Task</span>
-              <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
-            </label>
-            <label class="dashboard-control-field">
-              <span>Owner</span>
-              <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
-            </label>
-            <label class="dashboard-control-field">
-              <span>When</span>
-              <input id="developer-task-when" type="text" maxlength="80" placeholder="Today, this week, next month...">
-            </label>
-            <label class="dashboard-control-field">
-              <span>Urgency</span>
-              <select id="developer-task-priority">
-                <option value="Normal">Normal</option>
-                <option value="Urgent">Urgent</option>
-                <option value="Future">Future</option>
-              </select>
-            </label>
-            <label class="dashboard-control-field">
-              <span>Status</span>
-              <select id="developer-task-status">
-                <option value="Planned">Planned</option>
-                <option value="In progress">In progress</option>
-                <option value="Blocked">Blocked</option>
-                <option value="Done">Done</option>
-              </select>
-            </label>
-            <label class="dashboard-control-field dashboard-control-field-wide">
-              <span>Notes</span>
-              <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
-            </label>
-            <div class="dashboard-control-row">
-              <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
-              <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
-              <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+          <div class="dashboard-panel-meta">
+            <p class="dashboard-panel-copy">Use this as a real roadmap workspace: backlog, planned, in progress, blocked, ready to deploy, done, and completed logs all stay visible.</p>
+          </div>
+
+          <div class="dashboard-developer-task-list" id="developer-task-list">
+            <div class="dashboard-empty-state">
+              <strong>No developer tasks yet.</strong>
+              <p>Add the first roadmap item, owner, deadline, and urgency.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-developer-form-shell">
+            <div class="dashboard-panel-heading dashboard-panel-heading-tight">
+              <div>
+                <p class="dashboard-kicker">Create task</p>
+                <h2>Add a new roadmap item</h2>
+              </div>
+              <span class="dashboard-chip">Deadline required</span>
+            </div>
+
+            <div class="dashboard-developer-form-grid">
+              <label class="dashboard-control-field dashboard-control-field-wide">
+                <span>Task</span>
+                <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Owner</span>
+                <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Start date</span>
+                <input id="developer-task-start" type="date">
+              </label>
+              <label class="dashboard-control-field">
+                <span>Deadline</span>
+                <input id="developer-task-deadline" type="date" required>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Urgency</span>
+                <select id="developer-task-priority">
+                  <option value="Normal">Normal</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="Future">Future</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Status</span>
+                <select id="developer-task-status">
+                  <option value="Backlog">Backlog</option>
+                  <option value="Planned">Planned</option>
+                  <option value="In progress">In progress</option>
+                  <option value="Blocked">Blocked</option>
+                  <option value="Ready to deploy">Ready to deploy</option>
+                  <option value="Done">Done</option>
+                  <option value="Completed logs">Completed logs</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field dashboard-control-field-wide">
+                <span>Notes</span>
+                <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
+              </label>
+              <p class="dashboard-panel-copy" id="developer-task-feedback">Add the task to the board, then use the card controls to move it across the backlog.</p>
+              <div class="dashboard-control-row">
+                <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
+                <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
+                <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+              </div>
             </div>
           </div>
         </article>
-
-        <aside class="dashboard-stack dashboard-stack-admin">
-          <article class="dashboard-panel">
-            <div class="dashboard-panel-heading">
-              <div>
-                <p class="dashboard-kicker">Task board</p>
-                <h2>Detailed developer to-do list</h2>
-              </div>
-            </div>
-            <div class="dashboard-developer-task-list" id="developer-task-list">
-              <div class="dashboard-empty-state">
-                <strong>No developer tasks yet.</strong>
-                <p>Add the first roadmap item, owner, timing, and urgency.</p>
-              </div>
-            </div>
-          </article>
-        </aside>
       </section>
     </main>
   </div>

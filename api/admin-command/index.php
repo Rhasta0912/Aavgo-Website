@@ -9,6 +9,7 @@ $hoursPayload = aavgo_fetch_hours_bridge_payload();
 $hoursData = is_array($hoursPayload['data'] ?? null) ? $hoursPayload['data'] : [];
 $people = is_array($hoursData['people'] ?? null) ? $hoursData['people'] : [];
 $meta = is_array($hoursData['meta'] ?? null) ? $hoursData['meta'] : [];
+$meta['hotels'] = aavgo_normalize_hotel_options(is_array($meta['hotels'] ?? null) ? $meta['hotels'] : []);
 
 function aavgo_find_staff_row(array $people, string $discordId): ?array
 {
@@ -151,10 +152,26 @@ switch ($action) {
             exit;
         }
 
+        $targetDiscordId = trim((string) ($payload['targetDiscordId'] ?? ''));
+        $target = null;
+        if ($targetDiscordId !== '') {
+            $targetRow = aavgo_find_staff_row($people, $targetDiscordId);
+            if ($targetRow === null) {
+                aavgo_json_response(['ok' => false, 'error' => 'The selected staff target was not found in the current hours snapshot.'], 404);
+                exit;
+            }
+            $target = [
+                'discordId' => $targetDiscordId,
+                'name' => trim((string) ($targetRow['displayName'] ?? $targetRow['username'] ?? 'Selected staff')),
+                'roleSummary' => trim((string) ($targetRow['roleSummary'] ?? $targetRow['role'] ?? 'Staff')),
+            ];
+        }
+
         $announcement = aavgo_publish_announcement(
             (string) ($payload['message'] ?? ''),
             trim((string) ($payload['tone'] ?? 'standard')),
-            $actor
+            $actor,
+            $target
         );
 
         aavgo_json_response([

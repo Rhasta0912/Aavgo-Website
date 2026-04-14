@@ -2158,12 +2158,21 @@ h2 {
 
 .sidebar-collapsed .dashboard-shell-admin,
 .sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 0 minmax(0, 1fr);
 }
 
 .sidebar-collapsed .dashboard-sidebar-admin,
 .sidebar-collapsed .dashboard-sidebar-user {
-  padding: 1.1rem 0.9rem 1.25rem;
+  width: 0;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(-100%);
 }
 
 .sidebar-collapsed .dashboard-side-section {
@@ -3744,6 +3753,50 @@ h2 {
   gap: 0.8rem;
 }
 
+.dashboard-panel-wide {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-developer-form-shell {
+  display: grid;
+  gap: 0.95rem;
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-panel-heading-tight {
+  margin-bottom: 0;
+}
+
+.dashboard-developer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.dashboard-control-field-wide {
+  grid-column: 1 / -1;
+}
+
+.dashboard-developer-task-group {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.15rem 0;
+}
+
+.dashboard-developer-task-group h3 {
+  margin: 0.15rem 0 0;
+  color: #fff8ef;
+  font-size: 1.05rem;
+}
+
+.dashboard-developer-task-group-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .dashboard-developer-task-card {
   display: grid;
   gap: 0.7rem;
@@ -3769,10 +3822,20 @@ h2 {
   cursor: pointer;
 }
 
+.dashboard-developer-task-meta {
+  margin: 0.35rem 0 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.92rem;
+}
+
 .dashboard-developer-task-card p {
   margin: 0;
   color: rgba(255, 255, 255, 0.66);
   line-height: 1.65;
+}
+
+.dashboard-developer-task-card select {
+  width: 100%;
 }
 
 .dashboard-developer-card {
@@ -4020,6 +4083,18 @@ h2 {
 .theme-light .dashboard-developer-task-card {
   border-color: rgba(24, 32, 44, 0.08);
   background: rgba(244, 238, 230, 0.9);
+}
+
+.theme-light .dashboard-developer-form-shell {
+  border-top-color: rgba(24, 32, 44, 0.08);
+}
+
+.theme-light .dashboard-developer-task-group h3 {
+  color: #172234;
+}
+
+.theme-light .dashboard-developer-task-meta {
+  color: rgba(24, 32, 44, 0.62);
 }
 
 .theme-light .dashboard-developer-task-card p {

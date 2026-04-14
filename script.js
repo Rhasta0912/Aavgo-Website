@@ -2081,49 +2081,146 @@ function initializeDeveloperWorkspace() {
   const fields = {
     title: document.getElementById("developer-task-title"),
     owner: document.getElementById("developer-task-owner"),
-    when: document.getElementById("developer-task-when"),
+    start: document.getElementById("developer-task-start"),
+    deadline: document.getElementById("developer-task-deadline"),
     priority: document.getElementById("developer-task-priority"),
     status: document.getElementById("developer-task-status"),
     notes: document.getElementById("developer-task-notes")
   };
+  const feedback = document.getElementById("developer-task-feedback");
   const STORAGE_KEY = "aavgo_developer_tasks";
+  const STATUS_ORDER = [
+    "Backlog",
+    "Planned",
+    "In progress",
+    "Blocked",
+    "Ready to deploy",
+    "Done",
+    "Completed logs"
+  ];
+
+  const createTaskId = () => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return `task_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  };
+
+  const normalizeStatus = (status) => {
+    const value = String(status || "").trim();
+    return STATUS_ORDER.includes(value) ? value : "Backlog";
+  };
+
+  const normalizeTask = (item = {}) => ({
+    id: String(item.id || createTaskId()),
+    title: String(item.title || "").trim(),
+    owner: String(item.owner || "").trim(),
+    startDate: String(item.startDate ?? item.when ?? "").trim(),
+    deadlineDate: String(item.deadlineDate ?? item.deadline ?? "").trim(),
+    priority: String(item.priority || "Normal").trim(),
+    status: normalizeStatus(item.status),
+    notes: String(item.notes || "").trim()
+  });
 
   const load = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map(entry => normalizeTask(entry));
+      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
     } catch (_) {
       return [];
     }
   };
 
+  const setFeedback = (message, isError = false) => {
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.classList.toggle("is-error", Boolean(isError));
+  };
+
+  const sortTasks = (items) => {
+    const statusRank = new Map(STATUS_ORDER.map((status, index) => [status, index]));
+    return [...items].sort((left, right) => {
+      const leftRank = statusRank.get(normalizeStatus(left.status)) ?? 999;
+      const rightRank = statusRank.get(normalizeStatus(right.status)) ?? 999;
+      if (leftRank !== rightRank) return leftRank - rightRank;
+      const leftDeadline = String(left.deadlineDate || "");
+      const rightDeadline = String(right.deadlineDate || "");
+      if (leftDeadline !== rightDeadline) return leftDeadline.localeCompare(rightDeadline);
+      return String(left.title || "").localeCompare(String(right.title || ""));
+    });
+  };
+
+  const renderTaskCard = (item) => `
+    <article class="dashboard-developer-task-card" data-task-id="${escapeHtml(item.id)}">
+      <div class="dashboard-developer-task-top">
+        <div>
+          <strong>${escapeHtml(item.title || "Untitled task")}</strong>
+          <p class="dashboard-developer-task-meta">
+            Owner: ${escapeHtml(item.owner || "Unassigned")}
+            ${item.startDate ? ` · Starts ${escapeHtml(item.startDate)}` : " · Starts anytime"}
+            ${item.deadlineDate ? ` · Deadline ${escapeHtml(item.deadlineDate)}` : ""}
+          </p>
+        </div>
+        <button type="button" data-developer-task-remove="${escapeHtml(item.id)}">Remove</button>
+      </div>
+      <div class="dashboard-broadcast-meta">
+        <span class="dashboard-chip">${escapeHtml(item.status || "Backlog")}</span>
+        <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
+        <span class="dashboard-chip">${item.startDate ? `Start ${escapeHtml(item.startDate)}` : "Start anytime"}</span>
+        <span class="dashboard-chip">${item.deadlineDate ? `Deadline ${escapeHtml(item.deadlineDate)}` : "No deadline"}</span>
+      </div>
+      <label class="dashboard-control-field">
+        <span>Move status</span>
+        <select data-developer-task-status-change="${escapeHtml(item.id)}">
+          ${STATUS_ORDER.map(status => `<option value="${escapeHtml(status)}"${normalizeStatus(item.status) === status ? " selected" : ""}>${escapeHtml(status)}</option>`).join("")}
+        </select>
+      </label>
+      <p>${escapeHtml(item.notes || "No notes yet.")}</p>
+    </article>
+  `;
+
   const render = (items) => {
-    if (!items.length) {
+    const sorted = sortTasks(items.map(normalizeTask));
+    if (!sorted.length) {
       list.innerHTML = `
         <div class="dashboard-empty-state">
           <strong>No developer tasks yet.</strong>
-          <p>Add the first roadmap item, owner, timing, and urgency.</p>
+          <p>Add the first roadmap item, owner, deadline, and urgency.</p>
         </div>
       `;
       return;
     }
 
-    list.innerHTML = items.map((item, index) => `
-      <article class="dashboard-developer-task-card">
-        <div class="dashboard-developer-task-top">
-          <strong>${escapeHtml(item.title || "Untitled task")}</strong>
-          <button type="button" data-developer-task-remove="${index}">Remove</button>
-        </div>
-        <div class="dashboard-broadcast-meta">
-          <span class="dashboard-chip">${escapeHtml(item.status || "Planned")}</span>
-          <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
-          <span class="dashboard-chip">${escapeHtml(item.when || "No timing yet")}</span>
-        </div>
-        <p><strong>Owner:</strong> ${escapeHtml(item.owner || "Unassigned")}</p>
-        <p>${escapeHtml(item.notes || "No notes yet.")}</p>
-      </article>
-    `).join("");
+    const groups = STATUS_ORDER.map(status => {
+      const groupItems = sorted.filter(item => normalizeStatus(item.status) === status);
+      if (!groupItems.length) return "";
+      return `
+        <section class="dashboard-developer-task-group">
+          <div class="dashboard-panel-heading dashboard-panel-heading-tight">
+            <div>
+              <p class="dashboard-kicker">${escapeHtml(status)}</p>
+              <h3>${escapeHtml(status)} (${groupItems.length})</h3>
+            </div>
+          </div>
+          <div class="dashboard-developer-task-group-list">
+            ${groupItems.map(renderTaskCard).join("")}
+          </div>
+        </section>
+      `;
+    }).join("");
+
+    list.innerHTML = groups || `
+      <div class="dashboard-empty-state">
+        <strong>No developer tasks yet.</strong>
+        <p>Add the first roadmap item, owner, deadline, and urgency.</p>
+      </div>
+    `;
   };
 
   const save = (items) => {
@@ -2135,14 +2232,24 @@ function initializeDeveloperWorkspace() {
 
   addButton.addEventListener("click", () => {
     const title = String(fields.title?.value || "").trim();
-    if (!title) return;
+    const deadlineDate = String(fields.deadline?.value || "").trim();
+    if (!title) {
+      setFeedback("Task name is required before adding it.", true);
+      return;
+    }
+    if (!deadlineDate) {
+      setFeedback("Deadline is required so the board can stay structured.", true);
+      return;
+    }
     const items = load();
     items.unshift({
+      id: createTaskId(),
       title,
       owner: String(fields.owner?.value || "").trim(),
-      when: String(fields.when?.value || "").trim(),
+      startDate: String(fields.start?.value || "").trim(),
+      deadlineDate,
       priority: String(fields.priority?.value || "Normal").trim(),
-      status: String(fields.status?.value || "Planned").trim(),
+      status: normalizeStatus(fields.status?.value || "Backlog"),
       notes: String(fields.notes?.value || "").trim()
     });
     Object.values(fields).forEach(field => {
@@ -2150,18 +2257,34 @@ function initializeDeveloperWorkspace() {
       if ("value" in field) field.value = "";
     });
     if (fields.priority) fields.priority.value = "Normal";
-    if (fields.status) fields.status.value = "Planned";
+    if (fields.status) fields.status.value = "Backlog";
+    if (fields.deadline) fields.deadline.value = "";
+    setFeedback("Task added to the board.", false);
     save(items);
   });
 
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-developer-task-remove]");
     if (!button) return;
-    const index = Number(button.getAttribute("data-developer-task-remove"));
+    const taskId = String(button.getAttribute("data-developer-task-remove") || "");
     const items = load();
-    if (!Number.isFinite(index)) return;
-    items.splice(index, 1);
-    save(items);
+    const nextItems = items.filter(item => String(item.id || "") !== taskId);
+    if (nextItems.length === items.length) return;
+    setFeedback("Task removed from the board.", false);
+    save(nextItems);
+  });
+
+  list.addEventListener("change", event => {
+    const select = event.target.closest("select[data-developer-task-status-change]");
+    if (!select) return;
+    const taskId = String(select.getAttribute("data-developer-task-status-change") || "");
+    const items = load();
+    const nextItems = items.map(item => {
+      if (String(item.id || "") !== taskId) return item;
+      return { ...item, status: normalizeStatus(select.value) };
+    });
+    setFeedback("Task status updated.", false);
+    save(nextItems);
   });
 }
 
