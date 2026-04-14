@@ -65,11 +65,6 @@ $bootstrapJson = json_encode(
       <div class="dashboard-sidebar-glow"></div>
       <div class="dashboard-sidebar-top">
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
-        <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
 
       <section class="dashboard-profile-card dashboard-profile-card-plain">
@@ -118,6 +113,11 @@ $bootstrapJson = json_encode(
           </p>
         </div>
         <div class="dashboard-toolbar">
+          <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <div class="dashboard-toolbar-menu" data-toolbar-menu>
             <button class="dashboard-toolbar-link dashboard-toolbar-profile" type="button" data-toolbar-menu-toggle aria-expanded="false" aria-haspopup="true">
               <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>

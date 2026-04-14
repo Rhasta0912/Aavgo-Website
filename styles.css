@@ -2189,11 +2189,11 @@ h2 {
   padding: 1.35rem 1rem 1.5rem 1.1rem;
   border-radius: 0 22px 22px 0;
   border-left: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(circle at top left, rgba(109, 120, 255, 0.03), transparent 28%),
-    linear-gradient(180deg, rgba(17, 18, 24, 0.98) 0%, rgba(12, 14, 19, 0.98) 100%);
-  overflow: hidden;
+  border-right: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
   transition:
     width 220ms ease,
     min-width 220ms ease,
@@ -2217,7 +2217,7 @@ h2 {
 .dashboard-sidebar-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.75rem;
 }
 
@@ -3305,12 +3305,9 @@ h2 {
 
 .workspace-dashboard .dashboard-sidebar-admin,
 .workspace-dashboard .dashboard-sidebar-user {
-  background:
-    linear-gradient(180deg, rgba(17, 18, 24, 0.62) 0%, rgba(12, 14, 19, 0.58) 100%);
-  box-shadow:
-    10px 16px 44px rgba(0, 0, 0, 0.16),
-    inset -1px 0 0 rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(24px);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .workspace-dashboard .dashboard-sidebar-glow {
@@ -3334,9 +3331,13 @@ h2 {
 
 .dashboard-toolbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.7rem;
   justify-content: flex-end;
+}
+
+.dashboard-toolbar .dashboard-sidebar-toggle {
+  flex: 0 0 auto;
 }
 
 .dashboard-toolbar-menu {
@@ -4067,10 +4068,9 @@ h2 {
 
 .theme-light .workspace-dashboard .dashboard-sidebar-admin,
 .theme-light .workspace-dashboard .dashboard-sidebar-user {
-  background: linear-gradient(180deg, rgba(250, 244, 235, 0.94) 0%, rgba(242, 232, 219, 0.9) 100%);
-  box-shadow:
-    12px 18px 42px rgba(62, 52, 42, 0.1),
-    inset -1px 0 0 rgba(255, 255, 255, 0.62);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .theme-light .dashboard-toolbar-profile-copy small,

@@ -94,11 +94,6 @@ if (is_array($personalHours['activeSession'] ?? null)) {
       <div class="dashboard-sidebar-glow"></div>
       <div class="dashboard-sidebar-top">
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
-        <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
 
       <section class="dashboard-profile-card dashboard-profile-card-plain">
@@ -148,6 +143,11 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </p>
         </div>
         <div class="dashboard-toolbar">
+          <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <?php if ($showAdminLink): ?>
             <a class="dashboard-toolbar-link" href="/admin/">Leadership board</a>
           <?php endif; ?>
