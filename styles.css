@@ -3603,43 +3603,41 @@ h2 {
   text-overflow: ellipsis;
 }
 
+.dashboard-hours-cell-copy {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dashboard-hours-sheet thead th:nth-child(1),
 .dashboard-hours-sheet tbody td:nth-child(1) {
   position: sticky;
   left: 0;
   z-index: 3;
-  width: 84px;
-  min-width: 84px;
-  max-width: 84px;
+  width: 92px;
+  min-width: 92px;
+  max-width: 92px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(2),
 .dashboard-hours-sheet tbody td:nth-child(2) {
   position: sticky;
-  left: 84px;
+  left: 92px;
   z-index: 3;
-  width: 240px;
-  min-width: 240px;
-  max-width: 240px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(3),
 .dashboard-hours-sheet tbody td:nth-child(3) {
   position: sticky;
-  left: 324px;
-  z-index: 3;
-  width: 170px;
-  min-width: 170px;
-  max-width: 170px;
-  background: #10131a;
-}
-
-.dashboard-hours-sheet thead th:nth-child(4),
-.dashboard-hours-sheet tbody td:nth-child(4) {
-  position: sticky;
-  left: 494px;
+  left: 372px;
   z-index: 3;
   width: 190px;
   min-width: 190px;
@@ -3647,22 +3645,33 @@ h2 {
   background: #10131a;
 }
 
+.dashboard-hours-sheet thead th:nth-child(4),
+.dashboard-hours-sheet tbody td:nth-child(4) {
+  position: sticky;
+  left: 562px;
+  z-index: 3;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  background: #10131a;
+}
+
 .dashboard-hours-sheet thead th:nth-child(5),
 .dashboard-hours-sheet tbody td:nth-child(5) {
   position: sticky;
-  left: 684px;
+  left: 782px;
   z-index: 3;
-  width: 230px;
-  min-width: 230px;
-  max-width: 230px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
   background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
 .dashboard-hours-sheet tbody td:nth-child(n+6) {
-  width: 86px;
-  min-width: 86px;
-  max-width: 86px;
+  width: 104px;
+  min-width: 104px;
+  max-width: 104px;
 }
 
 .dashboard-hours-sheet thead th:nth-child(1),
@@ -4145,8 +4154,8 @@ h2 {
 .dashboard-hours-cell {
   text-align: center;
   color: rgba(255, 255, 255, 0.42);
-  font-size: 0.78rem;
-  line-height: 1.08;
+  font-size: 0.76rem;
+  line-height: 1.04;
   font-variant-numeric: tabular-nums;
 }
 

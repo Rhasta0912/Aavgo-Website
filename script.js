@@ -1158,20 +1158,20 @@ function renderFullHoursRows(people) {
             <span>${escapeHtml(person?.username || "")}</span>
           </div>
         </td>
-        <td>${escapeHtml(getRoleSummary(person))}</td>
-        <td>${escapeHtml(person?.team || "Unassigned")}</td>
-        <td>${escapeHtml(getPrimaryHotelLabel(person))}</td>
+        <td><div class="dashboard-hours-cell-copy">${escapeHtml(getRoleSummary(person))}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${escapeHtml(person?.team || "Unassigned")}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${escapeHtml(getPrimaryHotelLabel(person))}</div></td>
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
           return `<td class="${className}" data-day="${day}" data-hours="${hours}" title="Double-click to edit hours">
-            ${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}
+            <div class="dashboard-hours-cell-copy">${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}</div>
           </td>`;
         }).join("")}
-        <td>${formatHours(person?.payPeriods?.firstHalf?.totalHours)}</td>
-        <td>${formatHours(person?.payPeriods?.secondHalf?.totalHours)}</td>
-        <td>${formatHours(person?.monthlyHours)}</td>
-        <td>${formatHours(person?.allHours)}</td>
+        <td><div class="dashboard-hours-cell-copy">${formatHours(person?.payPeriods?.firstHalf?.totalHours)}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${formatHours(person?.payPeriods?.secondHalf?.totalHours)}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${formatHours(person?.monthlyHours)}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${formatHours(person?.allHours)}</div></td>
       </tr>
     `;
   }).join("");
