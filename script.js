@@ -534,6 +534,11 @@ function toggleSelectedBulkDiscordId(discordId, checked) {
   setSelectedBulkDiscordIds([...current]);
 }
 
+function clearSelectedStaff() {
+  adminBoardState.selectedDiscordId = "";
+  setSelectedBulkDiscordIds([]);
+}
+
 function getSelectedBulkStaff(allPeople) {
   const selectedIds = new Set(getSelectedBulkDiscordIds());
   return (Array.isArray(allPeople) ? allPeople : []).filter(person => selectedIds.has(String(person?.discordId || "")));
@@ -1387,7 +1392,14 @@ function initializeAdminBoard() {
   document.getElementById("hours-board-rows")?.addEventListener("click", event => {
     const row = event.target.closest("tr[data-discord-id]");
     if (!row) return;
-    adminBoardState.selectedDiscordId = String(row.getAttribute("data-discord-id") || "");
+    const discordId = String(row.getAttribute("data-discord-id") || "");
+    const isAlreadySelected = String(adminBoardState.selectedDiscordId) === discordId;
+    if (isAlreadySelected) {
+      clearSelectedStaff();
+    } else {
+      adminBoardState.selectedDiscordId = discordId;
+      toggleSelectedBulkDiscordId(discordId, true);
+    }
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
@@ -1396,8 +1408,9 @@ function initializeAdminBoard() {
     if (checkbox) {
       const discordId = checkbox.getAttribute("data-full-hours-select") || "";
       toggleSelectedBulkDiscordId(discordId, checkbox.checked);
-      if (checkbox.checked) {
-        adminBoardState.selectedDiscordId = String(discordId);
+      adminBoardState.selectedDiscordId = checkbox.checked ? String(discordId) : adminBoardState.selectedDiscordId;
+      if (!checkbox.checked && adminBoardState.selectedDiscordId === String(discordId)) {
+        adminBoardState.selectedDiscordId = "";
       }
       applyAdminBoardPayload(adminBoardState.payload);
       return;
@@ -1406,8 +1419,14 @@ function initializeAdminBoard() {
     const row = event.target.closest("tr[data-full-hours-row]");
     if (!row) return;
     const discordId = String(row.getAttribute("data-full-hours-row") || "");
-    adminBoardState.selectedDiscordId = discordId;
-    toggleSelectedBulkDiscordId(discordId, true);
+    const isAlreadySelected = String(adminBoardState.selectedDiscordId) === discordId;
+    if (isAlreadySelected) {
+      toggleSelectedBulkDiscordId(discordId, false);
+      adminBoardState.selectedDiscordId = "";
+    } else {
+      adminBoardState.selectedDiscordId = discordId;
+      toggleSelectedBulkDiscordId(discordId, true);
+    }
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
@@ -1439,7 +1458,7 @@ function initializeAdminBoard() {
   });
 
   document.getElementById("hours-bulk-clear")?.addEventListener("click", () => {
-    setSelectedBulkDiscordIds([]);
+    clearSelectedStaff();
     setBulkFeedback("Selection cleared.", false);
     applyAdminBoardPayload(adminBoardState.payload);
   });

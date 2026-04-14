@@ -436,6 +436,7 @@ $bootstrapJson = json_encode(
               <span class="dashboard-chip">Current month</span>
             </div>
           </div>
+          <p class="dashboard-panel-copy">Click any staff row to load the editor. Use the checkboxes to select multiple people before bulk team/hotel moves or force logout.</p>
 
           <div class="dashboard-bulk-shell">
             <div class="dashboard-bulk-actions">
@@ -560,11 +561,11 @@ $bootstrapJson = json_encode(
               </label>
             </div>
 
-            <div class="dashboard-control-row">
-              <button class="button button-secondary dashboard-inline-button" id="hours-remove-submit" type="button">Remove hours</button>
-            </div>
+          <div class="dashboard-control-row">
+            <button class="button button-secondary dashboard-inline-button" id="hours-remove-submit" type="button">Remove hours</button>
+          </div>
 
-            <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
+          <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
 
             <div class="dashboard-adjustment-log" id="hours-adjustment-log">
               <div class="dashboard-empty-state">

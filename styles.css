@@ -3141,10 +3141,11 @@ h2 {
 .workspace-dashboard .dashboard-sidebar-admin,
 .workspace-dashboard .dashboard-sidebar-user {
   background:
-    linear-gradient(180deg, rgba(10, 12, 18, 0.98) 0%, rgba(15, 18, 26, 0.96) 100%);
+    linear-gradient(180deg, rgba(10, 12, 18, 0.82) 0%, rgba(15, 18, 26, 0.78) 100%);
   box-shadow:
     22px 0 60px rgba(0, 0, 0, 0.18),
     inset -1px 0 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(18px);
 }
 
 .workspace-dashboard .dashboard-sidebar-glow {
@@ -3215,7 +3216,7 @@ h2 {
 .dashboard-filter-shell {
   padding: 1.15rem 1.2rem 1.25rem;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(13, 15, 22, 0.92) 0%, rgba(19, 22, 30, 0.88) 100%);
+  background: linear-gradient(180deg, rgba(13, 15, 22, 0.86) 0%, rgba(19, 22, 30, 0.82) 100%);
 }
 
 .dashboard-filter-shell-head {
@@ -3252,7 +3253,7 @@ h2 {
 .dashboard-control-textarea {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(10, 12, 18, 0.55);
   color: #fff8ef;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
@@ -3266,6 +3267,7 @@ h2 {
 
 .dashboard-filter-field select,
 .dashboard-control-field select {
+  color-scheme: dark;
   appearance: none;
   background-image:
     linear-gradient(45deg, transparent 50%, rgba(255, 248, 239, 0.85) 50%),
@@ -3276,6 +3278,12 @@ h2 {
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
   padding-right: 2.6rem;
+}
+
+.dashboard-filter-field select option,
+.dashboard-control-field select option {
+  background: #0f1218;
+  color: #fff8ef;
 }
 
 .dashboard-filter-reset {
@@ -3289,12 +3297,14 @@ h2 {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
+  max-height: 560px;
 }
 
 .dashboard-hours-sheet {
   width: 100%;
   min-width: 1200px;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .dashboard-hours-sheet thead th {
