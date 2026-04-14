@@ -788,12 +788,14 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
   input.focus();
   input.select();
   input.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" || event.code === "NumpadEnter") {
       event.preventDefault();
+      event.stopPropagation();
       finish(true);
     }
     if (event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       finish(false);
     }
   });
