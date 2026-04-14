@@ -92,7 +92,14 @@ if (is_array($personalHours['activeSession'] ?? null)) {
   <div class="dashboard-shell dashboard-shell-user">
     <aside class="dashboard-sidebar dashboard-sidebar-user reveal reveal-in">
       <div class="dashboard-sidebar-glow"></div>
-      <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+      <div class="dashboard-sidebar-top">
+        <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
+        <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
 
       <section class="dashboard-profile-card dashboard-profile-card-plain">
         <div class="dashboard-profile-copy">
@@ -113,15 +120,10 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         <?php endforeach; ?>
       </div>
 
-      <div class="dashboard-theme-toggle">
-        <button class="dashboard-theme-button" type="button" data-theme-toggle>Light mode</button>
-      </div>
-
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
         <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
         <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
         <a class="dashboard-nav-link" href="#user-history">Hour history</a>
-        <a class="dashboard-nav-link" href="#user-adjustments">Manual adjustments</a>
         <?php if ($showAdminLink): ?>
           <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
         <?php endif; ?>
@@ -146,6 +148,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </p>
         </div>
         <div class="dashboard-toolbar">
+          <button class="dashboard-toolbar-link dashboard-toolbar-toggle" type="button" data-sidebar-toggle>Menu</button>
           <?php if ($showAdminLink): ?>
             <a class="dashboard-toolbar-link" href="/admin/">Leadership board</a>
           <?php endif; ?>
@@ -281,7 +284,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </div>
         </article>
 
-        <article class="dashboard-panel" id="user-adjustments">
+        <article class="dashboard-panel" id="user-month-summary">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Recent month totals</p>
@@ -306,7 +309,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
             <?php endif; ?>
           </div>
 
-          <div class="dashboard-adjustment-log dashboard-adjustment-log-user">
+          <div class="dashboard-adjustment-log dashboard-adjustment-log-user is-hidden">
             <?php if ($recentAdjustments === []): ?>
               <div class="dashboard-empty-state">
                 <strong>No recent manual adjustments.</strong>

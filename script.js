@@ -640,6 +640,8 @@ function initializeToolbarMenu() {
       setOpen(false);
     }
   });
+
+  setOpen(false);
 }
 
 function setHoursEditorOpen(open) {
@@ -681,6 +683,97 @@ function openHoursEditorModal(person = null, options = {}) {
 
   applyAdminBoardPayload(adminBoardState.payload);
   setHoursEditorOpen(true);
+}
+
+function roundHoursStep(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.round(number * 10) / 10;
+}
+
+function hoursToClock(hours) {
+  const safeHours = Math.max(0, Math.min(23.9, roundHoursStep(hours)));
+  const wholeHours = Math.floor(safeHours);
+  const minutes = Math.round((safeHours - wholeHours) * 60);
+  const normalizedHours = String(wholeHours).padStart(2, "0");
+  const normalizedMinutes = String(Math.min(minutes, 59)).padStart(2, "0");
+  return `${normalizedHours}:${normalizedMinutes}`;
+}
+
+function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
+  const safeNext = roundHoursStep(nextHours);
+  const safeCurrent = roundHoursStep(currentHours);
+  if (!person?.discordId) return;
+  if (!Number.isFinite(safeNext) || safeNext < 0 || safeNext > 24) {
+    setEditorFeedback("Use a value between 0 and 24 hours for a single day.", true);
+    return;
+  }
+
+  const delta = roundHoursStep(Math.abs(safeNext - safeCurrent));
+  if (delta === 0) {
+    setEditorFeedback("That day already has that total.", false);
+    return;
+  }
+
+  const reason = "Quick full-hours grid update";
+  if (safeNext > safeCurrent) {
+    sendAdminCommand("add_manual_hours", {
+      discordId: person.discordId,
+      shiftDate,
+      loginTime: "00:00",
+      logoutTime: hoursToClock(delta),
+      mode: "training",
+      hotelId: "",
+      reason
+    }, { feedback: "editor" });
+    return;
+  }
+
+  sendAdminCommand("remove_manual_hours", {
+    discordId: person.discordId,
+    shiftDate,
+    hours: delta,
+    mode: "training",
+    reason
+  }, { feedback: "editor" });
+}
+
+function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
+  if (!cell || !person?.discordId) return;
+
+  const existing = document.querySelector(".dashboard-hours-inline-input");
+  if (existing) {
+    existing.blur();
+  }
+
+  cell.classList.add("is-editing");
+  const previousMarkup = cell.innerHTML;
+  cell.innerHTML = `<input class="dashboard-hours-inline-input" type="number" min="0" max="24" step="0.1" value="${escapeHtml(formatHoursValue(currentHours))}">`;
+  const input = cell.querySelector(".dashboard-hours-inline-input");
+  if (!input) return;
+
+  const finish = (commit) => {
+    const nextValue = Number(input.value || 0);
+    cell.classList.remove("is-editing");
+    cell.innerHTML = previousMarkup;
+    if (commit) {
+      quickSetCellHours(person, shiftDate, currentHours, nextValue);
+    }
+  };
+
+  input.focus();
+  input.select();
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      finish(true);
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      finish(false);
+    }
+  });
+  input.addEventListener("blur", () => finish(true), { once: true });
 }
 
 function getSelectedBulkStaff(allPeople) {
@@ -1047,7 +1140,7 @@ function renderFullHoursRows(people) {
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
-          return `<td class="${className}" data-day="${day}" data-hours="${hours}">
+          return `<td class="${className}" data-day="${day}" data-hours="${hours}" title="Double-click to edit hours">
             ${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}
           </td>`;
         }).join("")}
@@ -1627,8 +1720,6 @@ function initializeAdminBoard() {
       if (removeDate) removeDate.value = dateValue;
       const removeHours = document.getElementById("hours-remove-hours");
       if (removeHours && hours > 0) removeHours.value = String(hours);
-
-      applyAdminBoardPayload(adminBoardState.payload);
       return;
     }
 
@@ -1676,7 +1767,7 @@ function initializeAdminBoard() {
     const maxDay = new Date(year, month + 1, 0).getDate();
     const safeDay = Math.min(Math.max(day, 1), maxDay);
     const shiftDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
-    openHoursEditorModal(person, { shiftDate, hours });
+    openInlineHoursCellEditor(cell, person, shiftDate, hours);
   });
 
   ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
@@ -1982,9 +2073,102 @@ function initializeDeveloperTodoList() {
   });
 }
 
+function initializeDeveloperWorkspace() {
+  const list = document.getElementById("developer-task-list");
+  const addButton = document.getElementById("developer-task-add");
+  if (!list || !addButton) return;
+
+  const fields = {
+    title: document.getElementById("developer-task-title"),
+    owner: document.getElementById("developer-task-owner"),
+    when: document.getElementById("developer-task-when"),
+    priority: document.getElementById("developer-task-priority"),
+    status: document.getElementById("developer-task-status"),
+    notes: document.getElementById("developer-task-notes")
+  };
+  const STORAGE_KEY = "aavgo_developer_tasks";
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const render = (items) => {
+    if (!items.length) {
+      list.innerHTML = `
+        <div class="dashboard-empty-state">
+          <strong>No developer tasks yet.</strong>
+          <p>Add the first roadmap item, owner, timing, and urgency.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = items.map((item, index) => `
+      <article class="dashboard-developer-task-card">
+        <div class="dashboard-developer-task-top">
+          <strong>${escapeHtml(item.title || "Untitled task")}</strong>
+          <button type="button" data-developer-task-remove="${index}">Remove</button>
+        </div>
+        <div class="dashboard-broadcast-meta">
+          <span class="dashboard-chip">${escapeHtml(item.status || "Planned")}</span>
+          <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
+          <span class="dashboard-chip">${escapeHtml(item.when || "No timing yet")}</span>
+        </div>
+        <p><strong>Owner:</strong> ${escapeHtml(item.owner || "Unassigned")}</p>
+        <p>${escapeHtml(item.notes || "No notes yet.")}</p>
+      </article>
+    `).join("");
+  };
+
+  const save = (items) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    render(items);
+  };
+
+  render(load());
+
+  addButton.addEventListener("click", () => {
+    const title = String(fields.title?.value || "").trim();
+    if (!title) return;
+    const items = load();
+    items.unshift({
+      title,
+      owner: String(fields.owner?.value || "").trim(),
+      when: String(fields.when?.value || "").trim(),
+      priority: String(fields.priority?.value || "Normal").trim(),
+      status: String(fields.status?.value || "Planned").trim(),
+      notes: String(fields.notes?.value || "").trim()
+    });
+    Object.values(fields).forEach(field => {
+      if (!field) return;
+      if ("value" in field) field.value = "";
+    });
+    if (fields.priority) fields.priority.value = "Normal";
+    if (fields.status) fields.status.value = "Planned";
+    save(items);
+  });
+
+  list.addEventListener("click", event => {
+    const button = event.target.closest("button[data-developer-task-remove]");
+    if (!button) return;
+    const index = Number(button.getAttribute("data-developer-task-remove"));
+    const items = load();
+    if (!Number.isFinite(index)) return;
+    items.splice(index, 1);
+    save(items);
+  });
+}
+
 initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();
 initializeSidebarToggle();
 initializeToolbarMenu();
 initializeDeveloperTodoList();
+initializeDeveloperWorkspace();

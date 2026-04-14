@@ -91,15 +91,11 @@ $bootstrapJson = json_encode(
         <?php endforeach; ?>
       </div>
 
-      <div class="dashboard-theme-toggle">
-        <button class="dashboard-theme-button" type="button" data-theme-toggle>Switch theme</button>
-      </div>
-
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
         <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
         <a class="dashboard-nav-link" href="#leadership-full-hours">Full hours</a>
         <?php if ($isDeveloper): ?>
-          <a class="dashboard-nav-link" href="#leadership-developer-lane">Developer lane</a>
+          <a class="dashboard-nav-link" href="/admin/developer/">Developer panel</a>
         <?php endif; ?>
         <a class="dashboard-nav-link" href="/user/">User workspace</a>
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
@@ -136,7 +132,7 @@ $bootstrapJson = json_encode(
               <a class="dashboard-toolbar-dropdown-link" href="#leadership-broadcast">Command center</a>
               <a class="dashboard-toolbar-dropdown-link" href="#leadership-full-hours">Full hours</a>
               <?php if ($isDeveloper): ?>
-                <a class="dashboard-toolbar-dropdown-link" href="#leadership-developer-lane">Developer lane</a>
+                <a class="dashboard-toolbar-dropdown-link" href="/admin/developer/">Developer panel</a>
               <?php endif; ?>
               <a class="dashboard-toolbar-dropdown-link" href="/user/">User workspace</a>
               <a class="dashboard-toolbar-dropdown-link dashboard-toolbar-dropdown-link-danger" href="/auth/logout/">Log out</a>
@@ -542,39 +538,6 @@ $bootstrapJson = json_encode(
               </div>
             </article>
 
-            <?php if ($isDeveloper): ?>
-              <article class="dashboard-panel dashboard-panel-developer-lane" id="leadership-developer-lane">
-                <div class="dashboard-panel-heading">
-                  <div>
-                    <p class="dashboard-kicker">Developer lane</p>
-                    <h2>Keep the maintenance queue and live sync tools in one calmer place.</h2>
-                  </div>
-                  <span class="dashboard-chip dashboard-chip-accent">Developer only</span>
-                </div>
-
-                <div class="dashboard-developer-lane-grid">
-                  <section class="dashboard-developer-card">
-                    <p class="dashboard-kicker">To-do list</p>
-                    <div class="dashboard-dev-todo-input">
-                      <input id="dev-todo-input" type="text" maxlength="120" placeholder="Add a quick task for the dev lane">
-                      <button class="button button-secondary dashboard-inline-button" id="dev-todo-add" type="button">Add task</button>
-                    </div>
-                    <ul class="dashboard-dev-todo-list" id="dev-todo-list">
-                      <li class="dashboard-dev-todo-empty">No dev tasks yet.</li>
-                    </ul>
-                  </section>
-
-                  <section class="dashboard-developer-card">
-                    <p class="dashboard-kicker">Live maintenance</p>
-                    <div class="dashboard-control-stack">
-                      <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
-                      <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
-                    </div>
-                    <p class="dashboard-panel-copy">Developer-only controls for deep maintenance. Every action is written into the website audit log and the Discord bot audit trail.</p>
-                  </section>
-                </div>
-              </article>
-            <?php endif; ?>
           </aside>
         </section>
       </section>

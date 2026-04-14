@@ -3397,6 +3397,10 @@ h2 {
   color: #ffdccd;
 }
 
+.dashboard-toolbar-dropdown[hidden] {
+  display: none !important;
+}
+
 .dashboard-view-switch {
   display: inline-flex;
   gap: 0.55rem;
@@ -3530,7 +3534,7 @@ h2 {
 
 .dashboard-hours-sheet {
   width: 100%;
-  min-width: 1480px;
+  min-width: 1660px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -3554,6 +3558,7 @@ h2 {
   padding: 0.82rem 0.78rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+  height: 3.35rem;
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -3602,6 +3607,12 @@ h2 {
   z-index: 3;
   min-width: 210px;
   background: #10131a;
+}
+
+.dashboard-hours-sheet thead th:nth-child(n+6),
+.dashboard-hours-sheet tbody td:nth-child(n+6) {
+  width: 56px;
+  min-width: 56px;
 }
 
 .dashboard-hours-sheet thead th:nth-child(1),
@@ -3728,6 +3739,42 @@ h2 {
   gap: 1rem;
 }
 
+.dashboard-developer-task-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dashboard-developer-task-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-developer-task-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-developer-task-top button {
+  border: none;
+  background: transparent;
+  color: rgba(216, 176, 95, 0.92);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-developer-task-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.65;
+}
+
 .dashboard-developer-card {
   padding: 1rem 1.05rem;
   border-radius: 16px;
@@ -3821,8 +3868,21 @@ h2 {
 .theme-light .dashboard-stat-card,
 .theme-light .dashboard-hero-card {
   border-color: rgba(21, 27, 38, 0.09);
-  background: linear-gradient(180deg, rgba(248, 243, 236, 0.9) 0%, rgba(241, 234, 225, 0.86) 100%);
+  background: linear-gradient(180deg, rgba(248, 244, 238, 0.9) 0%, rgba(239, 232, 223, 0.84) 100%);
   color: #18202c;
+}
+
+.theme-light .dashboard-title,
+.theme-light .dashboard-title-access,
+.theme-light .dashboard-hero-title,
+.theme-light .dashboard-panel h2,
+.theme-light .dashboard-stat-card strong,
+.theme-light .dashboard-route-card strong,
+.theme-light .dashboard-hero-aside strong,
+.theme-light .dashboard-selected-meta strong,
+.theme-light .dashboard-command-box strong,
+.theme-light .dashboard-toolbar-profile-copy strong {
+  color: #172234;
 }
 
 .theme-light .dashboard-panel-copy,
@@ -3830,6 +3890,21 @@ h2 {
 .theme-light .dashboard-panel p,
 .theme-light .dashboard-filter-field span {
   color: rgba(24, 32, 44, 0.72);
+}
+
+.theme-light .dashboard-command-label,
+.theme-light .dashboard-kicker,
+.theme-light .dashboard-breadcrumb,
+.theme-light .dashboard-route-label,
+.theme-light .dashboard-stat-card p,
+.theme-light .dashboard-stat-card span,
+.theme-light .dashboard-hero-copy,
+.theme-light .dashboard-hero-aside p,
+.theme-light .dashboard-selected-meta span,
+.theme-light .dashboard-period-card p,
+.theme-light .dashboard-history-month-card p,
+.theme-light .dashboard-toolbar-profile-copy small {
+  color: rgba(24, 32, 44, 0.66);
 }
 
 .theme-light .dashboard-filter-field {
@@ -3852,6 +3927,28 @@ h2 {
   color: #18202c;
 }
 
+.theme-light .dashboard-nav-link,
+.theme-light .dashboard-toolbar-link {
+  border-color: rgba(24, 32, 44, 0.08);
+  background: rgba(250, 246, 240, 0.82);
+  color: #18202c;
+}
+
+.theme-light .dashboard-nav-link:hover,
+.theme-light .dashboard-nav-link:focus-visible,
+.theme-light .dashboard-toolbar-link:hover,
+.theme-light .dashboard-toolbar-link:focus-visible {
+  background: rgba(24, 32, 44, 0.06);
+  color: #162131;
+}
+
+.theme-light .dashboard-nav-link.is-active {
+  background: rgba(191, 90, 50, 0.1);
+  border-color: rgba(191, 90, 50, 0.14);
+  color: #162131;
+  box-shadow: inset 0 0 0 1px rgba(191, 90, 50, 0.04);
+}
+
 .theme-light .workspace-dashboard .dashboard-sidebar-admin,
 .theme-light .workspace-dashboard .dashboard-sidebar-user {
   background: linear-gradient(180deg, rgba(245, 239, 230, 0.76) 0%, rgba(240, 232, 221, 0.72) 100%);
@@ -3870,6 +3967,12 @@ h2 {
 .theme-light .dashboard-toolbar-dropdown {
   border-color: rgba(24, 32, 44, 0.08);
   background: linear-gradient(180deg, rgba(248, 243, 236, 0.98) 0%, rgba(241, 234, 225, 0.96) 100%);
+}
+
+.theme-light .dashboard-toolbar-dropdown-link:hover,
+.theme-light .dashboard-toolbar-dropdown-link:focus-visible {
+  background: rgba(24, 32, 44, 0.05);
+  border-color: rgba(24, 32, 44, 0.08);
 }
 
 .theme-light .dashboard-hours-editor-inline,
@@ -3906,9 +4009,32 @@ h2 {
   background: #e5ddcf;
 }
 
+.theme-light .dashboard-hours-cell {
+  color: rgba(24, 32, 44, 0.56);
+}
+
+.theme-light .dashboard-hours-cell.has-hours {
+  color: #172234;
+}
+
+.theme-light .dashboard-developer-task-card {
+  border-color: rgba(24, 32, 44, 0.08);
+  background: rgba(244, 238, 230, 0.9);
+}
+
+.theme-light .dashboard-developer-task-card p {
+  color: rgba(24, 32, 44, 0.7);
+}
+
 .dashboard-hours-cell {
   text-align: center;
   color: rgba(255, 255, 255, 0.42);
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+
+.dashboard-hours-cell[data-day] {
+  cursor: text;
 }
 
 .dashboard-hours-cell.has-hours {
