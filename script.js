@@ -1127,6 +1127,18 @@ function renderFullHoursRows(people) {
 
   const dayNumbers = getDayNumbersForFullHours(people);
   head.innerHTML = `
+    <colgroup>
+      <col style="width:108px">
+      <col style="width:250px">
+      <col style="width:176px">
+      <col style="width:210px">
+      <col style="width:238px">
+      ${dayNumbers.map(() => `<col style="width:118px">`).join("")}
+      <col style="width:128px">
+      <col style="width:128px">
+      <col style="width:128px">
+      <col style="width:128px">
+    </colgroup>
     <tr>
       <th>Select</th>
       <th>Staff</th>
@@ -2372,4 +2384,5 @@ initializeSidebarToggle();
 initializeToolbarMenu();
 initializeDeveloperTodoList();
 initializeDeveloperWorkspace();
+
 
