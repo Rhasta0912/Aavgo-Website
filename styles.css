@@ -4406,6 +4406,290 @@ h2 {
   margin-top: 1rem;
 }
 
+/* Video 68 polish: fuller collapse, warmer light mode, wider spreadsheet, and Trello-style dev lanes */
+.sidebar-collapsed .dashboard-sidebar-admin,
+.sidebar-collapsed .dashboard-sidebar-user {
+  display: none;
+}
+
+.sidebar-collapsed .dashboard-shell-admin,
+.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: 0 minmax(0, 1fr);
+  gap: 0;
+}
+
+.workspace-dashboard .dashboard-sidebar .dashboard-theme-toggle {
+  display: none;
+}
+
+.dashboard-hours-sheet thead th:nth-child(1),
+.dashboard-hours-sheet tbody td:nth-child(1) {
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+}
+
+.dashboard-hours-sheet thead th:nth-child(2),
+.dashboard-hours-sheet tbody td:nth-child(2) {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+}
+
+.dashboard-hours-sheet thead th:nth-child(3),
+.dashboard-hours-sheet tbody td:nth-child(3) {
+  width: 176px;
+  min-width: 176px;
+  max-width: 176px;
+}
+
+.dashboard-hours-sheet thead th:nth-child(4),
+.dashboard-hours-sheet tbody td:nth-child(4) {
+  width: 210px;
+  min-width: 210px;
+  max-width: 210px;
+}
+
+.dashboard-hours-sheet thead th:nth-child(5),
+.dashboard-hours-sheet tbody td:nth-child(5) {
+  width: 238px;
+  min-width: 238px;
+  max-width: 238px;
+}
+
+.dashboard-hours-sheet thead th:nth-child(n+6),
+.dashboard-hours-sheet tbody td:nth-child(n+6) {
+  width: 118px;
+  min-width: 118px;
+  max-width: 118px;
+}
+
+.dashboard-hours-cell-copy {
+  padding-inline: 0.1rem;
+}
+
+.dashboard-developer-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+}
+
+.dashboard-developer-lane {
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+  min-width: 240px;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.015) 100%);
+}
+
+.dashboard-developer-lane-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-developer-lane-head h3 {
+  margin: 0.1rem 0 0;
+  color: #fff8ef;
+  font-size: 1rem;
+}
+
+.dashboard-developer-lane-add {
+  border: 0;
+  cursor: pointer;
+  min-width: 2.3rem;
+  min-height: 2.3rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.dashboard-developer-lane-empty {
+  padding: 0.9rem;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-developer-lane-empty strong,
+.dashboard-developer-lane-empty p {
+  display: block;
+  margin: 0;
+}
+
+.dashboard-developer-lane-empty p {
+  margin-top: 0.35rem;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.dashboard-developer-task-card {
+  border-radius: 14px;
+}
+
+.dashboard-developer-task-group-list {
+  min-height: 2rem;
+}
+
+.dashboard-toolbar-dropdown,
+.dashboard-view-switch,
+.dashboard-hours-table-wrap,
+.dashboard-hours-sheet-wrap,
+.dashboard-hours-editor-inline,
+.dashboard-modal-dialog,
+.dashboard-developer-task-card,
+.dashboard-developer-lane {
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+
+.theme-light.workspace-dashboard {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(120, 179, 161, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 12%, rgba(216, 176, 95, 0.12), transparent 25%),
+    linear-gradient(180deg, #f6efe5 0%, #eee2d2 44%, #e5d6c0 100%);
+}
+
+.theme-light .dashboard-sidebar,
+.theme-light .dashboard-panel,
+.theme-light .dashboard-stat-card,
+.theme-light .dashboard-hero-card,
+.theme-light .dashboard-hours-table-wrap,
+.theme-light .dashboard-hours-sheet-wrap,
+.theme-light .dashboard-hours-editor-inline,
+.theme-light .dashboard-modal-dialog,
+.theme-light .dashboard-developer-task-card,
+.theme-light .dashboard-developer-lane,
+.theme-light .dashboard-toolbar-dropdown,
+.theme-light .dashboard-view-switch {
+  border-color: rgba(24, 32, 44, 0.1);
+  background: linear-gradient(180deg, rgba(249, 243, 233, 0.98) 0%, rgba(239, 231, 218, 0.94) 100%);
+  color: #18202c;
+  box-shadow:
+    0 18px 42px rgba(55, 44, 32, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.theme-light .dashboard-nav-link,
+.theme-light .dashboard-toolbar-link,
+.theme-light .dashboard-theme-button,
+.theme-light .dashboard-toolbar-dropdown-link,
+.theme-light .dashboard-filter-field input,
+.theme-light .dashboard-filter-field select,
+.theme-light .dashboard-control-field input,
+.theme-light .dashboard-control-field select,
+.theme-light .dashboard-control-textarea {
+  background: rgba(251, 247, 240, 0.98);
+  color: #18202c;
+  border-color: rgba(24, 32, 44, 0.12);
+}
+
+.theme-light .dashboard-nav-link:hover,
+.theme-light .dashboard-nav-link:focus-visible,
+.theme-light .dashboard-toolbar-link:hover,
+.theme-light .dashboard-toolbar-link:focus-visible,
+.theme-light .dashboard-toolbar-dropdown-link:hover,
+.theme-light .dashboard-toolbar-dropdown-link:focus-visible {
+  background: rgba(24, 32, 44, 0.06);
+  color: #162131;
+}
+
+.theme-light .dashboard-nav-link.is-active {
+  background: rgba(191, 90, 50, 0.12);
+  border-color: rgba(191, 90, 50, 0.16);
+  color: #162131;
+}
+
+.theme-light .dashboard-title,
+.theme-light .dashboard-title-access,
+.theme-light .dashboard-hero-title,
+.theme-light .dashboard-panel h2,
+.theme-light .dashboard-stat-card strong,
+.theme-light .dashboard-route-card strong,
+.theme-light .dashboard-hero-aside strong,
+.theme-light .dashboard-selected-meta strong,
+.theme-light .dashboard-command-box strong,
+.theme-light .dashboard-toolbar-profile-copy strong,
+.theme-light .dashboard-developer-lane-head h3,
+.theme-light .dashboard-staff-cell strong,
+.theme-light .dashboard-staff-cell span,
+.theme-light .dashboard-inline-stack strong,
+.theme-light .dashboard-inline-stack span,
+.theme-light .dashboard-hours-cell-copy,
+.theme-light .dashboard-empty-state,
+.theme-light .dashboard-empty-state strong,
+.theme-light .dashboard-empty-state p,
+.theme-light .dashboard-toolbar-avatar,
+.theme-light .dashboard-sidebar-toggle span,
+.theme-light .dashboard-developer-task-card strong,
+.theme-light .dashboard-developer-task-card p,
+.theme-light .dashboard-developer-task-meta,
+.theme-light .dashboard-developer-lane-empty strong,
+.theme-light .dashboard-developer-lane-empty p {
+  color: #18202c;
+}
+
+.theme-light .dashboard-panel-copy,
+.theme-light .dashboard-subtitle,
+.theme-light .dashboard-panel p,
+.theme-light .dashboard-filter-field span,
+.theme-light .dashboard-command-label,
+.theme-light .dashboard-kicker,
+.theme-light .dashboard-breadcrumb,
+.theme-light .dashboard-route-label,
+.theme-light .dashboard-stat-card p,
+.theme-light .dashboard-stat-card span,
+.theme-light .dashboard-hero-copy,
+.theme-light .dashboard-hero-aside p,
+.theme-light .dashboard-selected-meta span,
+.theme-light .dashboard-period-card p,
+.theme-light .dashboard-history-month-card p,
+.theme-light .dashboard-toolbar-profile-copy small {
+  color: rgba(24, 32, 44, 0.72);
+}
+
+.theme-light .dashboard-hours-sheet thead th {
+  background: #ebdfcf;
+  color: #18202c;
+  border-color: rgba(24, 32, 44, 0.08);
+}
+
+.theme-light .dashboard-hours-sheet tbody td {
+  background: rgba(250, 245, 237, 0.96);
+  color: #18202c;
+  border-color: rgba(24, 32, 44, 0.06);
+}
+
+.theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+5),
+.theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+5) {
+  background: rgba(239, 229, 215, 0.9);
+}
+
+.theme-light .dashboard-hours-cell.has-hours {
+  color: #162131;
+}
+
+.theme-light .dashboard-chip,
+.theme-light .dashboard-status-pill {
+  background: rgba(249, 242, 232, 0.97);
+  color: #18202c;
+}
+
+.theme-light .dashboard-hours-cell,
+.theme-light .dashboard-hours-cell-copy,
+.theme-light .dashboard-hours-sheet tbody td,
+.theme-light .dashboard-hours-sheet thead th {
+  color: #18202c;
+}
+
+.theme-light .dashboard-sidebar .dashboard-theme-toggle {
+  display: none;
+}
+
 @media (max-width: 1240px) {
   .dashboard-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

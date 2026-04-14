@@ -724,7 +724,7 @@ function hoursToClock(hours) {
   return `${normalizedHours}:${normalizedMinutes}`;
 }
 
-function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
+async function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
   const safeNext = roundHoursStep(nextHours);
   const safeCurrent = roundHoursStep(currentHours);
   if (!person?.discordId) return;
@@ -741,7 +741,7 @@ function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
 
   const reason = "Quick full-hours grid update";
   if (safeNext > safeCurrent) {
-    sendAdminCommand("add_manual_hours", {
+    return sendAdminCommand("add_manual_hours", {
       discordId: person.discordId,
       shiftDate,
       loginTime: "00:00",
@@ -750,10 +750,9 @@ function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
       hotelId: "",
       reason
     }, { feedback: "editor" });
-    return;
   }
 
-  sendAdminCommand("remove_manual_hours", {
+  return sendAdminCommand("remove_manual_hours", {
     discordId: person.discordId,
     shiftDate,
     hours: delta,
@@ -782,10 +781,22 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
     finished = true;
     const nextValue = Number(input.value || 0);
     cell.classList.remove("is-editing");
-    cell.innerHTML = previousMarkup;
     if (commit) {
-      quickSetCellHours(person, shiftDate, currentHours, nextValue);
+      const displayValue = roundHoursStep(nextValue);
+      cell.setAttribute("data-hours", String(displayValue));
+      cell.classList.toggle("has-hours", displayValue > 0);
+      cell.innerHTML = `<div class="dashboard-hours-cell-copy">${displayValue > 0 ? escapeHtml(formatHoursValue(displayValue)) : ""}</div>`;
+      setEditorFeedback("Saving hours...", false);
+      void quickSetCellHours(person, shiftDate, currentHours, displayValue).then(success => {
+        if (success === false) {
+          cell.setAttribute("data-hours", String(currentHours));
+          cell.classList.toggle("has-hours", Number(currentHours) > 0);
+          cell.innerHTML = previousMarkup;
+        }
+      });
+      return;
     }
+    cell.innerHTML = previousMarkup;
   };
 
   input.focus();
@@ -795,19 +806,13 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
     if (isEnter) {
       event.preventDefault();
       event.stopPropagation();
+      window.setTimeout(() => finish(true), 0);
+      return;
     }
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
       finish(false);
-    }
-  });
-  input.addEventListener("keyup", event => {
-    const isEnter = event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter" || event.keyCode === 13;
-    if (isEnter) {
-      event.preventDefault();
-      event.stopPropagation();
-      finish(true);
     }
   });
   input.addEventListener("change", () => finish(true));
@@ -1423,7 +1428,7 @@ function renderAdjustmentLog(person) {
         <span class="dashboard-chip">${escapeHtml(entry?.mode === "training" ? "Training" : "Live shift")}</span>
         <strong>${escapeHtml(entry?.shiftDate || "")}</strong>
       </div>
-      <p>${escapeHtml(entry?.hotelLabel || "N/A")} · ${escapeHtml(entry?.loginTime || "--:--")} - ${escapeHtml(entry?.logoutTime || "--:--")} · ${formatHours(entry?.hours)}</p>
+      <p>${escapeHtml(entry?.hotelLabel || "N/A")} &middot; ${escapeHtml(entry?.loginTime || "--:--")} - ${escapeHtml(entry?.logoutTime || "--:--")} &middot; ${formatHours(entry?.hours)}</p>
       <span>${escapeHtml(entry?.reason || "Manual adjustment")}</span>
     </article>
   `).join("");
@@ -1431,11 +1436,11 @@ function renderAdjustmentLog(person) {
 
 function syncHoursEditorState(person) {
   setText("hours-editor-selected", person?.displayName
-    ? `${person.displayName} · ${getRoleSummary(person)}`
+    ? `${person.displayName} &middot; ${getRoleSummary(person)}`
     : "Pick a staff row to edit hours.");
 
   setText("hours-editor-summary-selected", person?.displayName
-    ? `${person.displayName} · ${getRoleSummary(person)}`
+    ? `${person.displayName} &middot; ${getRoleSummary(person)}`
     : "Pick a staff row to edit hours.");
 
   renderAdjustmentLog(person);
@@ -2131,6 +2136,7 @@ function initializeDeveloperWorkspace() {
     notes: document.getElementById("developer-task-notes")
   };
   const feedback = document.getElementById("developer-task-feedback");
+  const formShell = document.querySelector(".dashboard-developer-form-shell");
   const STORAGE_KEY = "aavgo_developer_tasks";
   const STATUS_ORDER = [
     "Backlog",
@@ -2206,8 +2212,8 @@ function initializeDeveloperWorkspace() {
           <strong>${escapeHtml(item.title || "Untitled task")}</strong>
           <p class="dashboard-developer-task-meta">
             Owner: ${escapeHtml(item.owner || "Unassigned")}
-            ${item.startDate ? ` · Starts ${escapeHtml(item.startDate)}` : " · Starts anytime"}
-            ${item.deadlineDate ? ` · Deadline ${escapeHtml(item.deadlineDate)}` : ""}
+            ${item.startDate ? ` &middot; Starts ${escapeHtml(item.startDate)}` : " &middot; Starts anytime"}
+            ${item.deadlineDate ? ` &middot; Deadline ${escapeHtml(item.deadlineDate)}` : ""}
           </p>
         </div>
         <button type="button" data-developer-task-remove="${escapeHtml(item.id)}">Remove</button>
@@ -2228,6 +2234,34 @@ function initializeDeveloperWorkspace() {
     </article>
   `;
 
+  const renderTaskLane = (status, items) => {
+    const groupItems = items.filter(item => normalizeStatus(item.status) === status);
+    return `
+      <section class="dashboard-developer-lane" data-developer-lane="${escapeHtml(status)}">
+        <header class="dashboard-developer-lane-head">
+          <div>
+            <p class="dashboard-kicker">${escapeHtml(status)}</p>
+            <h3>${escapeHtml(status)} (${groupItems.length})</h3>
+          </div>
+          <button
+            type="button"
+            class="dashboard-chip dashboard-chip-accent dashboard-developer-lane-add"
+            data-developer-task-create-status="${escapeHtml(status)}"
+            aria-label="Add task to ${escapeHtml(status)}"
+          >+</button>
+        </header>
+        <div class="dashboard-developer-task-group-list">
+          ${groupItems.length ? groupItems.map(renderTaskCard).join("") : `
+            <div class="dashboard-developer-lane-empty">
+              <strong>No tasks here yet.</strong>
+              <p>Use the plus button to prefill this lane.</p>
+            </div>
+          `}
+        </div>
+      </section>
+    `;
+  };
+
   const render = (items) => {
     const sorted = sortTasks(items.map(normalizeTask));
     if (!sorted.length) {
@@ -2240,28 +2274,9 @@ function initializeDeveloperWorkspace() {
       return;
     }
 
-    const groups = STATUS_ORDER.map(status => {
-      const groupItems = sorted.filter(item => normalizeStatus(item.status) === status);
-      if (!groupItems.length) return "";
-      return `
-        <section class="dashboard-developer-task-group">
-          <div class="dashboard-panel-heading dashboard-panel-heading-tight">
-            <div>
-              <p class="dashboard-kicker">${escapeHtml(status)}</p>
-              <h3>${escapeHtml(status)} (${groupItems.length})</h3>
-            </div>
-          </div>
-          <div class="dashboard-developer-task-group-list">
-            ${groupItems.map(renderTaskCard).join("")}
-          </div>
-        </section>
-      `;
-    }).join("");
-
-    list.innerHTML = groups || `
-      <div class="dashboard-empty-state">
-        <strong>No developer tasks yet.</strong>
-        <p>Add the first roadmap item, owner, deadline, and urgency.</p>
+    list.innerHTML = `
+      <div class="dashboard-developer-board">
+        ${STATUS_ORDER.map(status => renderTaskLane(status, sorted)).join("")}
       </div>
     `;
   };
@@ -2269,6 +2284,18 @@ function initializeDeveloperWorkspace() {
   const save = (items) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     render(items);
+  };
+
+  const openTaskFormForStatus = (status = "") => {
+    if (fields.status && STATUS_ORDER.includes(status)) {
+      fields.status.value = status;
+    }
+    if (formShell) {
+      formShell.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    window.setTimeout(() => {
+      fields.title?.focus();
+    }, 320);
   };
 
   render(load());
@@ -2307,6 +2334,13 @@ function initializeDeveloperWorkspace() {
   });
 
   list.addEventListener("click", event => {
+    const createButton = event.target.closest("button[data-developer-task-create-status]");
+    if (createButton) {
+      openTaskFormForStatus(String(createButton.getAttribute("data-developer-task-create-status") || ""));
+      setFeedback("Task form opened for that lane. Fill in the details below.", false);
+      return;
+    }
+
     const button = event.target.closest("button[data-developer-task-remove]");
     if (!button) return;
     const taskId = String(button.getAttribute("data-developer-task-remove") || "");
@@ -2338,3 +2372,4 @@ initializeSidebarToggle();
 initializeToolbarMenu();
 initializeDeveloperTodoList();
 initializeDeveloperWorkspace();
+
