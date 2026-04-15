@@ -3068,6 +3068,11 @@ function initializeDeveloperWorkspace() {
       setFeedback("Deadline is required so the board can stay structured.", true);
       return;
     }
+    if (fields.deadline?.type !== "hidden" && fields.deadline?.checkValidity && !fields.deadline.checkValidity()) {
+      fields.deadline.reportValidity?.();
+      setFeedback("Pick a valid due date from the calendar.", true);
+      return;
+    }
     const attachments = await readAttachments().catch(() => []);
     const items = load();
     const now = nowIso();

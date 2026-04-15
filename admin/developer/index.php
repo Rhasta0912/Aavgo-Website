@@ -199,7 +199,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <label class="dashboard-control-field dashboard-control-field-wide">
           <span>Due date</span>
           <div class="dashboard-deadline-picker" data-deadline-picker>
-            <input id="developer-task-deadline" type="date" required class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+            <input id="developer-task-deadline" type="hidden" required class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
             <button type="button" class="dashboard-deadline-trigger" id="developer-task-deadline-trigger" aria-haspopup="dialog" aria-expanded="false">
               Choose a due date
             </button>
