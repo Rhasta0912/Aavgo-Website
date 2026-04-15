@@ -97,9 +97,58 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           </div>
 
           <div class="dashboard-developer-task-list" id="developer-task-list">
-            <div class="dashboard-empty-state">
-              <strong>No developer tasks yet.</strong>
-              <p>Add the first roadmap item, owner, deadline, and urgency.</p>
+            <div class="dashboard-developer-board">
+              <section class="dashboard-developer-lane" data-developer-lane="To Do" data-developer-lane-dropzone="To Do">
+                <header class="dashboard-developer-lane-head">
+                  <div>
+                    <p class="dashboard-kicker">List</p>
+                    <h3>To Do</h3>
+                    <p class="dashboard-developer-lane-copy">Ready to start.</p>
+                  </div>
+                  <span class="dashboard-chip">0</span>
+                </header>
+                <div class="dashboard-developer-task-group-list">
+                  <div class="dashboard-developer-lane-empty">
+                    <strong>No cards yet.</strong>
+                    <p>Start this list with a card for To Do.</p>
+                  </div>
+                </div>
+                <button type="button" class="dashboard-developer-lane-add" data-developer-task-create-status="To Do" onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('To Do')" aria-label="Add card to To Do">+ Add a card</button>
+              </section>
+              <section class="dashboard-developer-lane" data-developer-lane="Doing" data-developer-lane-dropzone="Doing">
+                <header class="dashboard-developer-lane-head">
+                  <div>
+                    <p class="dashboard-kicker">List</p>
+                    <h3>Doing</h3>
+                    <p class="dashboard-developer-lane-copy">Work in motion.</p>
+                  </div>
+                  <span class="dashboard-chip">0</span>
+                </header>
+                <div class="dashboard-developer-task-group-list">
+                  <div class="dashboard-developer-lane-empty">
+                    <strong>No cards yet.</strong>
+                    <p>Start this list with a card for Doing.</p>
+                  </div>
+                </div>
+                <button type="button" class="dashboard-developer-lane-add" data-developer-task-create-status="Doing" onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('Doing')" aria-label="Add card to Doing">+ Add a card</button>
+              </section>
+              <section class="dashboard-developer-lane" data-developer-lane="Done" data-developer-lane-dropzone="Done">
+                <header class="dashboard-developer-lane-head">
+                  <div>
+                    <p class="dashboard-kicker">List</p>
+                    <h3>Done</h3>
+                    <p class="dashboard-developer-lane-copy">Finished and ready to archive.</p>
+                  </div>
+                  <span class="dashboard-chip">0</span>
+                </header>
+                <div class="dashboard-developer-task-group-list">
+                  <div class="dashboard-developer-lane-empty">
+                    <strong>No cards yet.</strong>
+                    <p>Start this list with a card for Done.</p>
+                  </div>
+                </div>
+                <button type="button" class="dashboard-developer-lane-add" data-developer-task-create-status="Done" onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('Done')" aria-label="Add card to Done">+ Add a card</button>
+              </section>
             </div>
           </div>
 
