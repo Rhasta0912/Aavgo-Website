@@ -3827,12 +3827,14 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   margin-top: 0.35rem;
 }
 
-.workspace-page-developer .dashboard-panel-developer-board {
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  overflow: visible;
+.workspace-page-developer .dashboard-developer-workspace {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.workspace-page-developer .dashboard-developer-workspace-head {
+  margin-bottom: 0;
 }
 
 .dashboard-panel-actions {
@@ -4535,10 +4537,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-developer-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.1rem;
+  grid-template-columns: repeat(3, minmax(18rem, 1fr));
+  gap: 1.35rem;
   overflow: visible;
-  padding: 0.1rem 0 0.2rem;
+  padding: 0.15rem 0 0.3rem;
   align-items: start;
 }
 
@@ -4547,12 +4549,12 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   gap: 0.8rem;
   align-content: start;
   min-width: 0;
-  padding: 0.85rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(14px);
+  padding: 0.25rem 0.2rem 0.05rem;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .dashboard-developer-lane.is-drop-target {
@@ -4629,6 +4631,16 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.workspace-page-developer .dashboard-panel-developer-board {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .dashboard-developer-task-group-list {

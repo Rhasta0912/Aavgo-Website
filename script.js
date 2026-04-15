@@ -856,6 +856,14 @@ function setAdminView(nextView) {
     node.classList.toggle("is-active", isActive);
     node.hidden = !isActive;
   });
+  revealActiveAdminViewPanel();
+}
+
+function revealActiveAdminViewPanel() {
+  document.querySelectorAll("[data-hours-view-panel]").forEach(node => {
+    if (node.hidden) return;
+    node.querySelectorAll(".reveal").forEach(item => item.classList.add("reveal-in"));
+  });
 }
 
 function setActiveNavLink(hash) {
@@ -1598,6 +1606,7 @@ function applyAdminBoardPayload(payload) {
   renderAuditLog(getAdminManagement()?.audit?.entries || []);
   renderBroadcastComposer(getAdminManagement()?.signals?.announcement || null);
   renderSelectedStaff(selectedStaff);
+  revealActiveAdminViewPanel();
 }
 
 function findSelectedStaff() {
@@ -2588,6 +2597,7 @@ function initializeDeveloperWorkspace() {
           type="button"
           class="dashboard-developer-lane-add"
           data-developer-task-create-status="${escapeHtml(status)}"
+          onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('${escapeHtml(status)}')"
           aria-label="Add card to ${escapeHtml(status)}"
         >+ Add a card</button>
       </section>

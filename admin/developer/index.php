@@ -51,11 +51,6 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
 
-      <section class="dashboard-side-section">
-        <p class="dashboard-kicker">Developer mode</p>
-        <strong>Use this lane for roadmap ownership, maintenance timing, and live platform utilities.</strong>
-        <p>Tasks here are detailed on purpose so the leadership board can stay focused on live operations.</p>
-      </section>
     </aside>
 
     <main class="dashboard-main dashboard-main-admin">
@@ -63,7 +58,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <div>
           <p class="dashboard-breadcrumb">Dashboard / Developer / Panel</p>
           <h1 class="dashboard-title dashboard-title-wide">Roadmap board.</h1>
-          <p class="dashboard-subtitle">Trello-style roadmap for tasks, fixes, and platform work. Drag cards between To Do, Doing, and Done. Add new items from the plus button.</p>
+          <p class="dashboard-subtitle">A very open Trello-style board for tasks, fixes, and platform work.</p>
         </div>
         <div class="dashboard-toolbar">
           <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
@@ -90,8 +85,8 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
       </header>
 
       <section class="dashboard-admin-grid dashboard-admin-grid-developer reveal reveal-delay-2">
-        <article class="dashboard-panel dashboard-panel-developer-board dashboard-panel-wide">
-          <div class="dashboard-panel-heading">
+        <section class="dashboard-developer-workspace">
+          <div class="dashboard-panel-heading dashboard-developer-workspace-head">
             <div>
               <p class="dashboard-kicker">Developer board</p>
               <h2>To Do, Doing, Done.</h2>
@@ -108,7 +103,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <p>Add the first roadmap item, owner, deadline, and urgency.</p>
             </div>
           </div>
-        </article>
+        </section>
       </section>
     </main>
   </div>
