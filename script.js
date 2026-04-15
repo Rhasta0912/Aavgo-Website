@@ -2424,38 +2424,13 @@ function initializeDeveloperWorkspace() {
 
   render(load());
 
-  addButton.addEventListener("click", () => {
-    const title = String(fields.title?.value || "").trim();
-    const deadlineDate = String(fields.deadline?.value || "").trim();
-    if (!title) {
-      setFeedback("Task name is required before adding it.", true);
-      return;
-    }
-    if (!deadlineDate) {
-      setFeedback("Deadline is required so the board can stay structured.", true);
-      return;
-    }
-    const items = load();
-    items.unshift({
-      id: createTaskId(),
-      title,
-      owner: String(fields.owner?.value || "").trim(),
-      startDate: String(fields.start?.value || "").trim(),
-      deadlineDate,
-      priority: String(fields.priority?.value || "Normal").trim(),
-      status: normalizeStatus(fields.status?.value || "To Do"),
-      notes: String(fields.notes?.value || "").trim()
+    addButton.addEventListener("click", () => {
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+        return;
+      }
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    Object.values(fields).forEach(field => {
-      if (!field) return;
-      if ("value" in field) field.value = "";
-    });
-    if (fields.priority) fields.priority.value = "Normal";
-    if (fields.status) fields.status.value = "To Do";
-    if (fields.deadline) fields.deadline.value = "";
-    setFeedback("Task added to the board.", false);
-    save(items);
-  });
 
   list.addEventListener("click", event => {
     const createButton = event.target.closest("button[data-developer-task-create-status]");
@@ -2731,14 +2706,16 @@ function initializeDeveloperWorkspace() {
     }
   };
 
-  const setDeadlineValue = (value, { close = false } = {}) => {
-    if (fields.deadline) {
-      fields.deadline.value = value;
-    }
-    syncDeadlineTrigger();
-    renderDeadlineCalendar(value);
-    if (close) {
-      closeDeadlinePopover();
+    const setDeadlineValue = (value, { close = false } = {}) => {
+      if (fields.deadline) {
+        fields.deadline.value = value;
+        fields.deadline.dispatchEvent(new Event("input", { bubbles: true }));
+        fields.deadline.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      syncDeadlineTrigger();
+      renderDeadlineCalendar(value);
+      if (close) {
+        closeDeadlinePopover();
     }
   };
 
@@ -2989,6 +2966,11 @@ function initializeDeveloperWorkspace() {
 
   deadlineTrigger?.addEventListener("click", event => {
     event.preventDefault();
+    try {
+      fields.deadline?.showPicker?.();
+    } catch (error) {
+      void error;
+    }
     toggleDeadlinePopover();
   });
 
@@ -3056,8 +3038,7 @@ function initializeDeveloperWorkspace() {
     return Promise.all(files.map(readFileAsDataUrl));
   };
 
-  form.addEventListener("submit", async event => {
-    event.preventDefault();
+  const submitTask = async () => {
     const title = String(fields.title?.value || "").trim();
     const deadlineDate = String(fields.deadline?.value || "").trim();
     if (!title) {
@@ -3102,6 +3083,11 @@ function initializeDeveloperWorkspace() {
     save(items);
     resetFields("To Do");
     window.setTimeout(closeModal, 180);
+  };
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    await submitTask();
   });
 
   list.addEventListener("click", event => {
