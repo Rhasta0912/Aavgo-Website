@@ -2156,30 +2156,17 @@ h2 {
   align-items: stretch;
 }
 
-.sidebar-collapsed .dashboard-shell-admin,
-.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: 0 minmax(0, 1fr);
-  gap: 0;
+body.sidebar-collapsed .dashboard-shell-admin,
+body.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
 }
 
-.sidebar-collapsed .dashboard-sidebar-admin,
-.sidebar-collapsed .dashboard-sidebar-user {
-  width: 0;
-  min-width: 0;
-  max-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-  transform: translateX(-100%);
+body.sidebar-collapsed .dashboard-sidebar-admin,
+body.sidebar-collapsed .dashboard-sidebar-user {
   display: none !important;
-}
-
-.sidebar-collapsed .dashboard-side-section {
-  display: none;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin,
@@ -4427,44 +4414,17 @@ h2 {
 }
 
 /* Video 68 polish: fuller collapse, warmer light mode, wider spreadsheet, and Trello-style dev lanes */
-.sidebar-collapsed .dashboard-sidebar-admin,
-.sidebar-collapsed .dashboard-sidebar-user {
-  display: none;
-}
-
-.sidebar-collapsed .dashboard-shell-admin,
-.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: 0 minmax(0, 1fr);
-  gap: 0;
+body.sidebar-collapsed .dashboard-shell-admin,
+body.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
 }
 
 body.sidebar-collapsed .dashboard-sidebar-admin,
 body.sidebar-collapsed .dashboard-sidebar-user {
   display: none !important;
   visibility: hidden !important;
-  position: absolute !important;
-  inset: auto auto auto -120vw !important;
-  max-width: 0 !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
   pointer-events: none !important;
-}
-
-body.sidebar-collapsed .dashboard-sidebar-admin > *,
-body.sidebar-collapsed .dashboard-sidebar-user > * {
-  display: none !important;
-}
-
-body.sidebar-collapsed .dashboard-shell-admin,
-body.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: 0 minmax(0, 1fr) !important;
-  gap: 0 !important;
-}
-
-body.sidebar-collapsed .dashboard-main-admin,
-body.sidebar-collapsed .dashboard-main-user {
-  grid-column: 1 / -1 !important;
 }
 
 .workspace-dashboard .dashboard-sidebar .dashboard-theme-toggle {
