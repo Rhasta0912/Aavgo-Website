@@ -2530,6 +2530,18 @@ function initializeDeveloperWorkspace() {
     ["done today", "is-due-today"]
   ]);
   let draggingTaskId = "";
+  const deadlinePicker = document.querySelector("[data-deadline-picker]");
+  const deadlineTrigger = document.getElementById("developer-task-deadline-trigger");
+  const deadlinePopover = document.getElementById("developer-task-deadline-popover");
+  const deadlineGrid = document.getElementById("developer-task-deadline-grid");
+  const deadlineMonth = document.getElementById("developer-task-deadline-month");
+  const deadlinePrev = deadlinePopover?.querySelector("[data-deadline-prev]");
+  const deadlineNext = deadlinePopover?.querySelector("[data-deadline-next]");
+  const deadlineToday = deadlinePopover?.querySelector("[data-deadline-today]");
+  const deadlineNextWeek = deadlinePopover?.querySelector("[data-deadline-nextweek]");
+  const deadlineClear = deadlinePopover?.querySelector("[data-deadline-clear]");
+  const monthFormatter = new Intl.DateTimeFormat([], { month: "long", year: "numeric" });
+  const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
 
   const createTaskId = () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -2542,6 +2554,28 @@ function initializeDeveloperWorkspace() {
     const value = String(status || "").trim();
     const normalized = STATUS_ALIAS_MAP.get(value.toLowerCase()) || value;
     return STATUS_ORDER.includes(normalized) ? normalized : "To Do";
+  };
+
+  const parseLocalDate = (value) => {
+    const input = String(value || "").trim();
+    if (!input) return null;
+    const [year, month, day] = input.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const toLocalDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatDeadlineLabel = (value) => {
+    const parsed = parseLocalDate(value);
+    if (!parsed) return "";
+    return shortDateFormatter.format(parsed);
   };
 
   const normalizeTask = (item = {}) => ({
@@ -2597,9 +2631,12 @@ function initializeDeveloperWorkspace() {
     if (fields.priority) fields.priority.value = "Normal";
     if (fields.status) fields.status.value = STATUS_ORDER.includes(status) ? status : "To Do";
     if (fields.notes) fields.notes.value = "";
+    syncDeadlineTrigger();
+    closeDeadlinePopover();
   };
 
   const closeModal = () => {
+    closeDeadlinePopover();
     modal.hidden = true;
     document.body.classList.remove("dashboard-modal-open");
   };
@@ -2609,6 +2646,7 @@ function initializeDeveloperWorkspace() {
     setFeedback("Add a roadmap card, then drag it between lists.", false);
     modal.hidden = false;
     document.body.classList.add("dashboard-modal-open");
+    syncDeadlineTrigger();
     window.setTimeout(() => {
       fields.title?.focus();
     }, 40);
@@ -2625,6 +2663,87 @@ function initializeDeveloperWorkspace() {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
     render(load());
   };
+
+  const syncDeadlineTrigger = () => {
+    if (!deadlineTrigger) return;
+    const value = String(fields.deadline?.value || "").trim();
+    const label = formatDeadlineLabel(value);
+    deadlineTrigger.textContent = label ? `Due ${label}` : "Choose a due date";
+    deadlineTrigger.classList.toggle("is-filled", Boolean(label));
+    deadlineTrigger.setAttribute("aria-expanded", String(Boolean(deadlinePopover && !deadlinePopover.hidden)));
+  };
+
+  const renderDeadlineCalendar = (anchorValue = fields.deadline?.value || "") => {
+    if (!deadlineGrid || !deadlineMonth) return;
+    const anchor = parseLocalDate(anchorValue) || new Date();
+    const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    const todayValue = toLocalDateString(new Date());
+    const selectedValue = String(fields.deadline?.value || "").trim();
+    const firstDay = monthStart.getDay();
+    const daysInMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0).getDate();
+    const totalSlots = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    const cells = [];
+
+    deadlineMonth.textContent = monthFormatter.format(monthStart);
+    for (let index = 0; index < totalSlots; index += 1) {
+      const dayNumber = index - firstDay + 1;
+      if (dayNumber < 1 || dayNumber > daysInMonth) {
+        cells.push('<span class="dashboard-deadline-cell is-empty" aria-hidden="true"></span>');
+        continue;
+      }
+      const day = new Date(anchor.getFullYear(), anchor.getMonth(), dayNumber);
+      const iso = toLocalDateString(day);
+      const isSelected = selectedValue === iso;
+      const isToday = todayValue === iso;
+      cells.push(`
+        <button
+          type="button"
+          class="dashboard-deadline-cell${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}"
+          data-deadline-day="${escapeHtml(iso)}"
+          aria-pressed="${isSelected ? "true" : "false"}"
+        >
+          <span>${dayNumber}</span>
+        </button>
+      `);
+    }
+    deadlineGrid.innerHTML = cells.join("");
+  };
+
+  const openDeadlinePopover = () => {
+    if (!deadlinePopover) return;
+    deadlinePopover.hidden = false;
+    syncDeadlineTrigger();
+    renderDeadlineCalendar();
+  };
+
+  const closeDeadlinePopover = () => {
+    if (!deadlinePopover) return;
+    deadlinePopover.hidden = true;
+    syncDeadlineTrigger();
+  };
+
+  const toggleDeadlinePopover = () => {
+    if (!deadlinePopover) return;
+    if (deadlinePopover.hidden) {
+      openDeadlinePopover();
+    } else {
+      closeDeadlinePopover();
+    }
+  };
+
+  const setDeadlineValue = (value, { close = false } = {}) => {
+    if (fields.deadline) {
+      fields.deadline.value = value;
+    }
+    syncDeadlineTrigger();
+    renderDeadlineCalendar(value);
+    if (close) {
+      closeDeadlinePopover();
+    }
+  };
+
+  syncDeadlineTrigger();
+  renderDeadlineCalendar();
 
   const moveTaskToStatus = (taskId, status) => {
     const normalizedStatus = normalizeStatus(status);
@@ -2866,6 +2985,67 @@ function initializeDeveloperWorkspace() {
 
   openButtons.forEach(button => {
     button.addEventListener("click", () => openModal("To Do"));
+  });
+
+  deadlineTrigger?.addEventListener("click", event => {
+    event.preventDefault();
+    toggleDeadlinePopover();
+  });
+
+  deadlinePrev?.addEventListener("click", () => {
+    const current = parseLocalDate(fields.deadline?.value || "") || new Date();
+    const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    renderDeadlineCalendar(toLocalDateString(previous));
+  });
+
+  deadlineNext?.addEventListener("click", () => {
+    const current = parseLocalDate(fields.deadline?.value || "") || new Date();
+    const next = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    renderDeadlineCalendar(toLocalDateString(next));
+  });
+
+  deadlineToday?.addEventListener("click", () => {
+    const today = new Date();
+    setDeadlineValue(toLocalDateString(today), { close: true });
+    setFeedback(`Due date set to ${formatDeadlineLabel(fields.deadline?.value || "")}.`, false);
+  });
+
+  deadlineNextWeek?.addEventListener("click", () => {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    setDeadlineValue(toLocalDateString(nextWeek), { close: true });
+    setFeedback(`Due date set to ${formatDeadlineLabel(fields.deadline?.value || "")}.`, false);
+  });
+
+  deadlineClear?.addEventListener("click", () => {
+    setDeadlineValue("", { close: true });
+    setFeedback("Due date cleared.", false);
+  });
+
+  deadlineGrid?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-deadline-day]");
+    if (!button) return;
+    const value = String(button.getAttribute("data-deadline-day") || "").trim();
+    if (!value) return;
+    setDeadlineValue(value, { close: true });
+    setFeedback(`Due date set to ${formatDeadlineLabel(value)}.`, false);
+  });
+
+  fields.deadline?.addEventListener("change", () => {
+    syncDeadlineTrigger();
+    renderDeadlineCalendar(fields.deadline?.value || "");
+  });
+
+  deadlinePicker?.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeDeadlinePopover();
+    }
+  });
+
+  document.addEventListener("click", event => {
+    if (!deadlinePicker || deadlinePopover?.hidden) return;
+    if (deadlinePicker.contains(event.target)) return;
+    closeDeadlinePopover();
   });
 
   render(load());

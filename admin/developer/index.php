@@ -196,9 +196,31 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <span>Start date</span>
           <input id="developer-task-start" type="date">
         </label>
-        <label class="dashboard-control-field">
+        <label class="dashboard-control-field dashboard-control-field-wide">
           <span>Due date</span>
-          <input id="developer-task-deadline" type="date" required>
+          <div class="dashboard-deadline-picker" data-deadline-picker>
+            <input id="developer-task-deadline" type="date" required class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+            <button type="button" class="dashboard-deadline-trigger" id="developer-task-deadline-trigger" aria-haspopup="dialog" aria-expanded="false">
+              Choose a due date
+            </button>
+            <div class="dashboard-deadline-popover" id="developer-task-deadline-popover" hidden>
+              <div class="dashboard-deadline-header">
+                <button type="button" class="dashboard-deadline-nav" data-deadline-prev aria-label="Previous month">‹</button>
+                <strong id="developer-task-deadline-month">Month</strong>
+                <button type="button" class="dashboard-deadline-nav" data-deadline-next aria-label="Next month">›</button>
+              </div>
+              <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="dashboard-deadline-grid" id="developer-task-deadline-grid"></div>
+              <div class="dashboard-deadline-footer">
+                <button type="button" class="dashboard-deadline-chip" data-deadline-today>Today</button>
+                <button type="button" class="dashboard-deadline-chip" data-deadline-nextweek>Next week</button>
+                <button type="button" class="dashboard-deadline-chip" data-deadline-clear>Clear</button>
+              </div>
+            </div>
+          </div>
+          <small class="dashboard-control-hint">Pick a date from the calendar below, or jump to today / next week.</small>
         </label>
         <label class="dashboard-control-field">
           <span>Urgency</span>
