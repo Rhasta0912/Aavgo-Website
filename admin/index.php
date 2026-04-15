@@ -219,8 +219,8 @@ $bootstrapJson = json_encode(
         <button class="dashboard-view-tab" type="button" data-hours-view="full-hours">Full hours</button>
       </section>
 
-      <section class="dashboard-view-panel is-active" data-hours-view-panel="board">
-      <section class="dashboard-admin-grid reveal reveal-delay-2">
+      <section class="dashboard-view-panel is-active reveal-in" data-hours-view-panel="board">
+      <section class="dashboard-admin-grid reveal reveal-in reveal-delay-2">
         <article class="dashboard-panel dashboard-panel-board" id="leadership-hours">
           <div class="dashboard-panel-heading">
             <div>

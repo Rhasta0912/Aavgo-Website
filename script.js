@@ -2192,6 +2192,42 @@ function initializeDeveloperWorkspace() {
     return `task_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   };
 
+  const createHistoryId = () => `${createTaskId()}_history`;
+  const nowIso = () => new Date().toISOString();
+  const toDateLabel = (value) => {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return String(value);
+    return parsed.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  };
+  const escapeAttr = (value) => escapeHtml(String(value || ""));
+  const priorityClass = (value) => PRIORITY_CLASS_MAP.get(String(value || "").trim().toLowerCase()) || "";
+  const priorityLabel = (value) => String(value || "Normal").trim() || "Normal";
+  const isDueToday = (deadlineDate) => {
+    if (!deadlineDate) return false;
+    const target = String(deadlineDate).slice(0, 10);
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return target === `${yyyy}-${mm}-${dd}`;
+  };
+  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        id: createTaskId(),
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        size: file.size || 0,
+        dataUrl: String(reader.result || ""),
+        createdAt: nowIso()
+      });
+    };
+    reader.onerror = () => reject(reader.error || new Error("Unable to read attachment."));
+    reader.readAsDataURL(file);
+  });
+
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
     const normalized = STATUS_ALIAS_MAP.get(value.toLowerCase()) || value;
@@ -2206,7 +2242,29 @@ function initializeDeveloperWorkspace() {
     deadlineDate: String(item.deadlineDate ?? item.deadline ?? "").trim(),
     priority: String(item.priority || "Normal").trim(),
     status: normalizeStatus(item.status),
-    notes: String(item.notes || "").trim()
+    notes: String(item.notes || "").trim(),
+    attachments: Array.isArray(item.attachments)
+      ? item.attachments.map(attachment => ({
+          id: String(attachment?.id || createTaskId()),
+          name: String(attachment?.name || "Attachment").trim(),
+          type: String(attachment?.type || "application/octet-stream").trim(),
+          size: Number(attachment?.size || 0) || 0,
+          dataUrl: String(attachment?.dataUrl || "").trim(),
+          createdAt: String(attachment?.createdAt || nowIso()).trim()
+        }))
+      : [],
+    activity: Array.isArray(item.activity)
+      ? item.activity.map(entry => ({
+          id: String(entry?.id || createHistoryId()),
+          type: String(entry?.type || "note").trim(),
+          message: String(entry?.message || "").trim(),
+          createdAt: String(entry?.createdAt || nowIso()).trim()
+        }))
+      : [],
+    createdAt: String(item.createdAt || nowIso()).trim(),
+    updatedAt: String(item.updatedAt || item.createdAt || nowIso()).trim(),
+    archivedAt: String(item.archivedAt || "").trim(),
+    archivedFrom: String(item.archivedFrom || "").trim()
   });
 
   const load = () => {
@@ -2224,10 +2282,31 @@ function initializeDeveloperWorkspace() {
     }
   };
 
+  const loadHistory = () => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map(entry => normalizeTask({
+        ...entry,
+        archivedAt: entry?.archivedAt || nowIso()
+      }));
+    } catch (_) {
+      return [];
+    }
+  };
+
   const setFeedback = (message, isError = false) => {
     if (!feedback) return;
     feedback.textContent = message;
     feedback.classList.toggle("is-error", Boolean(isError));
+  };
+
+  const setHistoryState = (items) => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+    if (historyCount) {
+      historyCount.textContent = `${items.length} archived`;
+    }
   };
 
   const sortTasks = (items) => {
@@ -2288,7 +2367,7 @@ function initializeDeveloperWorkspace() {
           <span class="dashboard-chip">${groupItems.length}</span>
         </header>
         <div class="dashboard-developer-task-group-list">
-          ${groupItems.length ? groupItems.map(renderTaskCard).join("") : `
+          ${groupItems.length ? groupItems.map(renderDeveloperTaskCard).join("") : `
             <div class="dashboard-developer-lane-empty">
               <strong>No cards yet.</strong>
               <p>Start this list with a card for ${escapeHtml(status)}.</p>
@@ -2423,11 +2502,15 @@ function initializeDeveloperWorkspace() {
     deadline: document.getElementById("developer-task-deadline"),
     priority: document.getElementById("developer-task-priority"),
     status: document.getElementById("developer-task-status"),
-    notes: document.getElementById("developer-task-notes")
+    notes: document.getElementById("developer-task-notes"),
+    attachments: document.getElementById("developer-task-attachments")
   };
   const feedback = document.getElementById("developer-task-feedback");
+  const historyList = document.getElementById("developer-task-history");
+  const historyCount = document.getElementById("developer-history-count");
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const STORAGE_KEY = "aavgo_developer_tasks";
+  const HISTORY_KEY = "aavgo_developer_task_history";
   const STATUS_ORDER = ["To Do", "Doing", "Done"];
   const STATUS_ALIAS_MAP = new Map([
     ["backlog", "To Do"],
@@ -2440,6 +2523,11 @@ function initializeDeveloperWorkspace() {
     ["ready to deploy", "Doing"],
     ["done", "Done"],
     ["completed logs", "Done"]
+  ]);
+  const PRIORITY_CLASS_MAP = new Map([
+    ["urgent", "is-urgent"],
+    ["future", "is-future"],
+    ["done today", "is-due-today"]
   ]);
   let draggingTaskId = "";
 
@@ -2533,18 +2621,94 @@ function initializeDeveloperWorkspace() {
     render(items);
   };
 
+  const saveHistory = (items) => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+    render(load());
+  };
+
   const moveTaskToStatus = (taskId, status) => {
     const normalizedStatus = normalizeStatus(status);
     const items = load();
     let changed = false;
+    const now = nowIso();
     const nextItems = items.map(item => {
       if (String(item.id || "") !== String(taskId || "")) return item;
       changed = true;
-      return { ...item, status: normalizedStatus };
+      return {
+        ...item,
+        status: normalizedStatus,
+        updatedAt: now,
+        activity: [
+          {
+            id: createHistoryId(),
+            type: "status",
+            message: `Moved to ${normalizedStatus}.`,
+            createdAt: now
+          },
+          ...(Array.isArray(item.activity) ? item.activity : [])
+        ].slice(0, 12)
+      };
     });
     if (!changed) return;
     setFeedback(`Task moved to ${normalizedStatus}.`, false);
     save(nextItems);
+  };
+
+  const archiveTask = (taskId) => {
+    const items = load();
+    const history = loadHistory();
+    const index = items.findIndex(item => String(item.id || "") === String(taskId || ""));
+    if (index < 0) return;
+    const now = nowIso();
+    const [task] = items.splice(index, 1);
+    history.unshift({
+      ...task,
+      archivedAt: now,
+      archivedFrom: task.status || "To Do",
+      updatedAt: now,
+      activity: [
+        {
+          id: createHistoryId(),
+          type: "archive",
+          message: `Moved to History from ${task.status || "To Do"}.`,
+          createdAt: now
+        },
+        ...(Array.isArray(task.activity) ? task.activity : [])
+      ].slice(0, 12)
+    });
+    setFeedback("Task moved to History instead of being deleted.", false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    setHistoryState(history);
+    render(items);
+  };
+
+  const restoreTask = (taskId) => {
+    const items = load();
+    const history = loadHistory();
+    const index = history.findIndex(item => String(item.id || "") === String(taskId || ""));
+    if (index < 0) return;
+    const now = nowIso();
+    const [task] = history.splice(index, 1);
+    items.unshift({
+      ...task,
+      status: normalizeStatus(task.archivedFrom || task.status || "To Do"),
+      updatedAt: now,
+      archivedAt: "",
+      archivedFrom: "",
+      activity: [
+        {
+          id: createHistoryId(),
+          type: "restore",
+          message: "Restored from History.",
+          createdAt: now
+        },
+        ...(Array.isArray(task.activity) ? task.activity : [])
+      ].slice(0, 12)
+    });
+    setFeedback("Task restored from History.", false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    setHistoryState(history);
+    render(items);
   };
 
   const renderTaskCard = (item) => `
@@ -2568,6 +2732,83 @@ function initializeDeveloperWorkspace() {
     </article>
   `;
 
+  const renderDeveloperTaskCard = (item) => `
+    <article class="dashboard-developer-task-card ${priorityClass(item.priority)}" data-task-id="${escapeHtml(item.id)}" draggable="true">
+      <div class="dashboard-developer-task-labels">
+        <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.status || "To Do")}</span>
+        <span class="dashboard-chip ${priorityClass(item.priority)}">${escapeHtml(priorityLabel(item.priority))}</span>
+        ${item.deadlineDate ? `<span class="dashboard-chip ${isDueToday(item.deadlineDate) ? "dashboard-chip-due-today" : ""}">${isDueToday(item.deadlineDate) ? "Due today" : `Due ${escapeHtml(item.deadlineDate)}`}</span>` : ""}
+      </div>
+      <div class="dashboard-developer-task-top">
+        <div>
+          <strong>${escapeHtml(item.title || "Untitled card")}</strong>
+          <p class="dashboard-developer-task-meta">
+            Owner: ${escapeHtml(item.owner || "Unassigned")}
+            ${item.startDate ? ` &middot; Starts ${escapeHtml(item.startDate)}` : " &middot; Starts anytime"}
+            ${item.deadlineDate ? ` &middot; Due ${escapeHtml(item.deadlineDate)}` : ""}
+            ${item.updatedAt ? ` &middot; Updated ${escapeHtml(toDateLabel(item.updatedAt))}` : ""}
+          </p>
+        </div>
+        <button type="button" class="dashboard-developer-task-remove" data-developer-task-archive="${escapeHtml(item.id)}" aria-label="Archive task">Archive</button>
+      </div>
+      <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
+      ${Array.isArray(item.attachments) && item.attachments.length ? `
+        <div class="dashboard-developer-attachments">
+          ${item.attachments.map(attachment => `
+            <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
+              <strong>${escapeHtml(attachment.name)}</strong>
+              <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
+            </a>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${Array.isArray(item.activity) && item.activity.length ? `
+        <div class="dashboard-developer-activity">
+          <p class="dashboard-kicker">Latest update</p>
+          <strong>${escapeHtml(item.activity[0].message || "Task updated.")}</strong>
+          <p>${escapeHtml(toDateLabel(item.activity[0].createdAt))}</p>
+        </div>
+      ` : ""}
+    </article>
+  `;
+
+  const renderDeveloperHistoryCard = (item) => `
+    <article class="dashboard-developer-history-card">
+      <div class="dashboard-developer-task-labels">
+        <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.archivedFrom || item.status || "Archived")}</span>
+        <span class="dashboard-chip ${priorityClass(item.priority)}">${escapeHtml(priorityLabel(item.priority))}</span>
+      </div>
+      <div class="dashboard-developer-task-top">
+        <div>
+          <strong>${escapeHtml(item.title || "Untitled card")}</strong>
+          <p class="dashboard-developer-task-meta">
+            Owner: ${escapeHtml(item.owner || "Unassigned")}
+            ${item.archivedAt ? ` &middot; Archived ${escapeHtml(toDateLabel(item.archivedAt))}` : ""}
+          </p>
+        </div>
+        <button type="button" class="dashboard-developer-task-remove" data-developer-task-restore="${escapeHtml(item.id)}" aria-label="Restore task">Restore</button>
+      </div>
+      <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
+      ${Array.isArray(item.attachments) && item.attachments.length ? `
+        <div class="dashboard-developer-attachments">
+          ${item.attachments.map(attachment => `
+            <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
+              <strong>${escapeHtml(attachment.name)}</strong>
+              <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
+            </a>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${Array.isArray(item.activity) && item.activity.length ? `
+        <div class="dashboard-developer-activity">
+          <p class="dashboard-kicker">Latest update</p>
+          <strong>${escapeHtml(item.activity[0].message || "Task updated.")}</strong>
+          <p>${escapeHtml(toDateLabel(item.activity[0].createdAt))}</p>
+        </div>
+      ` : ""}
+    </article>
+  `;
+
   const renderTaskLane = (status, items) => {
     const groupItems = items.filter(item => normalizeStatus(item.status) === status);
     const laneCopy = status === "To Do"
@@ -2586,7 +2827,7 @@ function initializeDeveloperWorkspace() {
           <span class="dashboard-chip">${groupItems.length}</span>
         </header>
         <div class="dashboard-developer-task-group-list">
-          ${groupItems.length ? groupItems.map(renderTaskCard).join("") : `
+          ${groupItems.length ? groupItems.map(renderDeveloperTaskCard).join("") : `
             <div class="dashboard-developer-lane-empty">
               <strong>No cards yet.</strong>
               <p>Start this list with a card for ${escapeHtml(status)}.</p>
@@ -2606,11 +2847,21 @@ function initializeDeveloperWorkspace() {
 
   const render = (items) => {
     const sorted = sortTasks(items.map(normalizeTask));
+    const archived = [...loadHistory()].sort((left, right) => String(right.archivedAt || "").localeCompare(String(left.archivedAt || "")));
     list.innerHTML = `
       <div class="dashboard-developer-board">
         ${STATUS_ORDER.map(status => renderTaskLane(status, sorted)).join("")}
       </div>
     `;
+    if (historyList) {
+      historyList.innerHTML = archived.length ? archived.map(renderDeveloperHistoryCard).join("") : `
+        <div class="dashboard-empty-state">
+          <strong>No archived tasks yet.</strong>
+          <p>When a task is finished, it moves here instead of being deleted.</p>
+        </div>
+      `;
+    }
+    setHistoryState(archived);
   };
 
   openButtons.forEach(button => {
@@ -2619,7 +2870,13 @@ function initializeDeveloperWorkspace() {
 
   render(load());
 
-  form.addEventListener("submit", event => {
+  const readAttachments = async () => {
+    const files = Array.from(fields.attachments?.files || []);
+    if (!files.length) return [];
+    return Promise.all(files.map(readFileAsDataUrl));
+  };
+
+  form.addEventListener("submit", async event => {
     event.preventDefault();
     const title = String(fields.title?.value || "").trim();
     const deadlineDate = String(fields.deadline?.value || "").trim();
@@ -2631,7 +2888,10 @@ function initializeDeveloperWorkspace() {
       setFeedback("Deadline is required so the board can stay structured.", true);
       return;
     }
+    const attachments = await readAttachments().catch(() => []);
     const items = load();
+    const now = nowIso();
+    const note = String(fields.notes?.value || "").trim();
     items.unshift({
       id: createTaskId(),
       title,
@@ -2640,7 +2900,18 @@ function initializeDeveloperWorkspace() {
       deadlineDate,
       priority: String(fields.priority?.value || "Normal").trim(),
       status: normalizeStatus(fields.status?.value || "To Do"),
-      notes: String(fields.notes?.value || "").trim()
+      notes: note,
+      attachments,
+      activity: [
+        {
+          id: createHistoryId(),
+          type: "created",
+          message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+          createdAt: now
+        }
+      ],
+      createdAt: now,
+      updatedAt: now
     });
     setFeedback("Task added to the board.", false);
     save(items);
@@ -2657,14 +2928,19 @@ function initializeDeveloperWorkspace() {
       return;
     }
 
-    const button = event.target.closest("button[data-developer-task-remove]");
-    if (!button) return;
-    const taskId = String(button.getAttribute("data-developer-task-remove") || "");
-    const items = load();
-    const nextItems = items.filter(item => String(item.id || "") !== taskId);
-    if (nextItems.length === items.length) return;
-    setFeedback("Task removed from the board.", false);
-    save(nextItems);
+    const archiveButton = event.target.closest("button[data-developer-task-archive]");
+    if (archiveButton) {
+      const taskId = String(archiveButton.getAttribute("data-developer-task-archive") || "");
+      archiveTask(taskId);
+      return;
+    }
+  });
+
+  historyList?.addEventListener("click", event => {
+    const restoreButton = event.target.closest("button[data-developer-task-restore]");
+    if (!restoreButton) return;
+    const taskId = String(restoreButton.getAttribute("data-developer-task-restore") || "");
+    restoreTask(taskId);
   });
 
   list.addEventListener("dragstart", event => {

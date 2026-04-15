@@ -92,7 +92,6 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <h2>To Do, Doing, Done.</h2>
             </div>
             <div class="dashboard-panel-actions">
-              <span class="dashboard-chip dashboard-chip-accent">Drag to move</span>
               <button class="button button-secondary dashboard-developer-add-launcher" type="button" data-developer-task-open onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('To Do')">+ New item</button>
             </div>
           </div>
@@ -103,6 +102,22 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <p>Add the first roadmap item, owner, deadline, and urgency.</p>
             </div>
           </div>
+
+          <section class="dashboard-panel dashboard-panel-history">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">History</p>
+                <h2>Archived roadmap items.</h2>
+              </div>
+              <span class="dashboard-chip dashboard-chip-accent" id="developer-history-count">0 archived</span>
+            </div>
+            <div class="dashboard-developer-history-list" id="developer-task-history">
+              <div class="dashboard-empty-state">
+                <strong>No archived tasks yet.</strong>
+                <p>When a task is finished, it moves here instead of being deleted.</p>
+              </div>
+            </div>
+          </section>
         </section>
       </section>
     </main>
@@ -133,7 +148,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <input id="developer-task-start" type="date">
         </label>
         <label class="dashboard-control-field">
-          <span>Deadline</span>
+          <span>Due date</span>
           <input id="developer-task-deadline" type="date" required>
         </label>
         <label class="dashboard-control-field">
@@ -142,6 +157,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
             <option value="Normal">Normal</option>
             <option value="Urgent">Urgent</option>
             <option value="Future">Future</option>
+            <option value="Done today">Done today</option>
           </select>
         </label>
         <label class="dashboard-control-field">
@@ -153,8 +169,13 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           </select>
         </label>
         <label class="dashboard-control-field dashboard-control-field-wide">
-          <span>Notes</span>
-          <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
+          <span>Post note</span>
+          <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, progress, or rollout notes."></textarea>
+        </label>
+        <label class="dashboard-control-field dashboard-control-field-wide">
+          <span>Attachments</span>
+          <input id="developer-task-attachments" type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.json,image/*,application/pdf,text/plain">
+          <small class="dashboard-control-hint">Upload files or screenshots that support the note.</small>
         </label>
         <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
         <div class="dashboard-control-row">

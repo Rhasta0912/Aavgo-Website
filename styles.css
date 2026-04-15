@@ -3791,6 +3791,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-task-list {
   display: grid;
   gap: 0.8rem;
+  overflow: visible;
 }
 
 .dashboard-panel-wide {
@@ -3827,14 +3828,22 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   margin-top: 0.35rem;
 }
 
+.workspace-page-developer .dashboard-developer-task-list {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 0.4rem;
+}
+
 .workspace-page-developer .dashboard-developer-workspace {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.6rem;
   width: 100%;
+  overflow: visible;
 }
 
 .workspace-page-developer .dashboard-developer-workspace-head {
   margin-bottom: 0;
+  align-items: flex-end;
 }
 
 .dashboard-panel-actions {
@@ -3899,6 +3908,21 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.dashboard-developer-task-card.is-urgent {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.08);
+}
+
+.dashboard-developer-task-card.is-future {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 12px 28px rgba(34, 197, 94, 0.08);
+}
+
+.dashboard-developer-task-card.is-due-today {
+  border-color: rgba(245, 158, 11, 0.36);
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.08);
+}
+
 .dashboard-developer-task-card[draggable="true"] {
   cursor: grab;
 }
@@ -3942,6 +3966,24 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   gap: 0.45rem;
 }
 
+.dashboard-chip.is-urgent {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: #ffd6d6;
+}
+
+.dashboard-chip.is-future {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.18);
+  color: #d9ffe6;
+}
+
+.dashboard-chip.is-due-today {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.18);
+  color: #ffe6b8;
+}
+
 .dashboard-developer-task-meta {
   margin: 0.35rem 0 0;
   color: rgba(255, 255, 255, 0.52);
@@ -3952,6 +3994,55 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   margin: 0;
   color: rgba(255, 255, 255, 0.66);
   line-height: 1.65;
+}
+
+.dashboard-developer-attachments {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dashboard-developer-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-developer-attachment strong {
+  display: block;
+  color: #fff8ef;
+  font-size: 0.92rem;
+}
+
+.dashboard-developer-attachment span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.dashboard-developer-activity {
+  padding: 0.8rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-developer-activity strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: #fff8ef;
+}
+
+.dashboard-developer-activity p {
+  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.86rem;
 }
 
 .dashboard-developer-card {
@@ -4537,19 +4628,20 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-developer-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(18rem, 1fr));
-  gap: 1.35rem;
-  overflow: visible;
-  padding: 0.15rem 0 0.3rem;
+  grid-template-columns: repeat(3, minmax(22rem, 1fr));
+  gap: 1.6rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.15rem 0 0.45rem;
   align-items: start;
 }
 
 .dashboard-developer-lane {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.95rem;
   align-content: start;
   min-width: 0;
-  padding: 0.25rem 0.2rem 0.05rem;
+  padding: 0.2rem 0.15rem 0.05rem;
   border-radius: 0;
   border: none;
   background: transparent;
@@ -4847,7 +4939,139 @@ body.sidebar-collapsed .dashboard-sidebar-user {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-filter-field-search {
+.dashboard-filter-field-search {
     grid-column: auto;
   }
+}
+
+.workspace-page-developer .dashboard-panel-history {
+  margin-top: 0.2rem;
+}
+
+.workspace-page-developer .dashboard-panel-history .dashboard-panel-heading {
+  align-items: flex-end;
+}
+
+.theme-light .dashboard-developer-task-card.is-urgent {
+  border-color: rgba(191, 54, 50, 0.26);
+}
+
+.theme-light .dashboard-developer-task-card.is-future {
+  border-color: rgba(42, 138, 74, 0.22);
+}
+
+.theme-light .dashboard-developer-task-card.is-due-today {
+  border-color: rgba(190, 118, 22, 0.24);
+}
+
+.theme-light .dashboard-developer-task-card strong,
+.theme-light .dashboard-developer-task-card p,
+.theme-light .dashboard-developer-task-meta,
+.theme-light .dashboard-developer-lane-empty strong,
+.theme-light .dashboard-developer-lane-empty p,
+.theme-light .dashboard-developer-lane-copy,
+.theme-light .dashboard-developer-attachment strong,
+.theme-light .dashboard-developer-activity strong,
+.theme-light .dashboard-developer-activity p {
+  color: #172234;
+}
+
+.theme-light .dashboard-developer-attachment,
+.theme-light .dashboard-developer-activity {
+  border-color: rgba(24, 32, 44, 0.08);
+  background: rgba(255, 252, 248, 0.9);
+}
+
+body.sidebar-collapsed .dashboard-shell-admin,
+body.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-admin,
+body.sidebar-collapsed .dashboard-sidebar-user,
+.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-admin,
+.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-user {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+body.sidebar-collapsed .dashboard-main-admin,
+body.sidebar-collapsed .dashboard-main-user {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.workspace-page-developer .dashboard-panel-history {
+  margin-top: 0.2rem;
+}
+
+.workspace-page-developer .dashboard-panel-history .dashboard-panel-heading {
+  align-items: flex-end;
+}
+
+.theme-light .dashboard-developer-task-card.is-urgent {
+  border-color: rgba(191, 54, 50, 0.26);
+}
+
+.theme-light .dashboard-developer-task-card.is-future {
+  border-color: rgba(42, 138, 74, 0.22);
+}
+
+.theme-light .dashboard-developer-task-card.is-due-today {
+  border-color: rgba(190, 118, 22, 0.24);
+}
+
+.theme-light .dashboard-developer-task-card strong,
+.theme-light .dashboard-developer-task-card p,
+.theme-light .dashboard-developer-task-meta,
+.theme-light .dashboard-developer-lane-empty strong,
+.theme-light .dashboard-developer-lane-empty p,
+.theme-light .dashboard-developer-lane-copy,
+.theme-light .dashboard-developer-attachment strong,
+.theme-light .dashboard-developer-activity strong,
+.theme-light .dashboard-developer-activity p {
+  color: #172234;
+}
+
+.theme-light .dashboard-developer-attachment,
+.theme-light .dashboard-developer-activity {
+  border-color: rgba(24, 32, 44, 0.08);
+  background: rgba(255, 252, 248, 0.9);
+}
+
+body.sidebar-collapsed .dashboard-shell-admin,
+body.sidebar-collapsed .dashboard-shell-user {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-admin,
+body.sidebar-collapsed .dashboard-sidebar-user,
+.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-admin,
+.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-user {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+body.sidebar-collapsed .dashboard-main-admin,
+body.sidebar-collapsed .dashboard-main-user {
+  width: 100% !important;
+  min-width: 0 !important;
 }
