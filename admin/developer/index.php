@@ -98,7 +98,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
             </div>
             <div class="dashboard-panel-actions">
               <span class="dashboard-chip dashboard-chip-accent">Drag to move</span>
-              <button class="button button-secondary dashboard-developer-add-launcher" type="button" data-developer-task-open>+ New item</button>
+              <button class="button button-secondary dashboard-developer-add-launcher" type="button" data-developer-task-open onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('To Do')">+ New item</button>
             </div>
           </div>
 

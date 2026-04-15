@@ -2290,6 +2290,7 @@ function initializeDeveloperWorkspace() {
           type="button"
           class="dashboard-developer-lane-add"
           data-developer-task-create-status="${escapeHtml(status)}"
+          onclick="window.__aavgoOpenDeveloperTaskModal && window.__aavgoOpenDeveloperTaskModal('${escapeHtml(status)}')"
           aria-label="Add card to ${escapeHtml(status)}"
         >+ Add a card</button>
       </section>
@@ -2516,6 +2517,8 @@ function initializeDeveloperWorkspace() {
     }, 40);
   };
 
+  window.__aavgoOpenDeveloperTaskModal = openModal;
+
   const save = (items) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     render(items);
@@ -2638,7 +2641,9 @@ function initializeDeveloperWorkspace() {
   list.addEventListener("click", event => {
     const createButton = event.target.closest("button[data-developer-task-create-status]");
     if (createButton) {
-      openModal(String(createButton.getAttribute("data-developer-task-create-status") || "To Do"));
+      const status = String(createButton.getAttribute("data-developer-task-create-status") || "To Do");
+      openModal(status);
+      window.__aavgoOpenDeveloperTaskModal = openModal;
       return;
     }
 

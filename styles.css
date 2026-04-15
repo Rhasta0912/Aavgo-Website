@@ -3827,6 +3827,14 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   margin-top: 0.35rem;
 }
 
+.workspace-page-developer .dashboard-panel-developer-board {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
 .dashboard-panel-actions {
   display: flex;
   align-items: center;
@@ -4527,10 +4535,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-developer-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(320px, 1fr));
-  gap: 1rem;
-  overflow-x: auto;
-  padding: 0.15rem 0 0.4rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
+  overflow: visible;
+  padding: 0.1rem 0 0.2rem;
   align-items: start;
 }
 
@@ -4538,7 +4546,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   gap: 0.8rem;
   align-content: start;
-  min-width: 320px;
+  min-width: 0;
   padding: 0.85rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
