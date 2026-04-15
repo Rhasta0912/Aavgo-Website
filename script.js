@@ -2400,6 +2400,312 @@ function initializeDeveloperWorkspace() {
   });
 }
 
+function initializeDeveloperWorkspace() {
+  const list = document.getElementById("developer-task-list");
+  const form = document.getElementById("developer-task-form");
+  const modal = document.getElementById("developer-task-modal");
+  if (!list || !form || !modal) return;
+
+  const fields = {
+    title: document.getElementById("developer-task-title"),
+    owner: document.getElementById("developer-task-owner"),
+    start: document.getElementById("developer-task-start"),
+    deadline: document.getElementById("developer-task-deadline"),
+    priority: document.getElementById("developer-task-priority"),
+    status: document.getElementById("developer-task-status"),
+    notes: document.getElementById("developer-task-notes")
+  };
+  const feedback = document.getElementById("developer-task-feedback");
+  const openButtons = document.querySelectorAll("[data-developer-task-open]");
+  const STORAGE_KEY = "aavgo_developer_tasks";
+  const STATUS_ORDER = ["To Do", "Doing", "Done"];
+  const STATUS_ALIAS_MAP = new Map([
+    ["backlog", "To Do"],
+    ["planned", "To Do"],
+    ["to do", "To Do"],
+    ["todo", "To Do"],
+    ["doing", "Doing"],
+    ["in progress", "Doing"],
+    ["blocked", "Doing"],
+    ["ready to deploy", "Doing"],
+    ["done", "Done"],
+    ["completed logs", "Done"]
+  ]);
+  let draggingTaskId = "";
+
+  const createTaskId = () => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return `task_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  };
+
+  const normalizeStatus = (status) => {
+    const value = String(status || "").trim();
+    const normalized = STATUS_ALIAS_MAP.get(value.toLowerCase()) || value;
+    return STATUS_ORDER.includes(normalized) ? normalized : "To Do";
+  };
+
+  const normalizeTask = (item = {}) => ({
+    id: String(item.id || createTaskId()),
+    title: String(item.title || "").trim(),
+    owner: String(item.owner || "").trim(),
+    startDate: String(item.startDate ?? item.when ?? "").trim(),
+    deadlineDate: String(item.deadlineDate ?? item.deadline ?? "").trim(),
+    priority: String(item.priority || "Normal").trim(),
+    status: normalizeStatus(item.status),
+    notes: String(item.notes || "").trim()
+  });
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map(entry => normalizeTask(entry));
+      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const setFeedback = (message, isError = false) => {
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.classList.toggle("is-error", Boolean(isError));
+  };
+
+  const sortTasks = (items) => {
+    const statusRank = new Map(STATUS_ORDER.map((status, index) => [status, index]));
+    return [...items].sort((left, right) => {
+      const leftRank = statusRank.get(normalizeStatus(left.status)) ?? 999;
+      const rightRank = statusRank.get(normalizeStatus(right.status)) ?? 999;
+      if (leftRank !== rightRank) return leftRank - rightRank;
+      const leftDeadline = String(left.deadlineDate || "");
+      const rightDeadline = String(right.deadlineDate || "");
+      if (leftDeadline !== rightDeadline) return leftDeadline.localeCompare(rightDeadline);
+      return String(left.title || "").localeCompare(String(right.title || ""));
+    });
+  };
+
+  const resetFields = (status = "To Do") => {
+    if (fields.title) fields.title.value = "";
+    if (fields.owner) fields.owner.value = "";
+    if (fields.start) fields.start.value = "";
+    if (fields.deadline) fields.deadline.value = "";
+    if (fields.priority) fields.priority.value = "Normal";
+    if (fields.status) fields.status.value = STATUS_ORDER.includes(status) ? status : "To Do";
+    if (fields.notes) fields.notes.value = "";
+  };
+
+  const closeModal = () => {
+    modal.hidden = true;
+    document.body.classList.remove("dashboard-modal-open");
+  };
+
+  const openModal = (status = "To Do") => {
+    resetFields(status);
+    setFeedback("Add a roadmap card, then drag it between lists.", false);
+    modal.hidden = false;
+    document.body.classList.add("dashboard-modal-open");
+    window.setTimeout(() => {
+      fields.title?.focus();
+    }, 40);
+  };
+
+  const save = (items) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    render(items);
+  };
+
+  const moveTaskToStatus = (taskId, status) => {
+    const normalizedStatus = normalizeStatus(status);
+    const items = load();
+    let changed = false;
+    const nextItems = items.map(item => {
+      if (String(item.id || "") !== String(taskId || "")) return item;
+      changed = true;
+      return { ...item, status: normalizedStatus };
+    });
+    if (!changed) return;
+    setFeedback(`Task moved to ${normalizedStatus}.`, false);
+    save(nextItems);
+  };
+
+  const renderTaskCard = (item) => `
+    <article class="dashboard-developer-task-card" data-task-id="${escapeHtml(item.id)}" draggable="true">
+      <div class="dashboard-developer-task-labels">
+        <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.status || "To Do")}</span>
+        <span class="dashboard-chip">${escapeHtml(item.priority || "Normal")}</span>
+      </div>
+      <div class="dashboard-developer-task-top">
+        <div>
+          <strong>${escapeHtml(item.title || "Untitled card")}</strong>
+          <p class="dashboard-developer-task-meta">
+            Owner: ${escapeHtml(item.owner || "Unassigned")}
+            ${item.startDate ? ` &middot; Starts ${escapeHtml(item.startDate)}` : " &middot; Starts anytime"}
+            ${item.deadlineDate ? ` &middot; Deadline ${escapeHtml(item.deadlineDate)}` : ""}
+          </p>
+        </div>
+        <button type="button" class="dashboard-developer-task-remove" data-developer-task-remove="${escapeHtml(item.id)}" aria-label="Remove task">×</button>
+      </div>
+      <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No notes yet.")}</p>
+    </article>
+  `;
+
+  const renderTaskLane = (status, items) => {
+    const groupItems = items.filter(item => normalizeStatus(item.status) === status);
+    const laneCopy = status === "To Do"
+      ? "Ready to start."
+      : status === "Doing"
+        ? "Work in motion."
+        : "Finished and ready to archive.";
+    return `
+      <section class="dashboard-developer-lane" data-developer-lane="${escapeHtml(status)}" data-developer-lane-dropzone="${escapeHtml(status)}">
+        <header class="dashboard-developer-lane-head">
+          <div>
+            <p class="dashboard-kicker">List</p>
+            <h3>${escapeHtml(status)}</h3>
+            <p class="dashboard-developer-lane-copy">${escapeHtml(laneCopy)}</p>
+          </div>
+          <span class="dashboard-chip">${groupItems.length}</span>
+        </header>
+        <div class="dashboard-developer-task-group-list">
+          ${groupItems.length ? groupItems.map(renderTaskCard).join("") : `
+            <div class="dashboard-developer-lane-empty">
+              <strong>No cards yet.</strong>
+              <p>Start this list with a card for ${escapeHtml(status)}.</p>
+            </div>
+          `}
+        </div>
+        <button
+          type="button"
+          class="dashboard-developer-lane-add"
+          data-developer-task-create-status="${escapeHtml(status)}"
+          aria-label="Add card to ${escapeHtml(status)}"
+        >+ Add a card</button>
+      </section>
+    `;
+  };
+
+  const render = (items) => {
+    const sorted = sortTasks(items.map(normalizeTask));
+    list.innerHTML = `
+      <div class="dashboard-developer-board">
+        ${STATUS_ORDER.map(status => renderTaskLane(status, sorted)).join("")}
+      </div>
+    `;
+  };
+
+  openButtons.forEach(button => {
+    button.addEventListener("click", () => openModal("To Do"));
+  });
+
+  render(load());
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    const title = String(fields.title?.value || "").trim();
+    const deadlineDate = String(fields.deadline?.value || "").trim();
+    if (!title) {
+      setFeedback("Task name is required before adding it.", true);
+      return;
+    }
+    if (!deadlineDate) {
+      setFeedback("Deadline is required so the board can stay structured.", true);
+      return;
+    }
+    const items = load();
+    items.unshift({
+      id: createTaskId(),
+      title,
+      owner: String(fields.owner?.value || "").trim(),
+      startDate: String(fields.start?.value || "").trim(),
+      deadlineDate,
+      priority: String(fields.priority?.value || "Normal").trim(),
+      status: normalizeStatus(fields.status?.value || "To Do"),
+      notes: String(fields.notes?.value || "").trim()
+    });
+    setFeedback("Task added to the board.", false);
+    save(items);
+    resetFields("To Do");
+    window.setTimeout(closeModal, 180);
+  });
+
+  list.addEventListener("click", event => {
+    const createButton = event.target.closest("button[data-developer-task-create-status]");
+    if (createButton) {
+      openModal(String(createButton.getAttribute("data-developer-task-create-status") || "To Do"));
+      return;
+    }
+
+    const button = event.target.closest("button[data-developer-task-remove]");
+    if (!button) return;
+    const taskId = String(button.getAttribute("data-developer-task-remove") || "");
+    const items = load();
+    const nextItems = items.filter(item => String(item.id || "") !== taskId);
+    if (nextItems.length === items.length) return;
+    setFeedback("Task removed from the board.", false);
+    save(nextItems);
+  });
+
+  list.addEventListener("dragstart", event => {
+    const card = event.target.closest(".dashboard-developer-task-card");
+    if (!card || !card.dataset.taskId) return;
+    draggingTaskId = card.dataset.taskId;
+    card.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", draggingTaskId);
+    setFeedback("Drag the card onto another lane to move it.", false);
+  });
+
+  list.addEventListener("dragend", event => {
+    const card = event.target.closest(".dashboard-developer-task-card");
+    card?.classList.remove("is-dragging");
+    draggingTaskId = "";
+    list.querySelectorAll(".is-drop-target").forEach(node => node.classList.remove("is-drop-target"));
+  });
+
+  list.addEventListener("dragover", event => {
+    const lane = event.target.closest("[data-developer-lane-dropzone]");
+    if (!lane) return;
+    event.preventDefault();
+    lane.classList.add("is-drop-target");
+  });
+
+  list.addEventListener("dragleave", event => {
+    const lane = event.target.closest("[data-developer-lane-dropzone]");
+    if (!lane) return;
+    if (event.relatedTarget && lane.contains(event.relatedTarget)) return;
+    lane.classList.remove("is-drop-target");
+  });
+
+  list.addEventListener("drop", event => {
+    const lane = event.target.closest("[data-developer-lane-dropzone]");
+    if (!lane) return;
+    event.preventDefault();
+    lane.classList.remove("is-drop-target");
+    const taskId = draggingTaskId || event.dataTransfer.getData("text/plain") || "";
+    if (!taskId) return;
+    moveTaskToStatus(taskId, lane.getAttribute("data-developer-lane-dropzone") || "To Do");
+  });
+
+  modal.addEventListener("click", event => {
+    if (event.target.closest("[data-developer-task-modal-close]")) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !modal.hidden) {
+      closeModal();
+    }
+  });
+}
+
 initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();

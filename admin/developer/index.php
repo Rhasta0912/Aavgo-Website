@@ -62,8 +62,8 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
           <p class="dashboard-breadcrumb">Dashboard / Developer / Panel</p>
-          <h1 class="dashboard-title dashboard-title-wide">Developer panel for roadmap, live fixes, and platform timing.</h1>
-          <p class="dashboard-subtitle">This workspace is for actual dev planning: what is being built, who owns it, when it should happen, what is urgent, and what is blocked.</p>
+          <h1 class="dashboard-title dashboard-title-wide">Roadmap board.</h1>
+          <p class="dashboard-subtitle">Trello-style roadmap for tasks, fixes, and platform work. Drag cards between To Do, Doing, and Done. Add new items from the plus button.</p>
         </div>
         <div class="dashboard-toolbar">
           <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
@@ -89,31 +89,17 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         </div>
       </header>
 
-      <section class="dashboard-stat-grid dashboard-stat-grid-admin reveal reveal-delay-1">
-        <article class="dashboard-stat-card">
-          <p>Developer panel</p>
-          <strong>Detailed</strong>
-          <span>Roadmap, timing, owner, and urgency live here.</span>
-        </article>
-        <article class="dashboard-stat-card">
-          <p>Workspace type</p>
-          <strong>Private</strong>
-          <span>Leadership stays lean while dev work stays documented.</span>
-        </article>
-      </section>
-
-      <section class="dashboard-admin-grid reveal reveal-delay-2">
+      <section class="dashboard-admin-grid dashboard-admin-grid-developer reveal reveal-delay-2">
         <article class="dashboard-panel dashboard-panel-developer-board dashboard-panel-wide">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Developer board</p>
-              <h2>Trello-style roadmap with To Do, Doing, and Done.</h2>
+              <h2>To Do, Doing, Done.</h2>
             </div>
-            <span class="dashboard-chip dashboard-chip-accent">To Do / Doing / Done</span>
-          </div>
-
-          <div class="dashboard-panel-meta">
-            <p class="dashboard-panel-copy">Use this as a real roadmap workspace: every task lands in one of three lanes, and the add form stays at the bottom so the board comes first.</p>
+            <div class="dashboard-panel-actions">
+              <span class="dashboard-chip dashboard-chip-accent">Drag to move</span>
+              <button class="button button-secondary dashboard-developer-add-launcher" type="button" data-developer-task-open>+ New item</button>
+            </div>
           </div>
 
           <div class="dashboard-developer-task-list" id="developer-task-list">
@@ -122,64 +108,67 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <p>Add the first roadmap item, owner, deadline, and urgency.</p>
             </div>
           </div>
-
-          <div class="dashboard-developer-form-shell">
-            <div class="dashboard-panel-heading dashboard-panel-heading-tight">
-              <div>
-                <p class="dashboard-kicker">Create task</p>
-                <h2>Add a new roadmap item</h2>
-              </div>
-              <span class="dashboard-chip">Deadline required</span>
-            </div>
-
-            <div class="dashboard-developer-form-grid">
-              <label class="dashboard-control-field dashboard-control-field-wide">
-                <span>Task</span>
-                <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Owner</span>
-                <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Start date</span>
-                <input id="developer-task-start" type="date">
-              </label>
-              <label class="dashboard-control-field">
-                <span>Deadline</span>
-                <input id="developer-task-deadline" type="date" required>
-              </label>
-              <label class="dashboard-control-field">
-                <span>Urgency</span>
-                <select id="developer-task-priority">
-                  <option value="Normal">Normal</option>
-                  <option value="Urgent">Urgent</option>
-                  <option value="Future">Future</option>
-                </select>
-              </label>
-              <label class="dashboard-control-field">
-                <span>Status</span>
-                <select id="developer-task-status">
-                  <option value="To Do">To Do</option>
-                  <option value="Doing">Doing</option>
-                  <option value="Done">Done</option>
-                </select>
-              </label>
-              <label class="dashboard-control-field dashboard-control-field-wide">
-                <span>Notes</span>
-                <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
-              </label>
-              <p class="dashboard-panel-copy" id="developer-task-feedback">Add the task to the board, then move it through To Do, Doing, and Done as it changes.</p>
-              <div class="dashboard-control-row">
-                <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
-                <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
-                <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
-              </div>
-            </div>
-          </div>
         </article>
       </section>
     </main>
+  </div>
+
+  <div class="dashboard-modal" id="developer-task-modal" hidden>
+    <div class="dashboard-modal-backdrop" data-developer-task-modal-close></div>
+    <div class="dashboard-modal-dialog dashboard-developer-task-modal">
+      <div class="dashboard-panel-heading dashboard-panel-heading-tight">
+        <div>
+          <p class="dashboard-kicker">Create task</p>
+          <h2>Add a new roadmap item</h2>
+        </div>
+        <button type="button" class="dashboard-modal-close" data-developer-task-modal-close aria-label="Close task form">Close</button>
+      </div>
+
+      <form id="developer-task-form" class="dashboard-developer-form-grid">
+        <label class="dashboard-control-field dashboard-control-field-wide">
+          <span>Task</span>
+          <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
+        </label>
+        <label class="dashboard-control-field">
+          <span>Owner</span>
+          <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
+        </label>
+        <label class="dashboard-control-field">
+          <span>Start date</span>
+          <input id="developer-task-start" type="date">
+        </label>
+        <label class="dashboard-control-field">
+          <span>Deadline</span>
+          <input id="developer-task-deadline" type="date" required>
+        </label>
+        <label class="dashboard-control-field">
+          <span>Urgency</span>
+          <select id="developer-task-priority">
+            <option value="Normal">Normal</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Future">Future</option>
+          </select>
+        </label>
+        <label class="dashboard-control-field">
+          <span>Status</span>
+          <select id="developer-task-status">
+            <option value="To Do">To Do</option>
+            <option value="Doing">Doing</option>
+            <option value="Done">Done</option>
+          </select>
+        </label>
+        <label class="dashboard-control-field dashboard-control-field-wide">
+          <span>Notes</span>
+          <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, or rollout notes."></textarea>
+        </label>
+        <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
+        <div class="dashboard-control-row">
+          <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="submit">Add task</button>
+          <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
+          <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
