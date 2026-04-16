@@ -405,21 +405,6 @@ $bootstrapJson = json_encode(
             <p class="dashboard-panel-copy">This closes active sessions for the selected hotel and lets the bot clean up Discord status on the same pass.</p>
           </article>
 
-          <article class="dashboard-panel" id="leadership-audit">
-            <div class="dashboard-panel-heading">
-              <div>
-                <p class="dashboard-kicker">Audit log</p>
-                <h2>Every leadership action leaves a trail.</h2>
-              </div>
-            </div>
-            <div class="dashboard-audit-list" id="hours-audit-log">
-              <div class="dashboard-empty-state">
-                <strong>Waiting for audit events.</strong>
-                <p>Queued and completed actions will appear here.</p>
-              </div>
-            </div>
-          </article>
-
           <article class="dashboard-panel">
             <div class="dashboard-panel-heading">
               <div>

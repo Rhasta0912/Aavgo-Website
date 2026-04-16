@@ -1460,7 +1460,7 @@ function renderHotelLaneCards(lanes) {
           <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
         </div>
         <button
-          class="button button-secondary dashboard-inline-button"
+          class="button button-secondary dashboard-inline-button dashboard-inline-button-small"
           type="button"
           data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
           ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
@@ -1474,7 +1474,7 @@ function renderHotelLaneCards(lanes) {
         <span>Week <strong>${formatHours(lane?.weeklyHours)}</strong></span>
       </div>
       <ul class="dashboard-inline-list dashboard-inline-list-staff">
-        ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 6) : []).map(person => `
+        ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 4) : []).map(person => `
           <li>
             <span>${escapeHtml(person?.displayName || "Unknown")}</span>
             <strong>${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
