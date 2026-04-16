@@ -273,7 +273,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         </label>
         <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
         <div class="dashboard-control-row">
-        <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
+        <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button" onclick="return window.__aavgoSubmitDeveloperTask ? (window.__aavgoSubmitDeveloperTask(), false) : false">Add task</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
         </div>

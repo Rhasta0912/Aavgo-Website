@@ -3147,6 +3147,13 @@ function initializeDeveloperWorkspace() {
     window.setTimeout(closeModal, 180);
   };
 
+  window.__aavgoSubmitDeveloperTask = () => {
+    void submitTask().catch(error => {
+      console.warn("[DEVELOPER] Task submit failed:", error);
+      setFeedback("Could not save the task. Please try again.", true);
+    });
+  };
+
   const handleTaskSubmit = async event => {
     event.preventDefault();
     aavgoCloseAllDatePickers();
