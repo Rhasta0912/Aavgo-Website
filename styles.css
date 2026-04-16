@@ -4157,6 +4157,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   cursor: grab;
 }
 
+.dashboard-developer-task-card:not([draggable="true"]) {
+  cursor: pointer;
+}
+
 .dashboard-developer-task-card.is-dragging {
   opacity: 0.55;
   transform: scale(0.985);
@@ -4216,6 +4220,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-task-archive-action:focus-visible {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.07);
+}
+
+.dashboard-developer-task-card:hover {
+  border-color: rgba(216, 176, 95, 0.22);
 }
 
 .dashboard-developer-task-remove {
@@ -4370,6 +4378,117 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-activity-trail li span {
   color: rgba(255, 255, 255, 0.56);
   font-size: 0.82rem;
+}
+
+.dashboard-developer-detail-modal {
+  width: min(1060px, calc(100vw - 1.5rem));
+  max-height: min(88vh, 980px);
+  overflow: auto;
+}
+
+.dashboard-developer-detail-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-developer-detail-hero {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  border: 1px solid rgba(216, 176, 95, 0.16);
+  background:
+    linear-gradient(180deg, rgba(216, 176, 95, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.dashboard-developer-detail-hero strong {
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+.dashboard-developer-detail-hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.65;
+}
+
+.dashboard-developer-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.dashboard-developer-detail-block,
+.dashboard-developer-detail-block-wide {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-developer-detail-block-wide {
+  grid-column: 1 / -1;
+}
+
+.dashboard-developer-detail-block dl {
+  margin: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.dashboard-developer-detail-block dl div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.dashboard-developer-detail-block dt {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-developer-detail-block dd {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+}
+
+.dashboard-developer-detail-activity {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.dashboard-developer-detail-activity li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dashboard-developer-detail-activity li strong {
+  font-size: 0.95rem;
+}
+
+.dashboard-developer-detail-activity li span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.84rem;
+}
+
+.dashboard-developer-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}
+
+.dashboard-modal-dialog.dashboard-developer-detail-modal {
+  width: min(1080px, calc(100vw - 1.5rem));
 }
 
 .dashboard-developer-audit {

@@ -302,6 +302,20 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
     </div>
   </div>
 
+  <div class="dashboard-modal" id="developer-task-detail-modal" hidden>
+    <div class="dashboard-modal-backdrop" data-developer-task-detail-close></div>
+    <div class="dashboard-modal-dialog dashboard-developer-detail-modal">
+      <div class="dashboard-panel-heading dashboard-panel-heading-tight">
+        <div>
+          <p class="dashboard-kicker">Card details</p>
+          <h2 id="developer-task-detail-title">Roadmap item</h2>
+        </div>
+        <button type="button" class="dashboard-modal-close" data-developer-task-detail-close aria-label="Close task details">Close</button>
+      </div>
+      <div id="developer-task-detail-body" class="dashboard-developer-detail-body"></div>
+    </div>
+  </div>
+
   <script>
     window.AAVGO_CURRENT_USER = <?php echo json_encode([
       'displayName' => $displayName,

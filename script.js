@@ -2688,6 +2688,7 @@ function initializeDeveloperWorkspace() {
   const form = document.getElementById("developer-task-form");
   const modal = document.getElementById("developer-task-modal");
   const addButton = document.getElementById("developer-task-add");
+  const detailModal = document.getElementById("developer-task-detail-modal");
   if (!list || !form || !modal) return;
 
   const fields = {
@@ -2705,6 +2706,8 @@ function initializeDeveloperWorkspace() {
   const historyCount = document.getElementById("developer-history-count");
   const auditList = document.getElementById("developer-task-audit-list");
   const auditCount = document.getElementById("developer-audit-count");
+  const detailTitle = document.getElementById("developer-task-detail-title");
+  const detailBody = document.getElementById("developer-task-detail-body");
   const archivePanel = document.querySelector("[data-developer-archive-dropzone]");
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
@@ -2733,6 +2736,7 @@ function initializeDeveloperWorkspace() {
   ]);
   let draggingTaskId = "";
   let editingTaskId = "";
+  let viewingTaskId = "";
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
   const currentUser = {
     displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
@@ -2990,6 +2994,92 @@ function initializeDeveloperWorkspace() {
     aavgoCloseAllDatePickers();
     modal.hidden = true;
     document.body.classList.remove("dashboard-modal-open");
+  };
+
+  const closeDetailModal = () => {
+    if (!detailModal) return;
+    detailModal.hidden = true;
+    document.body.classList.remove("dashboard-modal-open");
+    viewingTaskId = "";
+  };
+
+  const openDetailModal = (taskId) => {
+    if (!detailModal || !detailBody || !detailTitle) return;
+    const task = [...load(), ...loadHistory()].find(item => String(item.id || "") === String(taskId || ""));
+    if (!task) return;
+    viewingTaskId = String(task.id || "");
+    const activity = Array.isArray(task.activity) ? task.activity.map(normalizeActivityEntry).filter(entry => entry.message) : [];
+    const attachments = Array.isArray(task.attachments) ? task.attachments : [];
+    const creator = activity.find(entry => entry.type === "created") || activity[activity.length - 1] || null;
+    detailTitle.textContent = task.title || "Untitled card";
+    detailBody.innerHTML = `
+      <div class="dashboard-developer-detail-hero">
+        <div class="dashboard-developer-task-labels">
+          <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(task.status || task.archivedFrom || "To Do")}</span>
+          <span class="dashboard-chip ${priorityClass(task.priority)}">${escapeHtml(priorityLabel(task.priority))}</span>
+          ${task.deadlineDate ? `<span class="dashboard-chip ${getTaskTimingState(task).isOverdue ? "dashboard-chip-danger" : ""}">${escapeHtml(task.deadlineDate)}</span>` : ""}
+        </div>
+        <strong>${escapeHtml(task.title || "Untitled card")}</strong>
+        <p>${escapeHtml(task.notes || "No post note yet.")}</p>
+      </div>
+      <div class="dashboard-developer-detail-grid">
+        <article class="dashboard-developer-detail-block">
+          <p class="dashboard-kicker">Overview</p>
+          <dl>
+            <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
+            <div><dt>Status</dt><dd>${escapeHtml(task.status || task.archivedFrom || "To Do")}</dd></div>
+            <div><dt>Priority</dt><dd>${escapeHtml(priorityLabel(task.priority))}</dd></div>
+            <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
+            <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
+            <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
+            <div><dt>Start date</dt><dd>${escapeHtml(task.startDate || "Not set")}</dd></div>
+            <div><dt>Due date</dt><dd>${escapeHtml(task.deadlineDate || "Not set")}</dd></div>
+          </dl>
+        </article>
+        <article class="dashboard-developer-detail-block">
+          <p class="dashboard-kicker">Activity</p>
+          ${activity.length ? `
+            <ol class="dashboard-developer-detail-activity">
+              ${activity.map(entry => `
+                <li>
+                  <strong>${escapeHtml(entry.message)}</strong>
+                  <span>${escapeHtml(entry.actorName)} · ${escapeHtml(toDateLabel(entry.createdAt))}</span>
+                </li>
+              `).join("")}
+            </ol>
+          ` : `
+            <div class="dashboard-empty-state">
+              <strong>No activity yet.</strong>
+              <p>This card has not been updated since it was created.</p>
+            </div>
+          `}
+        </article>
+      </div>
+      ${attachments.length ? `
+        <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
+          <p class="dashboard-kicker">Attachments</p>
+          <div class="dashboard-developer-attachments">
+            ${attachments.map(attachment => `
+              <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
+                <strong>${escapeHtml(attachment.name)}</strong>
+                <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
+              </a>
+            `).join("")}
+          </div>
+        </article>
+      ` : ""}
+      <div class="dashboard-developer-detail-actions">
+        <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>
+        ${loadHistory().some(item => String(item.id || "") === String(task.id || "")) ? `
+          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-restore="${escapeHtml(task.id)}">Restore</button>
+          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-delete="${escapeHtml(task.id)}">Delete</button>
+        ` : `
+          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-archive="${escapeHtml(task.id)}">Archive</button>
+        `}
+      </div>
+    `;
+    detailModal.hidden = false;
+    document.body.classList.add("dashboard-modal-open");
   };
 
   const openModal = (status = "To Do") => {
@@ -3251,14 +3341,6 @@ function initializeDeveloperWorkspace() {
         </div>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
-      ${activity.length ? `
-        <div class="dashboard-developer-activity">
-          <p class="dashboard-kicker">Latest activity</p>
-          <strong>${escapeHtml(activity[0].message)}</strong>
-          <p>${escapeHtml(activity[0].actorName)} · ${escapeHtml(toDateLabel(activity[0].createdAt))}</p>
-          ${renderActivityTrail(activity, "Activity trail")}
-        </div>
-      ` : ""}
       ${Array.isArray(item.attachments) && item.attachments.length ? `
         <div class="dashboard-developer-attachments">
           ${item.attachments.map(attachment => `
@@ -3557,6 +3639,7 @@ function initializeDeveloperWorkspace() {
     const editButton = event.target.closest("button[data-developer-task-edit]");
     if (editButton) {
       const taskId = String(editButton.getAttribute("data-developer-task-edit") || "");
+      closeDetailModal();
       openEditModal(taskId);
       return;
     }
@@ -3566,6 +3649,12 @@ function initializeDeveloperWorkspace() {
       const taskId = String(archiveButton.getAttribute("data-developer-task-archive") || "");
       archiveTask(taskId);
       return;
+    }
+
+    const card = event.target.closest(".dashboard-developer-task-card");
+    if (card && !event.target.closest("button")) {
+      const taskId = String(card.getAttribute("data-task-id") || "");
+      openDetailModal(taskId);
     }
   });
 
@@ -3667,9 +3756,47 @@ function initializeDeveloperWorkspace() {
     }
   });
 
+  detailModal?.addEventListener("click", event => {
+    if (event.target.closest("[data-developer-task-detail-close]")) {
+      closeDetailModal();
+      return;
+    }
+
+    const editButton = event.target.closest("button[data-developer-task-detail-edit]");
+    if (editButton) {
+      closeDetailModal();
+      openEditModal(String(editButton.getAttribute("data-developer-task-detail-edit") || ""));
+      return;
+    }
+
+    const archiveButton = event.target.closest("button[data-developer-task-detail-archive]");
+    if (archiveButton) {
+      archiveTask(String(archiveButton.getAttribute("data-developer-task-detail-archive") || ""));
+      closeDetailModal();
+      return;
+    }
+
+    const restoreButton = event.target.closest("button[data-developer-task-detail-restore]");
+    if (restoreButton) {
+      restoreTask(String(restoreButton.getAttribute("data-developer-task-detail-restore") || ""));
+      closeDetailModal();
+      return;
+    }
+
+    const deleteButton = event.target.closest("button[data-developer-task-detail-delete]");
+    if (deleteButton) {
+      deleteArchivedTask(String(deleteButton.getAttribute("data-developer-task-detail-delete") || ""));
+      closeDetailModal();
+    }
+  });
+
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !modal.hidden) {
       closeModal();
+      return;
+    }
+    if (event.key === "Escape" && detailModal && !detailModal.hidden) {
+      closeDetailModal();
     }
   });
 }
