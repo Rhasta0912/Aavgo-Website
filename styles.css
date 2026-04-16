@@ -5296,6 +5296,26 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   color: rgba(255, 255, 255, 0.66);
 }
 
+.dashboard-hotel-lane-empty {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-hotel-lane-empty strong {
+  color: #fff8ef;
+  font-size: 0.8rem;
+}
+
+.dashboard-hotel-lane-empty span {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 .dashboard-admin-grid-full {
   margin-top: 1rem;
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);

@@ -428,8 +428,39 @@ function deriveTeamCards(people) {
   return [...buckets.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function deriveHotelLaneCards(people) {
+function normalizeHotelLaneOptions(hotels) {
+  const seen = new Set();
+  const lanes = [];
+
+  (Array.isArray(hotels) ? hotels : []).forEach(hotel => {
+    const rawId = typeof hotel === "string"
+      ? hotel
+      : String(hotel?.id || hotel?.value || hotel?.hotelId || hotel?.name || hotel?.label || "").trim();
+    const label = String(typeof hotel === "string"
+      ? hotel
+      : (hotel?.label || hotel?.name || hotel?.id || hotel?.value || hotel?.hotelId || "")
+    ).trim();
+    const id = rawId || label || "UNASSIGNED";
+    const normalizedLabel = label || id || "Unassigned";
+    const dedupeKey = normalizeForSearch(normalizedLabel);
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    lanes.push({
+      id,
+      label: normalizedLabel
+    });
+  });
+
+  if (!seen.has("unassigned")) {
+    lanes.push({ id: "UNASSIGNED", label: "Unassigned" });
+  }
+
+  return lanes;
+}
+
+function deriveHotelLaneCards(people, hotels = []) {
   const buckets = new Map();
+  const aliasLookup = new Map();
 
   (Array.isArray(people) ? people : []).forEach(person => {
     const hotelId = getPrimaryHotelId(person) || "UNASSIGNED";
@@ -452,15 +483,48 @@ function deriveHotelLaneCards(people) {
     current.monthlyHours += Number(person?.monthlyHours || 0);
     current.staff.push(person);
     buckets.set(hotelId, current);
+    aliasLookup.set(normalizeForSearch(hotelId), hotelId);
+    aliasLookup.set(normalizeForSearch(hotelLabel), hotelId);
   });
 
-  return [...buckets.values()]
+  const orderedLanes = normalizeHotelLaneOptions(hotels).map(option => {
+    const lane = buckets.get(option.id)
+      || buckets.get(aliasLookup.get(normalizeForSearch(option.id)) || "")
+      || buckets.get(aliasLookup.get(normalizeForSearch(option.label)) || "")
+      || buckets.get(option.label)
+      || null;
+    return {
+      id: option.id,
+      label: option.label,
+      people: lane?.people || 0,
+      activeNow: lane?.activeNow || 0,
+      todayHours: Number(lane?.todayHours || 0),
+      weeklyHours: Number(lane?.weeklyHours || 0),
+      monthlyHours: Number(lane?.monthlyHours || 0),
+      staff: Array.isArray(lane?.staff) ? lane.staff : []
+    };
+  });
+
+  const matchedKeys = new Set(orderedLanes.flatMap(lane => [lane.id, lane.label]).map(value => normalizeForSearch(value)));
+  [...buckets.values()]
+    .filter(lane => !matchedKeys.has(normalizeForSearch(lane.label)))
+    .forEach(lane => {
+      orderedLanes.push({
+        ...lane,
+        todayHours: Number(lane.todayHours || 0),
+        weeklyHours: Number(lane.weeklyHours || 0),
+        monthlyHours: Number(lane.monthlyHours || 0),
+        staff: lane.staff.sort((left, right) => String(left?.displayName || "").localeCompare(String(right?.displayName || "")))
+      });
+    });
+
+  return orderedLanes
     .map(lane => ({
       ...lane,
       todayHours: Number(lane.todayHours || 0),
       weeklyHours: Number(lane.weeklyHours || 0),
       monthlyHours: Number(lane.monthlyHours || 0),
-      staff: lane.staff.sort((left, right) => String(left?.displayName || "").localeCompare(String(right?.displayName || "")))
+      staff: (Array.isArray(lane.staff) ? lane.staff : []).sort((left, right) => String(left?.displayName || "").localeCompare(String(right?.displayName || "")))
     }))
     .sort((left, right) => String(left.label || "").localeCompare(String(right.label || "")));
 }
@@ -1484,14 +1548,21 @@ function renderHotelLaneCards(lanes) {
       </div>
       <div class="dashboard-hotel-lane-staff-wrap">
         <div class="dashboard-hotel-lane-staff-label">Staff</div>
-        <ul class="dashboard-hotel-lane-staff">
-          ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 4) : []).map(person => `
-          <li>
-            <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-            <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
-          </li>
-          `).join("")}
-        </ul>
+        ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
+          <ul class="dashboard-hotel-lane-staff">
+            ${lane.staff.slice(0, 4).map(person => `
+            <li>
+              <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+              <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+            </li>
+            `).join("")}
+          </ul>
+        ` : `
+          <div class="dashboard-hotel-lane-empty">
+            <strong>No assigned staff yet</strong>
+            <span>This hotel is still waiting for its first visible row.</span>
+          </div>
+        `}
       </div>
     </article>
   `).join("");
@@ -1828,7 +1899,7 @@ function applyAdminBoardPayload(payload) {
   renderHoursRows(visiblePeople, selectedStaff?.discordId || "");
   renderFullHoursRows(visiblePeople);
   renderTeamCards(deriveTeamCards(visiblePeople));
-  renderHotelLaneCards(deriveHotelLaneCards(visiblePeople));
+  renderHotelLaneCards(deriveHotelLaneCards(visiblePeople, meta.hotels || []));
   renderAuditLog(getAdminManagement()?.audit?.entries || []);
   renderBroadcastComposer(getAdminManagement()?.signals?.announcement || null);
   renderSelectedStaff(selectedStaff);
