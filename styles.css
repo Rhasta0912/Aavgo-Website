@@ -4178,6 +4178,23 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   cursor: pointer;
 }
 
+.dashboard-developer-task-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.1rem;
+}
+
+.dashboard-developer-task-archive-action {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(216, 176, 95, 0.95);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .dashboard-developer-task-remove {
   width: 2rem;
   height: 2rem;

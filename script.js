@@ -3221,7 +3221,6 @@ function initializeDeveloperWorkspace() {
             ${item.updatedAt ? ` &middot; Updated ${escapeHtml(toDateLabel(item.updatedAt))}` : ""}
           </p>
         </div>
-        <button type="button" class="dashboard-developer-task-remove" data-developer-task-archive="${escapeHtml(item.id)}" aria-label="Archive task">Archive</button>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
       ${activity.length ? `
@@ -3242,6 +3241,9 @@ function initializeDeveloperWorkspace() {
           `).join("")}
         </div>
       ` : ""}
+      <div class="dashboard-developer-task-footer">
+        <button type="button" class="dashboard-developer-task-archive-action" data-developer-task-archive="${escapeHtml(item.id)}" aria-label="Archive task">Archive</button>
+      </div>
     </article>
   `;
   };
