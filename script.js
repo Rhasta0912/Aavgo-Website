@@ -2732,6 +2732,7 @@ function initializeDeveloperWorkspace() {
     ["done today", "is-due-today"]
   ]);
   let draggingTaskId = "";
+  let editingTaskId = "";
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
   const currentUser = {
     displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
@@ -2993,6 +2994,10 @@ function initializeDeveloperWorkspace() {
 
   const openModal = (status = "To Do") => {
     resetFields(status);
+    editingTaskId = "";
+    if (addButton) {
+      addButton.textContent = "Add task";
+    }
     setFeedback("Add a roadmap card, then drag it between lists.", false);
     modal.hidden = false;
     document.body.classList.add("dashboard-modal-open");
@@ -3002,6 +3007,29 @@ function initializeDeveloperWorkspace() {
   };
 
   window.__aavgoOpenDeveloperTaskModal = openModal;
+
+  const openEditModal = (taskId) => {
+    const task = load().find(item => String(item.id || "") === String(taskId || ""));
+    if (!task) return;
+    editingTaskId = String(task.id || "");
+    resetFields(task.status || "To Do");
+    if (fields.title) fields.title.value = task.title || "";
+    if (fields.owner) fields.owner.value = task.owner || "";
+    if (fields.start) aavgoDispatchInputChange(fields.start, String(task.startDate || ""));
+    if (fields.deadline) aavgoDispatchInputChange(fields.deadline, String(task.deadlineDate || ""));
+    if (fields.priority) fields.priority.value = String(task.priority || "Normal");
+    if (fields.status) fields.status.value = normalizeStatus(task.status || "To Do");
+    if (fields.notes) fields.notes.value = task.notes || "";
+    if (addButton) {
+      addButton.textContent = "Save changes";
+    }
+    setFeedback("Edit this roadmap card, then save the changes.", false);
+    modal.hidden = false;
+    document.body.classList.add("dashboard-modal-open");
+    window.setTimeout(() => {
+      fields.title?.focus();
+    }, 40);
+  };
 
   const save = (items) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -3242,6 +3270,7 @@ function initializeDeveloperWorkspace() {
         </div>
       ` : ""}
       <div class="dashboard-developer-task-footer">
+        <button type="button" class="dashboard-developer-task-edit-action" data-developer-task-edit="${escapeHtml(item.id)}" aria-label="Edit task">Edit</button>
         <button type="button" class="dashboard-developer-task-archive-action" data-developer-task-archive="${escapeHtml(item.id)}" aria-label="Archive task">Archive</button>
       </div>
     </article>
@@ -3412,41 +3441,90 @@ function initializeDeveloperWorkspace() {
     const actorName = getActorName();
     const actorRole = getActorRole();
     const note = String(fields.notes?.value || "").trim();
-    items.unshift({
-      id: createTaskId(),
-      title,
-      owner: String(fields.owner?.value || "").trim(),
-      startDate: String(fields.start?.value || "").trim(),
-      deadlineDate,
-      priority: String(fields.priority?.value || "Normal").trim(),
-      status: normalizeStatus(fields.status?.value || "To Do"),
-      notes: note,
-      attachments,
-      activity: [
-        {
-          id: createHistoryId(),
-          type: "created",
-          message: note ? `Created with a note: ${note}` : "Created roadmap card.",
-          createdAt: now,
-          actorName,
-          actorRole
-        }
-      ],
-      createdAt: now,
-      updatedAt: now
-    });
-    recordAuditEvent({
-      type: "created",
-      title,
-      taskId: items[0].id,
-      toStatus: normalizeStatus(fields.status?.value || "To Do"),
-      message: note ? `Created with a note: ${note}` : "Created roadmap card.",
-      createdAt: now,
-      actorName,
-      actorRole
-    });
-    setFeedback("Task added to the board.", false);
+    const nextStatus = normalizeStatus(fields.status?.value || "To Do");
+    const editingIndex = editingTaskId ? items.findIndex(item => String(item.id || "") === String(editingTaskId || "")) : -1;
+
+    if (editingIndex >= 0) {
+      const existing = items[editingIndex];
+      const nextItem = {
+        ...existing,
+        title,
+        owner: String(fields.owner?.value || "").trim(),
+        startDate: String(fields.start?.value || "").trim(),
+        deadlineDate,
+        priority: String(fields.priority?.value || "Normal").trim(),
+        status: nextStatus,
+        notes: note,
+        attachments,
+        updatedAt: now,
+        activity: [
+          {
+            id: createHistoryId(),
+            type: "edited",
+            message: note ? `Edited card with a note: ${note}` : "Edited roadmap card.",
+            createdAt: now,
+            actorName,
+            actorRole
+          },
+          ...(Array.isArray(existing.activity) ? existing.activity : [])
+        ].slice(0, 12)
+      };
+      items[editingIndex] = nextItem;
+      recordAuditEvent({
+        type: "edit",
+        title,
+        taskId: nextItem.id,
+        fromStatus: existing.status || "To Do",
+        toStatus: nextStatus,
+        message: note ? `Edited card with a note: ${note}` : "Edited roadmap card.",
+        createdAt: now,
+        actorName,
+        actorRole
+      });
+      setFeedback("Task updated.", false);
+    } else {
+      const nextItem = {
+        id: createTaskId(),
+        title,
+        owner: String(fields.owner?.value || "").trim(),
+        startDate: String(fields.start?.value || "").trim(),
+        deadlineDate,
+        priority: String(fields.priority?.value || "Normal").trim(),
+        status: nextStatus,
+        notes: note,
+        attachments,
+        activity: [
+          {
+            id: createHistoryId(),
+            type: "created",
+            message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+            createdAt: now,
+            actorName,
+            actorRole
+          }
+        ],
+        createdAt: now,
+        updatedAt: now
+      };
+      items.unshift(nextItem);
+      recordAuditEvent({
+        type: "created",
+        title,
+        taskId: nextItem.id,
+        toStatus: nextStatus,
+        message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+        createdAt: now,
+        actorName,
+        actorRole
+      });
+      setFeedback("Task added to the board.", false);
+    }
+
     save(items);
+    editingTaskId = "";
+    if (addButton) {
+      addButton.textContent = "Add task";
+    }
     resetFields("To Do");
     window.setTimeout(closeModal, 180);
   };
@@ -3473,6 +3551,13 @@ function initializeDeveloperWorkspace() {
       const status = String(createButton.getAttribute("data-developer-task-create-status") || "To Do");
       openModal(status);
       window.__aavgoOpenDeveloperTaskModal = openModal;
+      return;
+    }
+
+    const editButton = event.target.closest("button[data-developer-task-edit]");
+    if (editButton) {
+      const taskId = String(editButton.getAttribute("data-developer-task-edit") || "");
+      openEditModal(taskId);
       return;
     }
 

@@ -4183,16 +4183,39 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   justify-content: flex-end;
   align-items: center;
   margin-top: 0.1rem;
+  gap: 0.55rem;
 }
 
+.dashboard-developer-task-edit-action,
 .dashboard-developer-task-archive-action {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: rgba(216, 176, 95, 0.95);
+  min-height: 2rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(216, 176, 95, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 248, 239, 0.92);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.dashboard-developer-task-edit-action {
+  border-color: rgba(59, 130, 246, 0.2);
+  color: rgba(205, 228, 255, 0.95);
+}
+
+.dashboard-developer-task-archive-action {
+  border-color: rgba(216, 176, 95, 0.2);
+  color: rgba(216, 176, 95, 0.95);
+}
+
+.dashboard-developer-task-edit-action:hover,
+.dashboard-developer-task-edit-action:focus-visible,
+.dashboard-developer-task-archive-action:hover,
+.dashboard-developer-task-archive-action:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .dashboard-developer-task-remove {
