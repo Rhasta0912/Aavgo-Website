@@ -2687,6 +2687,7 @@ function initializeDeveloperWorkspace() {
   const list = document.getElementById("developer-task-list");
   const form = document.getElementById("developer-task-form");
   const modal = document.getElementById("developer-task-modal");
+  const addButton = document.getElementById("developer-task-add");
   if (!list || !form || !modal) return;
 
   const fields = {
@@ -3146,11 +3147,14 @@ function initializeDeveloperWorkspace() {
     window.setTimeout(closeModal, 180);
   };
 
-  form.addEventListener("submit", async event => {
+  const handleTaskSubmit = async event => {
     event.preventDefault();
     aavgoCloseAllDatePickers();
     await submitTask();
-  });
+  };
+
+  form.addEventListener("submit", handleTaskSubmit);
+  addButton?.addEventListener("click", handleTaskSubmit);
 
   list.addEventListener("click", event => {
     const createButton = event.target.closest("button[data-developer-task-create-status]");
