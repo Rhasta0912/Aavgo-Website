@@ -130,6 +130,7 @@ $bootstrapJson = json_encode(
               <button class="dashboard-toolbar-dropdown-link" type="button" data-theme-toggle>Toggle theme</button>
               <a class="dashboard-toolbar-dropdown-link" href="#leadership-broadcast">Command center</a>
               <a class="dashboard-toolbar-dropdown-link" href="#leadership-full-hours">Full hours</a>
+              <a class="dashboard-toolbar-dropdown-link" href="#leadership-hotels">Hotel lanes</a>
               <?php if ($isDeveloper): ?>
                 <a class="dashboard-toolbar-dropdown-link" href="/admin/developer/">Developer panel</a>
               <?php endif; ?>
@@ -217,6 +218,7 @@ $bootstrapJson = json_encode(
       <section class="dashboard-view-switch reveal reveal-delay-1" aria-label="Leadership view switcher">
         <button class="dashboard-view-tab is-active" type="button" data-hours-view="board">Leadership board</button>
         <button class="dashboard-view-tab" type="button" data-hours-view="full-hours">Full hours</button>
+        <button class="dashboard-view-tab" type="button" data-hours-view="hotel-lanes">Hotel lanes</button>
       </section>
 
       <section class="dashboard-view-panel is-active reveal-in" data-hours-view-panel="board">
@@ -506,25 +508,25 @@ $bootstrapJson = json_encode(
           </div>
         </article>
 
-        <section class="dashboard-admin-grid dashboard-admin-grid-full reveal reveal-delay-2">
-          <aside class="dashboard-stack dashboard-stack-admin">
-            <article class="dashboard-panel" id="leadership-hotels">
-              <div class="dashboard-panel-heading">
-                <div>
-                  <p class="dashboard-kicker">Hotel command lanes</p>
-                  <h2>Live hotel rows with quick visibility.</h2>
-                </div>
-              </div>
-              <div class="dashboard-hotel-lane-grid" id="hours-hotel-lanes">
-                <div class="dashboard-empty-state">
-                  <strong>Waiting for hotel lane data.</strong>
-                  <p>Once the board snapshot is ready, hotel command cards will appear here.</p>
-                </div>
-              </div>
-            </article>
+      </section>
 
-          </aside>
-        </section>
+      <section class="dashboard-view-panel" data-hours-view-panel="hotel-lanes" id="leadership-hotels" hidden>
+        <article class="dashboard-panel reveal reveal-in reveal-delay-2">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Hotel command lanes</p>
+              <h2>Live hotel rows with quick visibility.</h2>
+            </div>
+            <span class="dashboard-chip dashboard-chip-accent">3-4 assigned agents</span>
+          </div>
+          <p class="dashboard-panel-copy">Each hotel keeps a compact lane so assigned agents, live status, and quick logout actions stay readable without crowding the main leadership board.</p>
+          <div class="dashboard-hotel-lane-grid" id="hours-hotel-lanes">
+            <div class="dashboard-empty-state">
+              <strong>Waiting for hotel lane data.</strong>
+              <p>Once the board snapshot is ready, hotel command cards will appear here.</p>
+            </div>
+          </div>
+        </article>
       </section>
     </main>
   </div>

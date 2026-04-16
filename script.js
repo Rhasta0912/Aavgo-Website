@@ -1061,7 +1061,7 @@ function setEditorFeedback(message, isError = false) {
 }
 
 function setAdminView(nextView) {
-  adminBoardState.view = nextView === "full-hours" ? "full-hours" : "board";
+  adminBoardState.view = ["board", "full-hours", "hotel-lanes"].includes(nextView) ? nextView : "board";
   document.querySelectorAll("[data-hours-view]").forEach(node => {
     node.classList.toggle("is-active", node.getAttribute("data-hours-view") === adminBoardState.view);
   });
@@ -2023,6 +2023,8 @@ function initializeAdminBoard() {
       event.preventDefault();
       if (href === "#leadership-full-hours") {
         setAdminView("full-hours");
+      } else if (href === "#leadership-hotels") {
+        setAdminView("hotel-lanes");
       } else if (href.startsWith("#leadership-")) {
         setAdminView("board");
       }
