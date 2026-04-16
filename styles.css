@@ -2656,6 +2656,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   z-index: 6;
 }
 
+.dashboard-deadline-popover[hidden] {
+  display: none !important;
+}
+
 .dashboard-deadline-header {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -4049,6 +4053,20 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .workspace-page-developer .dashboard-developer-form-grid .dashboard-control-field {
   grid-column: span 6;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-form-grid {
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field,
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field-wide {
+  grid-column: auto;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-row {
+  grid-template-columns: 1fr;
 }
 
 .dashboard-control-field-wide {
