@@ -3024,8 +3024,20 @@ function initializeDeveloperWorkspace() {
         <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No post note yet.")}</p>
       </div>
       <div class="dashboard-developer-detail-grid">
-        <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
-          <p class="dashboard-kicker">Activity</p>
+        <article class="dashboard-developer-detail-block">
+          <p class="dashboard-kicker">Details</p>
+          <dl>
+            <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
+            <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
+            <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
+            <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
+          </dl>
+        </article>
+        <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-activity-toggle">
+          <summary>
+            <span>Activity</span>
+            <span class="dashboard-chip dashboard-chip-muted">${escapeHtml(String(activity.length || 0))}</span>
+          </summary>
           ${activity.length ? `
             <ol class="dashboard-developer-detail-activity">
               ${activity.map(entry => `
@@ -3041,16 +3053,7 @@ function initializeDeveloperWorkspace() {
               <p>This card has not been updated since it was created.</p>
             </div>
           `}
-        </article>
-        <article class="dashboard-developer-detail-block">
-          <p class="dashboard-kicker">Details</p>
-          <dl>
-            <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
-            <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
-            <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
-            <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
-          </dl>
-        </article>
+        </details>
       </div>
       ${attachments.length ? `
         <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
@@ -3066,12 +3069,12 @@ function initializeDeveloperWorkspace() {
         </article>
       ` : ""}
       <div class="dashboard-developer-detail-actions">
-        <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>
+        <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>
         ${isArchived ? `
-          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-restore="${escapeHtml(task.id)}">Restore</button>
-          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-delete="${escapeHtml(task.id)}">Delete</button>
+          <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-restore="${escapeHtml(task.id)}">Restore</button>
+          <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-delete="${escapeHtml(task.id)}">Delete</button>
         ` : `
-          <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-archive="${escapeHtml(task.id)}">Archive</button>
+          <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-archive="${escapeHtml(task.id)}">Archive</button>
         `}
       </div>
     `;
