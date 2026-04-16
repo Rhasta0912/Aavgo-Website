@@ -183,7 +183,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <button type="button" class="dashboard-modal-close" data-developer-task-modal-close aria-label="Close task form">Close</button>
       </div>
 
-      <form id="developer-task-form" class="dashboard-developer-form-grid">
+      <form id="developer-task-form" class="dashboard-developer-form-grid" novalidate>
         <label class="dashboard-control-field dashboard-control-field-wide">
           <span>Task</span>
           <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
@@ -195,7 +195,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <label class="dashboard-control-field">
           <span>Start date</span>
           <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Start" data-empty-label="Choose a start date">
-            <input id="developer-task-start" type="date" readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+            <input id="developer-task-start" type="date" data-date-input readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
             <button type="button" class="dashboard-deadline-trigger" id="developer-task-start-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
               Choose a start date
             </button>
@@ -273,7 +273,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         </label>
         <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
         <div class="dashboard-control-row">
-        <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button">Add task</button>
+        <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="submit">Add task</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
         </div>

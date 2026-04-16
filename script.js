@@ -2385,6 +2385,7 @@ function initializeDeveloperWorkspace() {
     title: document.getElementById("developer-task-title"),
     owner: document.getElementById("developer-task-owner"),
     start: document.getElementById("developer-task-start"),
+    deadlineTrigger: document.getElementById("developer-task-deadline-trigger"),
     deadline: document.getElementById("developer-task-deadline"),
     priority: document.getElementById("developer-task-priority"),
     status: document.getElementById("developer-task-status"),
@@ -2649,11 +2650,6 @@ function initializeDeveloperWorkspace() {
   };
 
   render(load());
-
-  addButton.addEventListener("click", () => {
-      aavgoCloseAllDatePickers();
-      void submitTask();
-    });
 
   list.addEventListener("click", event => {
     const createButton = event.target.closest("button[data-developer-task-create-status]");
@@ -3105,10 +3101,13 @@ function initializeDeveloperWorkspace() {
     const deadlineDate = String(fields.deadline?.value || "").trim();
     if (!title) {
       setFeedback("Task name is required before adding it.", true);
+      fields.title?.focus?.();
       return;
     }
     if (!deadlineDate) {
       setFeedback("Deadline is required so the board can stay structured.", true);
+      fields.deadlineTrigger?.click?.();
+      fields.deadlineTrigger?.focus?.();
       return;
     }
     if (fields.deadline?.type !== "hidden" && fields.deadline?.checkValidity && !fields.deadline.checkValidity()) {
