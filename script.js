@@ -441,12 +441,20 @@ function normalizeHotelLaneOptions(hotels) {
       : (hotel?.label || hotel?.name || hotel?.id || hotel?.value || hotel?.hotelId || "")
     ).trim();
     const id = rawId || label || "UNASSIGNED";
-    const normalizedLabel = label || id || "Unassigned";
+    let normalizedLabel = label || id || "Unassigned";
+    let normalizedId = normalizeForSearch(id);
+    const hotelKey = normalizeHotelLabel(normalizedLabel || id);
+
+    if (normalizedId === "sup8" || normalizedId === "rmda" || hotelKey.includes("ramada") || hotelKey.includes("super 8")) {
+      normalizedLabel = "Ramada / Super 8";
+      normalizedId = "rmda";
+    }
+
     const dedupeKey = normalizeForSearch(normalizedLabel);
     if (!dedupeKey || seen.has(dedupeKey)) return;
     seen.add(dedupeKey);
     lanes.push({
-      id,
+      id: normalizedId === "rmda" ? "RMDA" : id,
       label: normalizedLabel
     });
   });
@@ -1652,11 +1660,13 @@ function renderHotelLaneCards(lanes) {
         <div class="dashboard-hotel-team-copy">
           <span class="dashboard-kicker">${escapeHtml(group?.label || "Other hotels")}</span>
           <h3>${escapeHtml(group?.label || "Other hotels")}</h3>
-          <p>${escapeHtml(
-            Array.isArray(group?.hotels) && group.hotels.length > 0
-              ? group.hotels.join(" · ")
-              : "Hotels that do not fit the current team map"
-          )}</p>
+          <div class="dashboard-hotel-team-hotels">
+            ${(Array.isArray(group?.hotels) && group.hotels.length > 0
+              ? group.hotels
+              : ["Hotels that do not fit the current team map"]).map(hotel => `
+              <span class="dashboard-hotel-team-hotel-chip">${escapeHtml(hotel)}</span>
+            `).join("")}
+          </div>
         </div>
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(String((Array.isArray(group?.lanes) ? group.lanes.length : 0)))} hotels</span>
       </div>
@@ -1697,15 +1707,24 @@ function renderHotelLaneCards(lanes) {
                 <ul class="dashboard-hotel-lane-staff">
                   ${lane.staff.slice(0, 4).map(person => `
                   <li
-                    class="dashboard-hotel-staff-chip"
+                    class="dashboard-hotel-staff-chip${String(person?.assignedHotelId || "") && String(person?.linkedHotelId || "") && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId) ? " is-mismatched" : ""}"
                     draggable="true"
                     data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
                     data-hotel-agent-name="${escapeHtml(person?.displayName || "Unknown")}"
                     data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
                     title="Drag to another hotel"
                   >
-                    <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-                    <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                    <div class="dashboard-hotel-staff-chip-main">
+                      <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+                      <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                    </div>
+                    <small class="dashboard-hotel-staff-chip-meta">
+                      ${escapeHtml(
+                        person?.assignedHotelId && person?.linkedHotelId && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId)
+                          ? `Assigned ${person.assignedHotel || "Unassigned"} | Live ${person.linkedHotel || "Unassigned"}`
+                          : `Live ${person?.linkedHotel || person?.assignedHotel || "Unassigned"}`
+                      )}
+                    </small>
                   </li>
                   `).join("")}
                 </ul>
