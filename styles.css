@@ -4069,6 +4069,16 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   grid-column: 1 / -1 !important;
 }
 
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-deadline-picker {
+  gap: 0.35rem;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-deadline-popover {
+  position: static;
+  inset: auto;
+  margin-top: 0.35rem;
+}
+
 .workspace-page-developer .dashboard-developer-task-modal .dashboard-control-row {
   grid-template-columns: 1fr;
   gap: 0.7rem;
