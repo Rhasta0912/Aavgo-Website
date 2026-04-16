@@ -2742,6 +2742,7 @@ function initializeDeveloperWorkspace() {
   const deadlineClose = deadlinePopover?.querySelector("[data-deadline-close]");
   const monthFormatter = new Intl.DateTimeFormat([], { month: "long", year: "numeric" });
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
+  const datePickerRegistry = Array.isArray(window.__aavgoDatePickers) ? window.__aavgoDatePickers : (window.__aavgoDatePickers = []);
 
   const createTaskId = () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -2912,6 +2913,7 @@ function initializeDeveloperWorkspace() {
 
   const openDeadlinePopover = () => {
     if (!deadlinePopover) return;
+    aavgoCloseAllDatePickers();
     deadlinePopover.hidden = false;
     syncDeadlineTrigger();
     renderDeadlineCalendar();
@@ -2931,6 +2933,19 @@ function initializeDeveloperWorkspace() {
       closeDeadlinePopover();
     }
   };
+
+  const deadlinePickerApi = {
+    open: openDeadlinePopover,
+    close: closeDeadlinePopover,
+    toggle: toggleDeadlinePopover,
+    setValue: (value, options = {}) => setDeadlineValue(value, options),
+    sync: syncDeadlineTrigger,
+    render: renderDeadlineCalendar
+  };
+
+  if (!datePickerRegistry.includes(deadlinePickerApi)) {
+    datePickerRegistry.push(deadlinePickerApi);
+  }
 
     const setDeadlineValue = (value, { close = false } = {}) => {
       if (fields.deadline) {

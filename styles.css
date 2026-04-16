@@ -4056,7 +4056,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-form-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr !important;
   gap: 0.75rem;
 }
 
@@ -4065,8 +4065,17 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   grid-column: auto;
 }
 
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-form-grid > * {
+  grid-column: 1 / -1 !important;
+}
+
 .workspace-page-developer .dashboard-developer-task-modal .dashboard-control-row {
   grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-row .dashboard-inline-button {
+  width: 100%;
 }
 
 .dashboard-control-field-wide {
