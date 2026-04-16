@@ -519,7 +519,7 @@ $bootstrapJson = json_encode(
             </div>
             <span class="dashboard-chip dashboard-chip-accent">All hotels</span>
           </div>
-          <p class="dashboard-panel-copy">Hotels are grouped by team so every property stays visible, assigned agents are easy to scan, and logout actions stay readable without crowding the main leadership board.</p>
+          <p class="dashboard-panel-copy">Hotels are grouped by team so every property stays visible, assigned agents are easy to scan, and logout actions stay readable without crowding the main leadership board. Drag any staff chip onto another hotel card to reassign it instantly.</p>
           <div class="dashboard-hotel-lanes" id="hours-hotel-lanes">
             <div class="dashboard-empty-state">
               <strong>Waiting for hotel lane data.</strong>

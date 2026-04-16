@@ -463,6 +463,7 @@ const HOTEL_TEAM_GROUPS = [
     key: "team-1",
     label: "Team 1",
     hotels: [
+      "AD1",
       "Indianhead/Magnuson",
       "The Garden Inn At Campsite",
       "Ramada / Super 8",
@@ -498,13 +499,76 @@ function normalizeHotelLabel(value) {
   return normalizeForSearch(String(value || "").trim());
 }
 
+function buildHotelLaneLookup(hotels) {
+  const byId = new Map();
+  const byLabel = new Map();
+  const combinedRamada = { id: "RMDA", label: "Ramada / Super 8" };
+
+  (Array.isArray(hotels) ? hotels : []).forEach(hotel => {
+    const rawId = typeof hotel === "string"
+      ? hotel
+      : String(hotel?.id || hotel?.value || hotel?.hotelId || hotel?.name || hotel?.label || "").trim();
+    const rawLabel = String(typeof hotel === "string"
+      ? hotel
+      : (hotel?.label || hotel?.name || hotel?.id || hotel?.value || hotel?.hotelId || "")
+    ).trim();
+    const id = rawId || rawLabel || "UNASSIGNED";
+    const normalizedId = normalizeHotelLabel(id);
+    const normalizedLabel = normalizeHotelLabel(rawLabel || id);
+
+    byId.set(normalizedId, { id, label: rawLabel || id });
+    if (normalizedLabel) {
+      byLabel.set(normalizedLabel, { id, label: rawLabel || id });
+    }
+
+    if (normalizedId === "rmda" || normalizedLabel.includes("ramada") || normalizedLabel.includes("super 8")) {
+      byId.set("rmda", combinedRamada);
+      byLabel.set("rmda", combinedRamada);
+      byLabel.set("super 8", combinedRamada);
+      byLabel.set("super8", combinedRamada);
+      byLabel.set("ramada", combinedRamada);
+      byLabel.set("ramada super 8", combinedRamada);
+      byLabel.set("ramada / super 8", combinedRamada);
+    }
+  });
+
+  return { byId, byLabel };
+}
+
+function resolveHotelLaneIdentity(person, hotelsLookup) {
+  const rawHotelId = String(person?.linkedHotelId || "").trim();
+  const rawHotelLabel = String(person?.linkedHotel || "").trim();
+  const normalizedHotelId = normalizeHotelLabel(rawHotelId);
+  const normalizedHotelLabel = normalizeHotelLabel(rawHotelLabel);
+
+  const byId = hotelsLookup?.byId || new Map();
+  const byLabel = hotelsLookup?.byLabel || new Map();
+
+  const resolved =
+    byId.get(normalizedHotelId) ||
+    byLabel.get(normalizedHotelLabel) ||
+    (normalizedHotelLabel.includes("ramada") || normalizedHotelLabel.includes("super 8")
+      ? { id: "RMDA", label: "Ramada / Super 8" }
+      : null) ||
+    (normalizedHotelId ? { id: rawHotelId || normalizedHotelId, label: rawHotelLabel || rawHotelId } : null) ||
+    (normalizedHotelLabel ? { id: rawHotelLabel || normalizedHotelLabel, label: rawHotelLabel || rawHotelId || "Unassigned" } : null) ||
+    { id: "UNASSIGNED", label: "Unassigned" };
+
+  return {
+    id: String(resolved.id || "UNASSIGNED"),
+    label: String(resolved.label || "Unassigned")
+  };
+}
+
 function deriveHotelLaneCards(people, hotels = []) {
   const buckets = new Map();
   const aliasLookup = new Map();
+  const hotelLookup = buildHotelLaneLookup(hotels);
 
   (Array.isArray(people) ? people : []).forEach(person => {
-    const hotelId = getPrimaryHotelId(person) || "UNASSIGNED";
-    const hotelLabel = getPrimaryHotelLabel(person);
+    const hotelIdentity = resolveHotelLaneIdentity(person, hotelLookup);
+    const hotelId = hotelIdentity.id || "UNASSIGNED";
+    const hotelLabel = hotelIdentity.label || "Unassigned";
     const current = buckets.get(hotelId) || {
       id: hotelId,
       label: hotelLabel,
@@ -636,6 +700,7 @@ const adminBoardState = {
 
 const THEME_STORAGE_KEY = "aavgo_theme";
 const SIDEBAR_STORAGE_KEY = "aavgo_sidebar";
+let draggingHotelAgent = null;
 
 function getAdminPeople() {
   return Array.isArray(adminBoardState?.payload?.data?.people) ? adminBoardState.payload.data.people : [];
@@ -1586,17 +1651,18 @@ function renderHotelLaneCards(lanes) {
       <div class="dashboard-hotel-team-head">
         <div class="dashboard-hotel-team-copy">
           <span class="dashboard-kicker">${escapeHtml(group?.label || "Other hotels")}</span>
-          <h3>${escapeHtml(
+          <h3>${escapeHtml(group?.label || "Other hotels")}</h3>
+          <p>${escapeHtml(
             Array.isArray(group?.hotels) && group.hotels.length > 0
-              ? group.hotels.join(" / ")
+              ? group.hotels.join(" · ")
               : "Hotels that do not fit the current team map"
-          )}</h3>
+          )}</p>
         </div>
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(String((Array.isArray(group?.lanes) ? group.lanes.length : 0)))} hotels</span>
       </div>
       <div class="dashboard-hotel-lane-grid">
         ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => `
-          <article class="dashboard-hotel-lane-card">
+          <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
             <div class="dashboard-hotel-lane-head">
               <div class="dashboard-hotel-lane-head-copy">
                 <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
@@ -1630,7 +1696,14 @@ function renderHotelLaneCards(lanes) {
               ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
                 <ul class="dashboard-hotel-lane-staff">
                   ${lane.staff.slice(0, 4).map(person => `
-                  <li>
+                  <li
+                    class="dashboard-hotel-staff-chip"
+                    draggable="true"
+                    data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
+                    data-hotel-agent-name="${escapeHtml(person?.displayName || "Unknown")}"
+                    data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
+                    title="Drag to another hotel"
+                  >
                     <span>${escapeHtml(person?.displayName || "Unknown")}</span>
                     <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
                   </li>
@@ -1639,7 +1712,7 @@ function renderHotelLaneCards(lanes) {
               ` : `
                 <div class="dashboard-hotel-lane-empty">
                   <strong>No assigned staff yet</strong>
-                  <span>This hotel is still waiting for its first visible row.</span>
+                  <span>This hotel is still waiting for its first visible row. Drag a staff chip here once one becomes visible.</span>
                 </div>
               `}
             </div>
@@ -2497,7 +2570,75 @@ function initializeAdminBoard() {
     }, { feedback: "editor" });
   });
 
-  document.getElementById("hours-hotel-lanes")?.addEventListener("click", event => {
+  const hotelLanesRoot = document.getElementById("hours-hotel-lanes");
+  hotelLanesRoot?.addEventListener("dragstart", event => {
+    const chip = event.target.closest("[data-hotel-agent-drag]");
+    if (!chip) return;
+    const discordId = String(chip.getAttribute("data-hotel-agent-drag") || "").trim();
+    const agentName = String(chip.getAttribute("data-hotel-agent-name") || "").trim();
+    const currentHotelId = String(chip.getAttribute("data-hotel-agent-current-hotel") || "").trim();
+    if (!discordId) return;
+    draggingHotelAgent = { discordId, agentName, currentHotelId };
+    chip.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", discordId);
+    event.dataTransfer.setData("application/x-aavgo-agent", JSON.stringify(draggingHotelAgent));
+    setActionFeedback(`Drag ${agentName || "this agent"} onto a hotel card to reassign them.`, false);
+  });
+
+  hotelLanesRoot?.addEventListener("dragend", event => {
+    const chip = event.target.closest("[data-hotel-agent-drag]");
+    chip?.classList.remove("is-dragging");
+    draggingHotelAgent = null;
+    hotelLanesRoot.querySelectorAll(".is-drop-target").forEach(node => node.classList.remove("is-drop-target"));
+  });
+
+  hotelLanesRoot?.addEventListener("dragover", event => {
+    const card = event.target.closest("[data-hotel-lane-dropzone]");
+    if (!card || !draggingHotelAgent) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    card.classList.add("is-drop-target");
+  });
+
+  hotelLanesRoot?.addEventListener("dragenter", event => {
+    const card = event.target.closest("[data-hotel-lane-dropzone]");
+    if (!card || !draggingHotelAgent) return;
+    event.preventDefault();
+    card.classList.add("is-drop-target");
+  });
+
+  hotelLanesRoot?.addEventListener("dragleave", event => {
+    const card = event.target.closest("[data-hotel-lane-dropzone]");
+    if (!card) return;
+    card.classList.remove("is-drop-target");
+  });
+
+  hotelLanesRoot?.addEventListener("drop", event => {
+    const card = event.target.closest("[data-hotel-lane-dropzone]");
+    if (!card || !draggingHotelAgent) return;
+    event.preventDefault();
+    card.classList.remove("is-drop-target");
+    const hotelId = String(card.getAttribute("data-hotel-lane-dropzone") || "").trim();
+    const hotelLabel = String(card.getAttribute("data-hotel-lane-label") || "").trim();
+    const agent = draggingHotelAgent;
+    draggingHotelAgent = null;
+    hotelLanesRoot.querySelectorAll(".is-drop-target").forEach(node => node.classList.remove("is-drop-target"));
+
+    if (!hotelId || hotelId === "UNASSIGNED") {
+      setActionFeedback("Pick a real hotel lane to reassign the agent.", true);
+      return;
+    }
+    if (hotelId === agent.currentHotelId) {
+      setActionFeedback(`${agent.agentName || "That agent"} is already linked to ${hotelLabel || "that hotel"}.`, false);
+      return;
+    }
+
+    setActionFeedback(`Reassigning ${agent.agentName || "agent"} to ${hotelLabel || "the selected hotel"}...`, false);
+    sendAdminCommand("update_hotel", { discordId: agent.discordId, hotelId });
+  });
+
+  hotelLanesRoot?.addEventListener("click", event => {
     const button = event.target.closest("button[data-hotel-lane-logout]");
     if (!button) return;
     const hotelId = String(button.getAttribute("data-hotel-lane-logout") || "").trim();
