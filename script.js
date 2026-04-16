@@ -2966,11 +2966,6 @@ function initializeDeveloperWorkspace() {
 
   deadlineTrigger?.addEventListener("click", event => {
     event.preventDefault();
-    try {
-      fields.deadline?.showPicker?.();
-    } catch (error) {
-      void error;
-    }
     toggleDeadlinePopover();
   });
 

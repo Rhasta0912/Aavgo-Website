@@ -2639,11 +2639,13 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   gap: 0.85rem;
   padding: 0.95rem;
+  max-height: min(24rem, calc(100vh - 11rem));
+  overflow: auto;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(17, 19, 25, 0.98) 0%, rgba(13, 14, 19, 0.98) 100%);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
-  z-index: 3;
+  z-index: 6;
 }
 
 .dashboard-deadline-header {
@@ -3977,9 +3979,16 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .workspace-page-developer .dashboard-developer-task-list {
-  overflow-x: auto;
-  overflow-y: visible;
-  padding-bottom: 0.4rem;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.workspace-page-developer .dashboard-panel-developer-board {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .workspace-page-developer .dashboard-developer-workspace {
@@ -4776,9 +4785,9 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-developer-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(22rem, 1fr));
-  gap: 1.6rem;
-  overflow-x: auto;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap: 1.25rem;
+  overflow: visible;
   overflow-y: visible;
   padding: 0.15rem 0 0.45rem;
   align-items: start;
