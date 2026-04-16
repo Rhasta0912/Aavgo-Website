@@ -87,17 +87,17 @@ $bootstrapJson = json_encode(
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
-        <a class="dashboard-nav-link is-active" href="/admin/">Leadership board</a>
-        <a class="dashboard-nav-link" href="#leadership-full-hours">Full hours</a>
+        <a class="dashboard-nav-link is-active" href="/admin/"><span class="dashboard-nav-emoji" aria-hidden="true">🏛️</span><span>Leadership board</span></a>
+        <a class="dashboard-nav-link" href="#leadership-full-hours"><span class="dashboard-nav-emoji" aria-hidden="true">📊</span><span>Full hours</span></a>
         <?php if ($isDeveloper): ?>
-          <a class="dashboard-nav-link" href="/admin/developer/">Developer panel</a>
+          <a class="dashboard-nav-link" href="/admin/developer/"><span class="dashboard-nav-emoji" aria-hidden="true">🧭</span><span>Developer panel</span></a>
         <?php endif; ?>
-        <a class="dashboard-nav-link" href="/user/">User workspace</a>
-        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
+        <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
+        <a class="dashboard-nav-link" href="/auth/logout/"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
       </nav>
 
       <section class="dashboard-side-section">
-        <p class="dashboard-kicker">Control mode</p>
+        <p class="dashboard-kicker">🗂️ Control mode</p>
         <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
         <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
       </section>
@@ -176,7 +176,7 @@ $bootstrapJson = json_encode(
             <h2>Search people fast, then narrow by role, team, hotel, or live status.</h2>
           </div>
           <div class="dashboard-filter-shell-meta">
-            <span class="dashboard-chip dashboard-chip-accent" id="hours-sync-label"><?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="dashboard-chip dashboard-chip-accent" id="hours-sync-label">🔄 <?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="dashboard-chip" id="hours-filter-result-count">0 visible</span>
           </div>
         </div>
@@ -216,9 +216,9 @@ $bootstrapJson = json_encode(
       </section>
 
       <section class="dashboard-view-switch reveal reveal-delay-1" aria-label="Leadership view switcher">
-        <button class="dashboard-view-tab is-active" type="button" data-hours-view="board">Leadership board</button>
-        <button class="dashboard-view-tab" type="button" data-hours-view="full-hours">Full hours</button>
-        <button class="dashboard-view-tab" type="button" data-hours-view="hotel-lanes">Hotel lanes</button>
+        <button class="dashboard-view-tab is-active" type="button" data-hours-view="board">🗂️ Leadership board</button>
+        <button class="dashboard-view-tab" type="button" data-hours-view="full-hours">📊 Full hours</button>
+        <button class="dashboard-view-tab" type="button" data-hours-view="hotel-lanes">🏨 Hotel lanes</button>
       </section>
 
       <section class="dashboard-view-panel is-active reveal-in" data-hours-view-panel="board">

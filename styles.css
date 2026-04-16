@@ -1028,6 +1028,7 @@ h2 {
 .dashboard-toolbar-link {
   display: inline-flex;
   align-items: center;
+  gap: 0.65rem;
   min-height: 3.05rem;
   padding: 0 1rem;
   border-radius: 12px;
@@ -1073,6 +1074,14 @@ h2 {
 
 .dashboard-nav-link {
   justify-content: flex-start;
+}
+
+.dashboard-nav-emoji {
+  flex: 0 0 auto;
+  width: 1.35rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .dashboard-toolbar-link {
@@ -2296,6 +2305,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   border-radius: 12px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.015);
+}
+
+.workspace-dashboard .dashboard-nav-emoji {
+  width: 1.25rem;
 }
 
 .workspace-dashboard .dashboard-nav-link.is-active {
