@@ -1732,7 +1732,7 @@ function renderHotelLaneCards(lanes) {
                   </li>
                   `).join("")}
                   ${remainingStaff > 0 ? `
-                    <li class="dashboard-hotel-staff-chip dashboard-hotel-staff-chip-more" title="${escapeAttr(`${remainingStaff} more staff member(s)`) }">
+                    <li class="dashboard-hotel-staff-chip dashboard-hotel-staff-chip-more" title="${escapeHtml(`${remainingStaff} more staff member(s)`) }">
                       <div class="dashboard-hotel-staff-chip-main">
                         <span>+${remainingStaff} more</span>
                         <strong>More</strong>
