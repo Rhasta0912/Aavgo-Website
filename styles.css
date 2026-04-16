@@ -4195,16 +4195,15 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-developer-history-actions {
-  display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 0.15rem;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: stretch;
+  min-width: 8.2rem;
 }
 
 .dashboard-developer-history-actions .dashboard-developer-task-remove {
-  min-width: 6.4rem;
+  width: 100%;
   justify-content: center;
 }
 
@@ -4277,15 +4276,14 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-activity {
   padding: 0.8rem 0.85rem;
   border-radius: 12px;
-  border: 1px solid rgba(216, 176, 95, 0.16);
-  background:
-    linear-gradient(180deg, rgba(216, 176, 95, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .dashboard-developer-activity-trail {
   margin-top: 0.8rem;
   border-radius: 12px;
-  border: 1px solid rgba(216, 176, 95, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
   overflow: hidden;
 }
@@ -4337,9 +4335,8 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-audit {
   margin-top: 1rem;
   border-radius: 18px;
-  border: 1px solid rgba(216, 176, 95, 0.18);
-  background:
-    linear-gradient(180deg, rgba(216, 176, 95, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
 
@@ -4369,7 +4366,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   gap: 0.35rem;
   padding: 0.95rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(216, 176, 95, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -5369,10 +5366,8 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   gap: 0.8rem;
   padding: 1rem 1.05rem;
   border-radius: 16px;
-  border: 1px solid rgba(216, 176, 95, 0.18);
-  background:
-    linear-gradient(180deg, rgba(216, 176, 95, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%),
-    rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
