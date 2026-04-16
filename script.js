@@ -2523,17 +2523,17 @@ function initializeDeveloperWorkspace() {
     }
   };
 
-  const setFeedback = (message, isError = false) => {
-    if (!feedback) return;
-    feedback.textContent = message;
-    feedback.classList.toggle("is-error", Boolean(isError));
-  };
-
   const setHistoryState = (items) => {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
     if (historyCount) {
       historyCount.textContent = `${items.length} archived`;
     }
+  };
+
+  const setFeedback = (message, isError = false) => {
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.classList.toggle("is-error", Boolean(isError));
   };
 
   const sortTasks = (items) => {
@@ -2734,6 +2734,27 @@ function initializeDeveloperWorkspace() {
     return `task_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   };
 
+  const createHistoryId = () => `${createTaskId()}_history`;
+  const nowIso = () => new Date().toISOString();
+  const toDateLabel = (value) => {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return String(value);
+    return parsed.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  };
+  const priorityClass = (value) => PRIORITY_CLASS_MAP.get(String(value || "").trim().toLowerCase()) || "";
+  const priorityLabel = (value) => String(value || "Normal").trim() || "Normal";
+  const isDueToday = (deadlineDate) => {
+    if (!deadlineDate) return false;
+    const target = String(deadlineDate).slice(0, 10);
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return target === `${yyyy}-${mm}-${dd}`;
+  };
+  const escapeAttr = (value) => escapeHtml(String(value || ""));
+
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
     const normalized = STATUS_ALIAS_MAP.get(value.toLowerCase()) || value;
@@ -2785,6 +2806,31 @@ function initializeDeveloperWorkspace() {
       return normalized;
     } catch (_) {
       return [];
+    }
+  };
+
+  const loadHistory = () => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map(entry => normalizeTask({
+        ...entry,
+        archivedAt: entry?.archivedAt || nowIso()
+      }));
+      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const setHistoryState = (items) => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+    if (historyCount) {
+      historyCount.textContent = `${items.length} archived`;
     }
   };
 
