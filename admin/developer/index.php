@@ -159,11 +159,12 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           </div>
           </div>
 
-          <section class="dashboard-view-panel dashboard-panel dashboard-panel-history" data-developer-view-panel="archive">
+          <section class="dashboard-view-panel dashboard-panel dashboard-panel-history" data-developer-view-panel="archive" data-developer-archive-dropzone="true">
             <div class="dashboard-panel-heading">
               <div>
                 <p class="dashboard-kicker">Archive</p>
                 <h2>Archived roadmap items.</h2>
+                <p class="dashboard-panel-copy">Drag a finished card here to archive it, or restore it later from this tab.</p>
               </div>
               <span class="dashboard-chip dashboard-chip-accent" id="developer-history-count">0 archived</span>
             </div>
@@ -173,6 +174,18 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
                 <p>When a task is finished, it moves here instead of being deleted.</p>
               </div>
             </div>
+            <details class="dashboard-developer-audit" id="developer-task-audit">
+              <summary>
+                <span>Board activity</span>
+                <span class="dashboard-chip dashboard-chip-muted" id="developer-audit-count">0 events</span>
+              </summary>
+              <div class="dashboard-developer-audit-list" id="developer-task-audit-list">
+                <div class="dashboard-empty-state">
+                  <strong>No activity yet.</strong>
+                  <p>Created, moved, archived, restored, and deleted actions will appear here.</p>
+                </div>
+              </div>
+            </details>
           </section>
         </section>
       </section>
@@ -290,6 +303,10 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
   </div>
 
   <script>
+    window.AAVGO_CURRENT_USER = <?php echo json_encode([
+      'displayName' => $displayName,
+      'roleSummary' => $roleSummary,
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
   </script>

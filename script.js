@@ -2703,11 +2703,15 @@ function initializeDeveloperWorkspace() {
   const feedback = document.getElementById("developer-task-feedback");
   const historyList = document.getElementById("developer-task-history");
   const historyCount = document.getElementById("developer-history-count");
+  const auditList = document.getElementById("developer-task-audit-list");
+  const auditCount = document.getElementById("developer-audit-count");
+  const archivePanel = document.querySelector("[data-developer-archive-dropzone]");
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
   const viewPanels = Array.from(document.querySelectorAll("[data-developer-view-panel]"));
   const STORAGE_KEY = "aavgo_developer_tasks";
   const HISTORY_KEY = "aavgo_developer_task_history";
+  const AUDIT_KEY = "aavgo_developer_task_audit";
   const VIEW_KEY = "aavgo_developer_view";
   const STATUS_ORDER = ["To Do", "Doing", "Done"];
   const STATUS_ALIAS_MAP = new Map([
@@ -2729,6 +2733,10 @@ function initializeDeveloperWorkspace() {
   ]);
   let draggingTaskId = "";
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
+  const currentUser = {
+    displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
+    roleSummary: String(window.AAVGO_CURRENT_USER?.roleSummary || window.AAVGO_CURRENT_USER?.role || "Leadership").trim() || "Leadership"
+  };
 
   const createTaskId = () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -2756,7 +2764,41 @@ function initializeDeveloperWorkspace() {
     const dd = String(today.getDate()).padStart(2, "0");
     return target === `${yyyy}-${mm}-${dd}`;
   };
+  const getDayDelta = (leftValue, rightValue = nowIso()) => {
+    const left = parseLocalDate(leftValue);
+    const right = parseLocalDate(rightValue);
+    if (!left || !right) return null;
+    return Math.round((left.setHours(0, 0, 0, 0) - right.setHours(0, 0, 0, 0)) / 86400000);
+  };
+  const getTaskTimingState = (item = {}) => {
+    const deadlineDelta = getDayDelta(item.deadlineDate);
+    const startDelta = getDayDelta(item.startDate);
+    return {
+      isOverdue: Boolean(item.deadlineDate) && normalizeStatus(item.status) !== "Done" && deadlineDelta !== null && deadlineDelta < 0,
+      isDueToday: Boolean(item.deadlineDate) && normalizeStatus(item.status) !== "Done" && deadlineDelta === 0,
+      isStartingSoon: Boolean(item.startDate) && normalizeStatus(item.status) !== "Done" && startDelta !== null && startDelta >= 0 && startDelta <= 3
+    };
+  };
   const escapeAttr = (value) => escapeHtml(String(value || ""));
+  const getActorName = () => currentUser.displayName || "Leadership";
+  const getActorRole = () => currentUser.roleSummary || "Leadership";
+
+  const normalizeActivityEntry = (entry = {}) => ({
+    id: String(entry.id || createHistoryId()),
+    type: String(entry.type || "note").trim() || "note",
+    message: String(entry.message || "").trim(),
+    createdAt: String(entry.createdAt || nowIso()).trim(),
+    actorName: String(entry.actorName || getActorName()).trim() || "Leadership",
+    actorRole: String(entry.actorRole || getActorRole()).trim() || "Leadership"
+  });
+
+  const normalizeAttachmentEntry = (attachment = {}) => ({
+    name: String(attachment.name || "attachment").trim() || "attachment",
+    dataUrl: String(attachment.dataUrl || "").trim(),
+    size: Number(attachment.size || 0) || 0,
+    type: String(attachment.type || "").trim(),
+    createdAt: String(attachment.createdAt || nowIso()).trim()
+  });
 
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
@@ -2794,7 +2836,17 @@ function initializeDeveloperWorkspace() {
     deadlineDate: String(item.deadlineDate ?? item.deadline ?? "").trim(),
     priority: String(item.priority || "Normal").trim(),
     status: normalizeStatus(item.status),
-    notes: String(item.notes || "").trim()
+    notes: String(item.notes || "").trim(),
+    attachments: Array.isArray(item.attachments)
+      ? item.attachments.map(normalizeAttachmentEntry).filter(attachment => attachment.dataUrl)
+      : [],
+    activity: Array.isArray(item.activity)
+      ? item.activity.map(normalizeActivityEntry).filter(entry => entry.message)
+      : [],
+    createdAt: String(item.createdAt || nowIso()).trim(),
+    updatedAt: String(item.updatedAt || item.createdAt || nowIso()).trim(),
+    archivedAt: String(item.archivedAt || "").trim(),
+    archivedFrom: String(item.archivedFrom || "").trim()
   });
 
   const load = () => {
@@ -2835,6 +2887,59 @@ function initializeDeveloperWorkspace() {
     if (historyCount) {
       historyCount.textContent = `${items.length} archived`;
     }
+  };
+
+  const loadAudit = () => {
+    try {
+      const raw = localStorage.getItem(AUDIT_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map(entry => ({
+        id: String(entry?.id || createHistoryId()),
+        type: String(entry?.type || "note").trim() || "note",
+        title: String(entry?.title || "").trim(),
+        message: String(entry?.message || "").trim(),
+        taskId: String(entry?.taskId || "").trim(),
+        fromStatus: String(entry?.fromStatus || "").trim(),
+        toStatus: String(entry?.toStatus || "").trim(),
+        actorName: String(entry?.actorName || getActorName()).trim() || "Leadership",
+        actorRole: String(entry?.actorRole || getActorRole()).trim() || "Leadership",
+        createdAt: String(entry?.createdAt || nowIso()).trim()
+      }));
+      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const setAuditState = (items) => {
+    localStorage.setItem(AUDIT_KEY, JSON.stringify(items));
+    if (auditCount) {
+      auditCount.textContent = `${items.length} events`;
+    }
+  };
+
+  const recordAuditEvent = (entry = {}) => {
+    const next = [
+      {
+        id: String(entry.id || createHistoryId()),
+        type: String(entry.type || "note").trim() || "note",
+        title: String(entry.title || "").trim(),
+        message: String(entry.message || "").trim(),
+        taskId: String(entry.taskId || "").trim(),
+        fromStatus: String(entry.fromStatus || "").trim(),
+        toStatus: String(entry.toStatus || "").trim(),
+        actorName: String(entry.actorName || getActorName()).trim() || "Leadership",
+        actorRole: String(entry.actorRole || getActorRole()).trim() || "Leadership",
+        createdAt: String(entry.createdAt || nowIso()).trim()
+      },
+      ...loadAudit()
+    ].slice(0, 30);
+    setAuditState(next);
+    return next;
   };
 
   const setDeveloperView = (view = "board") => {
@@ -2913,6 +3018,8 @@ function initializeDeveloperWorkspace() {
     const items = load();
     let changed = false;
     const now = nowIso();
+    const actorName = getActorName();
+    const actorRole = getActorRole();
     const nextItems = items.map(item => {
       if (String(item.id || "") !== String(taskId || "")) return item;
       changed = true;
@@ -2925,13 +3032,25 @@ function initializeDeveloperWorkspace() {
             id: createHistoryId(),
             type: "status",
             message: `Moved to ${normalizedStatus}.`,
-            createdAt: now
+            createdAt: now,
+            actorName,
+            actorRole
           },
           ...(Array.isArray(item.activity) ? item.activity : [])
         ].slice(0, 12)
       };
     });
     if (!changed) return;
+    recordAuditEvent({
+      type: "status",
+      title: nextItems.find(item => String(item.id || "") === String(taskId || ""))?.title || "Roadmap card",
+      taskId,
+      toStatus: normalizedStatus,
+      message: `Moved to ${normalizedStatus}.`,
+      createdAt: now,
+      actorName,
+      actorRole
+    });
     setFeedback(`Task moved to ${normalizedStatus}.`, false);
     save(nextItems);
   };
@@ -2942,6 +3061,8 @@ function initializeDeveloperWorkspace() {
     const index = items.findIndex(item => String(item.id || "") === String(taskId || ""));
     if (index < 0) return;
     const now = nowIso();
+    const actorName = getActorName();
+    const actorRole = getActorRole();
     const [task] = items.splice(index, 1);
     history.unshift({
       ...task,
@@ -2952,13 +3073,25 @@ function initializeDeveloperWorkspace() {
         {
           id: createHistoryId(),
           type: "archive",
-          message: `Moved to History from ${task.status || "To Do"}.`,
-          createdAt: now
+          message: `Archived from ${task.status || "To Do"}.`,
+          createdAt: now,
+          actorName,
+          actorRole
         },
         ...(Array.isArray(task.activity) ? task.activity : [])
       ].slice(0, 12)
     });
-    setFeedback("Task moved to History instead of being deleted.", false);
+    recordAuditEvent({
+      type: "archive",
+      title: task.title || "Roadmap card",
+      taskId: task.id,
+      fromStatus: task.status || "To Do",
+      message: `Archived from ${task.status || "To Do"}.`,
+      createdAt: now,
+      actorName,
+      actorRole
+    });
+    setFeedback("Task moved to Archive instead of being deleted.", false);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     setHistoryState(history);
     render(items);
@@ -2970,6 +3103,8 @@ function initializeDeveloperWorkspace() {
     const index = history.findIndex(item => String(item.id || "") === String(taskId || ""));
     if (index < 0) return;
     const now = nowIso();
+    const actorName = getActorName();
+    const actorRole = getActorRole();
     const [task] = history.splice(index, 1);
     items.unshift({
       ...task,
@@ -2981,13 +3116,25 @@ function initializeDeveloperWorkspace() {
         {
           id: createHistoryId(),
           type: "restore",
-          message: "Restored from History.",
-          createdAt: now
+          message: `Restored to ${normalizeStatus(task.archivedFrom || task.status || "To Do")}.`,
+          createdAt: now,
+          actorName,
+          actorRole
         },
         ...(Array.isArray(task.activity) ? task.activity : [])
       ].slice(0, 12)
     });
-    setFeedback("Task restored from History.", false);
+    recordAuditEvent({
+      type: "restore",
+      title: task.title || "Roadmap card",
+      taskId: task.id,
+      toStatus: normalizeStatus(task.archivedFrom || task.status || "To Do"),
+      message: `Restored to ${normalizeStatus(task.archivedFrom || task.status || "To Do")}.`,
+      createdAt: now,
+      actorName,
+      actorRole
+    });
+    setFeedback("Task restored from Archive.", false);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     setHistoryState(history);
     render(items);
@@ -2995,11 +3142,39 @@ function initializeDeveloperWorkspace() {
 
   const deleteArchivedTask = (taskId) => {
     const history = loadHistory();
+    const deletedItem = history.find(item => String(item.id || "") === String(taskId || ""));
     const nextHistory = history.filter(item => String(item.id || "") !== String(taskId || ""));
     if (nextHistory.length === history.length) return;
+    recordAuditEvent({
+      type: "delete",
+      title: deletedItem?.title || "Archived card",
+      taskId: deletedItem?.id || taskId,
+      fromStatus: deletedItem?.archivedFrom || deletedItem?.status || "",
+      message: `Deleted archived card${deletedItem?.title ? `: ${deletedItem.title}` : ""}.`
+    });
     setFeedback("Archived task deleted.", false);
     setHistoryState(nextHistory);
     render(load());
+  };
+
+  const renderActivityTrail = (entries = [], label = "Activity history") => {
+    const normalizedEntries = Array.isArray(entries) ? entries.map(normalizeActivityEntry).filter(entry => entry.message) : [];
+    if (!normalizedEntries.length) {
+      return "";
+    }
+    return `
+      <details class="dashboard-developer-activity-trail">
+        <summary>${escapeHtml(label)} <span>${escapeHtml(String(normalizedEntries.length))}</span></summary>
+        <ol>
+          ${normalizedEntries.slice(0, 6).map(entry => `
+            <li>
+              <strong>${escapeHtml(entry.message)}</strong>
+              <span>${escapeHtml(entry.actorName)} · ${escapeHtml(toDateLabel(entry.createdAt))}</span>
+            </li>
+          `).join("")}
+        </ol>
+      </details>
+    `;
   };
 
   const renderTaskCard = (item) => `
@@ -3023,12 +3198,18 @@ function initializeDeveloperWorkspace() {
     </article>
   `;
 
-  const renderDeveloperTaskCard = (item) => `
-    <article class="dashboard-developer-task-card ${priorityClass(item.priority)}" data-task-id="${escapeHtml(item.id)}" draggable="true">
+  const renderDeveloperTaskCard = (item) => {
+    const timing = getTaskTimingState(item);
+    const activity = Array.isArray(item.activity) ? item.activity.map(normalizeActivityEntry).filter(entry => entry.message) : [];
+    return `
+    <article class="dashboard-developer-task-card ${priorityClass(item.priority)} ${timing.isOverdue ? "is-overdue" : ""} ${timing.isStartingSoon ? "is-starting-soon" : ""} ${timing.isDueToday ? "is-due-today" : ""}" data-task-id="${escapeHtml(item.id)}" draggable="true">
       <div class="dashboard-developer-task-labels">
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.status || "To Do")}</span>
         <span class="dashboard-chip ${priorityClass(item.priority)}">${escapeHtml(priorityLabel(item.priority))}</span>
-        ${item.deadlineDate ? `<span class="dashboard-chip ${isDueToday(item.deadlineDate) ? "dashboard-chip-due-today" : ""}">${isDueToday(item.deadlineDate) ? "Due today" : `Due ${escapeHtml(item.deadlineDate)}`}</span>` : ""}
+        ${timing.isOverdue ? `<span class="dashboard-chip dashboard-chip-danger">Overdue</span>` : ""}
+        ${timing.isDueToday ? `<span class="dashboard-chip dashboard-chip-warning dashboard-chip-due-today">Due today</span>` : ""}
+        ${timing.isStartingSoon ? `<span class="dashboard-chip dashboard-chip-info">Starting soon</span>` : ""}
+        ${item.deadlineDate && !timing.isOverdue && !timing.isDueToday ? `<span class="dashboard-chip">${escapeHtml(`Due ${item.deadlineDate}`)}</span>` : ""}
       </div>
       <div class="dashboard-developer-task-top">
         <div>
@@ -3043,6 +3224,14 @@ function initializeDeveloperWorkspace() {
         <button type="button" class="dashboard-developer-task-remove" data-developer-task-archive="${escapeHtml(item.id)}" aria-label="Archive task">Archive</button>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
+      ${activity.length ? `
+        <div class="dashboard-developer-activity">
+          <p class="dashboard-kicker">Latest activity</p>
+          <strong>${escapeHtml(activity[0].message)}</strong>
+          <p>${escapeHtml(activity[0].actorName)} · ${escapeHtml(toDateLabel(activity[0].createdAt))}</p>
+          ${renderActivityTrail(activity, "Activity trail")}
+        </div>
+      ` : ""}
       ${Array.isArray(item.attachments) && item.attachments.length ? `
         <div class="dashboard-developer-attachments">
           ${item.attachments.map(attachment => `
@@ -3053,17 +3242,13 @@ function initializeDeveloperWorkspace() {
           `).join("")}
         </div>
       ` : ""}
-      ${Array.isArray(item.activity) && item.activity.length ? `
-        <div class="dashboard-developer-activity">
-          <p class="dashboard-kicker">Latest update</p>
-          <strong>${escapeHtml(item.activity[0].message || "Task updated.")}</strong>
-          <p>${escapeHtml(toDateLabel(item.activity[0].createdAt))}</p>
-        </div>
-      ` : ""}
     </article>
   `;
+  };
 
-  const renderDeveloperHistoryCard = (item) => `
+  const renderDeveloperHistoryCard = (item) => {
+    const activity = Array.isArray(item.activity) ? item.activity.map(normalizeActivityEntry).filter(entry => entry.message) : [];
+    return `
     <article class="dashboard-developer-history-card">
       <div class="dashboard-developer-task-labels">
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.archivedFrom || item.status || "Archived")}</span>
@@ -3083,6 +3268,14 @@ function initializeDeveloperWorkspace() {
         </div>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
+      ${activity.length ? `
+        <div class="dashboard-developer-activity">
+          <p class="dashboard-kicker">Activity trail</p>
+          <strong>${escapeHtml(activity[0].message)}</strong>
+          <p>${escapeHtml(activity[0].actorName)} · ${escapeHtml(toDateLabel(activity[0].createdAt))}</p>
+          ${renderActivityTrail(activity, "Full trail")}
+        </div>
+      ` : ""}
       ${Array.isArray(item.attachments) && item.attachments.length ? `
         <div class="dashboard-developer-attachments">
           ${item.attachments.map(attachment => `
@@ -3093,15 +3286,9 @@ function initializeDeveloperWorkspace() {
           `).join("")}
         </div>
       ` : ""}
-      ${Array.isArray(item.activity) && item.activity.length ? `
-        <div class="dashboard-developer-activity">
-          <p class="dashboard-kicker">Latest update</p>
-          <strong>${escapeHtml(item.activity[0].message || "Task updated.")}</strong>
-          <p>${escapeHtml(toDateLabel(item.activity[0].createdAt))}</p>
-        </div>
-      ` : ""}
     </article>
   `;
+  };
 
   const renderTaskLane = (status, items) => {
     const groupItems = items.filter(item => normalizeStatus(item.status) === status);
@@ -3142,6 +3329,7 @@ function initializeDeveloperWorkspace() {
   const render = (items) => {
     const sorted = sortTasks(items.map(normalizeTask));
     const archived = [...loadHistory()].sort((left, right) => String(right.archivedAt || "").localeCompare(String(left.archivedAt || "")));
+    const audit = loadAudit();
     list.innerHTML = `
       <div class="dashboard-developer-board">
         ${STATUS_ORDER.map(status => renderTaskLane(status, sorted)).join("")}
@@ -3156,6 +3344,25 @@ function initializeDeveloperWorkspace() {
       `;
     }
     setHistoryState(archived);
+    if (auditList) {
+      auditList.innerHTML = audit.length ? audit.map(entry => `
+        <article class="dashboard-developer-audit-card">
+          <div class="dashboard-developer-audit-topline">
+            <span class="dashboard-chip ${entry.type === "delete" ? "dashboard-chip-muted" : "dashboard-chip-accent"}">${escapeHtml(entry.type || "event")}</span>
+            <span>${escapeHtml(toDateLabel(entry.createdAt))}</span>
+          </div>
+          <strong>${escapeHtml(entry.title || entry.message || "Board event")}</strong>
+          <p>${escapeHtml(entry.message || "")}</p>
+          <span>${escapeHtml(entry.actorName)} · ${escapeHtml(entry.actorRole)}</span>
+        </article>
+      `).join("") : `
+        <div class="dashboard-empty-state">
+          <strong>No activity yet.</strong>
+          <p>Created, moved, archived, restored, and deleted actions will appear here.</p>
+        </div>
+      `;
+      setAuditState(audit);
+    }
   };
 
   openButtons.forEach(button => {
@@ -3200,6 +3407,8 @@ function initializeDeveloperWorkspace() {
     const attachments = await readAttachments().catch(() => []);
     const items = load();
     const now = nowIso();
+    const actorName = getActorName();
+    const actorRole = getActorRole();
     const note = String(fields.notes?.value || "").trim();
     items.unshift({
       id: createTaskId(),
@@ -3216,11 +3425,23 @@ function initializeDeveloperWorkspace() {
           id: createHistoryId(),
           type: "created",
           message: note ? `Created with a note: ${note}` : "Created roadmap card.",
-          createdAt: now
+          createdAt: now,
+          actorName,
+          actorRole
         }
       ],
       createdAt: now,
       updatedAt: now
+    });
+    recordAuditEvent({
+      type: "created",
+      title,
+      taskId: items[0].id,
+      toStatus: normalizeStatus(fields.status?.value || "To Do"),
+      message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+      createdAt: now,
+      actorName,
+      actorRole
     });
     setFeedback("Task added to the board.", false);
     save(items);
@@ -3280,6 +3501,7 @@ function initializeDeveloperWorkspace() {
     if (!card || !card.dataset.taskId) return;
     draggingTaskId = card.dataset.taskId;
     card.classList.add("is-dragging");
+    document.body.classList.add("developer-dragging");
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", draggingTaskId);
     setFeedback("Drag the card onto another lane to move it.", false);
@@ -3289,13 +3511,22 @@ function initializeDeveloperWorkspace() {
     const card = event.target.closest(".dashboard-developer-task-card");
     card?.classList.remove("is-dragging");
     draggingTaskId = "";
+    document.body.classList.remove("developer-dragging");
     list.querySelectorAll(".is-drop-target").forEach(node => node.classList.remove("is-drop-target"));
+    archivePanel?.classList.remove("is-drop-target");
   });
 
   list.addEventListener("dragover", event => {
     const lane = event.target.closest("[data-developer-lane-dropzone]");
     if (!lane) return;
     event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    lane.classList.add("is-drop-target");
+  });
+
+  list.addEventListener("dragenter", event => {
+    const lane = event.target.closest("[data-developer-lane-dropzone]");
+    if (!lane) return;
     lane.classList.add("is-drop-target");
   });
 
@@ -3314,6 +3545,33 @@ function initializeDeveloperWorkspace() {
     const taskId = draggingTaskId || event.dataTransfer.getData("text/plain") || "";
     if (!taskId) return;
     moveTaskToStatus(taskId, lane.getAttribute("data-developer-lane-dropzone") || "To Do");
+  });
+
+  archivePanel?.addEventListener("dragover", event => {
+    if (!draggingTaskId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    archivePanel.classList.add("is-drop-target");
+  });
+
+  archivePanel?.addEventListener("dragenter", event => {
+    if (!draggingTaskId) return;
+    event.preventDefault();
+    archivePanel.classList.add("is-drop-target");
+  });
+
+  archivePanel?.addEventListener("dragleave", event => {
+    if (event.relatedTarget && archivePanel.contains(event.relatedTarget)) return;
+    archivePanel.classList.remove("is-drop-target");
+  });
+
+  archivePanel?.addEventListener("drop", event => {
+    if (!draggingTaskId) return;
+    event.preventDefault();
+    archivePanel.classList.remove("is-drop-target");
+    const taskId = draggingTaskId || event.dataTransfer.getData("text/plain") || "";
+    if (!taskId) return;
+    archiveTask(taskId);
   });
 
   modal.addEventListener("click", event => {

@@ -4124,6 +4124,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.dashboard-developer-task-card {
+  animation: developerCardEnter 240ms ease-out;
+}
+
 .dashboard-developer-task-card.is-urgent {
   border-color: rgba(239, 68, 68, 0.35);
   box-shadow: 0 12px 28px rgba(239, 68, 68, 0.08);
@@ -4137,6 +4141,16 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-task-card.is-due-today {
   border-color: rgba(245, 158, 11, 0.36);
   box-shadow: 0 12px 28px rgba(245, 158, 11, 0.08);
+}
+
+.dashboard-developer-task-card.is-overdue {
+  border-color: rgba(239, 68, 68, 0.42);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.12);
+}
+
+.dashboard-developer-task-card.is-starting-soon {
+  border-color: rgba(59, 130, 246, 0.34);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.09);
 }
 
 .dashboard-developer-task-card[draggable="true"] {
@@ -4181,10 +4195,16 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-developer-history-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  align-items: center;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: stretch;
+  min-width: 8.2rem;
+}
+
+.dashboard-developer-history-actions .dashboard-developer-task-remove {
+  width: 100%;
+  justify-content: center;
 }
 
 .dashboard-developer-task-labels {
@@ -4258,6 +4278,118 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-developer-activity-trail {
+  margin-top: 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.dashboard-developer-activity-trail summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: inherit;
+}
+
+.dashboard-developer-activity-trail summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-developer-activity-trail summary span {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.74rem;
+}
+
+.dashboard-developer-activity-trail ol {
+  margin: 0;
+  padding: 0 0.85rem 0.85rem 1.05rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dashboard-developer-activity-trail li {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.dashboard-developer-activity-trail li strong {
+  font-size: 0.94rem;
+}
+
+.dashboard-developer-activity-trail li span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.82rem;
+}
+
+.dashboard-developer-audit {
+  margin-top: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.dashboard-developer-audit summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.dashboard-developer-audit summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-developer-audit-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 1.1rem 1.1rem;
+}
+
+.dashboard-developer-audit-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-developer-audit-card strong {
+  font-size: 0.98rem;
+}
+
+.dashboard-developer-audit-card p,
+.dashboard-developer-audit-card span {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.84rem;
+}
+
+@keyframes developerCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .dashboard-developer-activity strong {
@@ -4879,6 +5011,33 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-developer-lane.is-drop-target {
   border-color: rgba(216, 176, 95, 0.55);
   box-shadow: 0 0 0 1px rgba(216, 176, 95, 0.12), 0 16px 36px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) scale(1.008);
+}
+
+.developer-dragging .dashboard-developer-lane:not(.is-drop-target) {
+  opacity: 0.88;
+}
+
+.developer-dragging .dashboard-developer-task-card {
+  transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
+}
+
+.dashboard-chip-danger {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #ffcdc7;
+}
+
+.dashboard-chip-warning {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #ffe0ab;
+}
+
+.dashboard-chip-info {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #cbe0ff;
 }
 
 .dashboard-developer-lane-head {
@@ -5196,6 +5355,26 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   padding-top: 0.2rem;
 }
 
+.workspace-page-developer [data-developer-archive-dropzone].is-drop-target {
+  border-color: rgba(216, 176, 95, 0.55);
+  box-shadow: 0 0 0 1px rgba(216, 176, 95, 0.12), 0 18px 40px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.workspace-page-developer .dashboard-developer-history-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.05rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.workspace-page-developer .dashboard-developer-history-card .dashboard-developer-task-top {
+  align-items: flex-start;
+}
+
 .theme-light .dashboard-developer-task-card.is-urgent {
   border-color: rgba(191, 54, 50, 0.26);
 }
@@ -5231,6 +5410,19 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .theme-light .dashboard-deadline-cell {
   border-color: rgba(24, 32, 44, 0.08);
   background: rgba(255, 252, 248, 0.9);
+}
+
+.theme-light .dashboard-developer-activity-trail,
+.theme-light .dashboard-developer-audit,
+.theme-light .dashboard-developer-audit-card {
+  border-color: rgba(24, 32, 44, 0.08);
+  background: rgba(255, 252, 248, 0.9);
+}
+
+.theme-light .dashboard-developer-activity-trail li span,
+.theme-light .dashboard-developer-audit-card p,
+.theme-light .dashboard-developer-audit-card span {
+  color: rgba(24, 32, 44, 0.68);
 }
 
 .theme-light .dashboard-deadline-popover {
