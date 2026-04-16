@@ -668,6 +668,232 @@ function initializeToolbarMenu() {
   toggle.setAttribute("aria-expanded", "false");
 }
 
+function aavgoDispatchInputChange(input, value) {
+  if (!input) return;
+  input.value = value;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function aavgoCloseAllDatePickers() {
+  const pickers = Array.isArray(window.__aavgoDatePickers) ? window.__aavgoDatePickers : [];
+  pickers.forEach(picker => {
+    if (picker && typeof picker.close === "function") {
+      picker.close();
+    }
+  });
+}
+
+function initializeCustomDatePickers() {
+  const pickers = Array.from(document.querySelectorAll("[data-aavgo-date-picker]"));
+  if (!pickers.length) return;
+
+  const monthFormatter = new Intl.DateTimeFormat([], { month: "long", year: "numeric" });
+  const dayFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
+  const registry = [];
+
+  const parseLocalDate = (value) => {
+    const input = String(value || "").trim();
+    if (!input) return null;
+    const [year, month, day] = input.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const toLocalDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const closeOtherPickers = (activePicker) => {
+    registry.forEach(picker => {
+      if (picker !== activePicker) {
+        picker.close();
+      }
+    });
+  };
+
+  const bindPicker = (wrapper) => {
+    const input = wrapper.querySelector("[data-date-input]") || wrapper.querySelector('input[type="date"]');
+    const trigger = wrapper.querySelector("[data-date-trigger]");
+    const popover = wrapper.querySelector("[data-date-popover]");
+    const grid = wrapper.querySelector("[data-date-grid]");
+    const month = wrapper.querySelector("[data-date-month]");
+    const prev = wrapper.querySelector("[data-date-prev]");
+    const next = wrapper.querySelector("[data-date-next]");
+    const today = wrapper.querySelector("[data-date-today]");
+    const nextWeek = wrapper.querySelector("[data-date-nextweek]");
+    const clear = wrapper.querySelector("[data-date-clear]");
+    const close = wrapper.querySelector("[data-date-close]");
+    if (!input || !trigger || !popover || !grid || !month) return null;
+
+    const emptyLabel = String(wrapper.dataset.emptyLabel || "Choose a date").trim() || "Choose a date";
+    const valuePrefix = String(wrapper.dataset.valuePrefix || "Date").trim() || "Date";
+
+    const syncTrigger = () => {
+      const label = (() => {
+        const parsed = parseLocalDate(input.value);
+        return parsed ? dayFormatter.format(parsed) : "";
+      })();
+
+      trigger.textContent = label ? `${valuePrefix} ${label}` : emptyLabel;
+      trigger.classList.toggle("is-filled", Boolean(label));
+      trigger.setAttribute("aria-expanded", String(!popover.hidden));
+    };
+
+    const renderCalendar = (anchorValue = input.value) => {
+      const anchor = parseLocalDate(anchorValue) || new Date();
+      const selectedValue = String(input.value || "").trim();
+      const todayValue = toLocalDateString(new Date());
+      const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+      const firstDay = monthStart.getDay();
+      const daysInMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0).getDate();
+      const totalSlots = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+      const cells = [];
+
+      month.textContent = monthFormatter.format(monthStart);
+      for (let index = 0; index < totalSlots; index += 1) {
+        const dayNumber = index - firstDay + 1;
+        if (dayNumber < 1 || dayNumber > daysInMonth) {
+          cells.push('<span class="dashboard-deadline-cell is-empty" aria-hidden="true"></span>');
+          continue;
+        }
+
+        const day = new Date(anchor.getFullYear(), anchor.getMonth(), dayNumber);
+        const iso = toLocalDateString(day);
+        const isSelected = selectedValue === iso;
+        const isToday = todayValue === iso;
+        cells.push(`
+          <button
+            type="button"
+            class="dashboard-deadline-cell${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}"
+            data-date-day="${escapeHtml(iso)}"
+            aria-pressed="${isSelected ? "true" : "false"}"
+          >
+            <span>${dayNumber}</span>
+          </button>
+        `);
+      }
+      grid.innerHTML = cells.join("");
+    };
+
+    const closePicker = () => {
+      if (popover.hidden) return;
+      popover.hidden = true;
+      syncTrigger();
+    };
+
+    const openPicker = () => {
+      if (!popover.hidden) return;
+      closeOtherPickers(api);
+      popover.hidden = false;
+      syncTrigger();
+      renderCalendar();
+    };
+
+    const togglePicker = () => {
+      if (popover.hidden) {
+        openPicker();
+      } else {
+        closePicker();
+      }
+    };
+
+    const setValue = (value, { close = false } = {}) => {
+      aavgoDispatchInputChange(input, value);
+      syncTrigger();
+      renderCalendar(value);
+      if (close) {
+        closePicker();
+      }
+    };
+
+    const api = {
+      open: openPicker,
+      close: closePicker,
+      toggle: togglePicker,
+      setValue,
+      sync: syncTrigger,
+      render: renderCalendar
+    };
+
+    trigger.addEventListener("click", event => {
+      event.preventDefault();
+      togglePicker();
+    });
+
+    prev?.addEventListener("click", () => {
+      const current = parseLocalDate(input.value) || new Date();
+      const previous = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+      renderCalendar(toLocalDateString(previous));
+    });
+
+    next?.addEventListener("click", () => {
+      const current = parseLocalDate(input.value) || new Date();
+      const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+      renderCalendar(toLocalDateString(nextMonth));
+    });
+
+    today?.addEventListener("click", () => {
+      setValue(toLocalDateString(new Date()), { close: true });
+    });
+
+    nextWeek?.addEventListener("click", () => {
+      const next = new Date();
+      next.setDate(next.getDate() + 7);
+      setValue(toLocalDateString(next), { close: true });
+    });
+
+    clear?.addEventListener("click", () => {
+      setValue("", { close: true });
+    });
+
+    close?.addEventListener("click", () => closePicker());
+
+    grid.addEventListener("click", event => {
+      const button = event.target.closest("button[data-date-day]");
+      if (!button) return;
+      const value = String(button.getAttribute("data-date-day") || "").trim();
+      if (!value) return;
+      setValue(value, { close: true });
+    });
+
+    input.addEventListener("change", () => {
+      syncTrigger();
+      renderCalendar(input.value || "");
+    });
+
+    input.addEventListener("input", () => {
+      syncTrigger();
+      renderCalendar(input.value || "");
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !popover.hidden) {
+        closePicker();
+      }
+    });
+
+    document.addEventListener("click", event => {
+      if (popover.hidden) return;
+      if (wrapper.contains(event.target)) return;
+      closePicker();
+    });
+
+    syncTrigger();
+    renderCalendar();
+    popover.hidden = true;
+    registry.push(api);
+    return api;
+  };
+
+  pickers.forEach(bindPicker);
+  window.__aavgoDatePickers = registry;
+}
+
 function setHoursEditorOpen(open) {
   const modal = document.getElementById("hours-editor-modal");
   if (!modal) return;
@@ -696,8 +922,8 @@ function openHoursEditorModal(person = null, options = {}) {
   const removeHours = document.getElementById("hours-remove-hours");
 
   if (shiftDate) {
-    if (editorDate) editorDate.value = shiftDate;
-    if (removeDate) removeDate.value = shiftDate;
+    if (editorDate) aavgoDispatchInputChange(editorDate, shiftDate);
+    if (removeDate) aavgoDispatchInputChange(removeDate, shiftDate);
   }
   if (editorMode) editorMode.value = mode;
   if (removeMode) removeMode.value = mode;
@@ -1488,12 +1714,12 @@ function syncHoursEditorState(person) {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
-    editorDate.value = `${year}-${month}-${day}`;
+    aavgoDispatchInputChange(editorDate, `${year}-${month}-${day}`);
   }
 
   const removeDate = document.getElementById("hours-remove-date");
   if (removeDate && !removeDate.value && editorDate?.value) {
-    removeDate.value = editorDate.value;
+    aavgoDispatchInputChange(removeDate, editorDate.value);
   }
 }
 
@@ -2515,6 +2741,7 @@ function initializeDeveloperWorkspace() {
   const deadlineToday = deadlinePopover?.querySelector("[data-deadline-today]");
   const deadlineNextWeek = deadlinePopover?.querySelector("[data-deadline-nextweek]");
   const deadlineClear = deadlinePopover?.querySelector("[data-deadline-clear]");
+  const deadlineClose = deadlinePopover?.querySelector("[data-deadline-close]");
   const monthFormatter = new Intl.DateTimeFormat([], { month: "long", year: "numeric" });
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
 
@@ -2601,11 +2828,12 @@ function initializeDeveloperWorkspace() {
   const resetFields = (status = "To Do") => {
     if (fields.title) fields.title.value = "";
     if (fields.owner) fields.owner.value = "";
-    if (fields.start) fields.start.value = "";
-    if (fields.deadline) fields.deadline.value = "";
+    if (fields.start) aavgoDispatchInputChange(fields.start, "");
+    if (fields.deadline) aavgoDispatchInputChange(fields.deadline, "");
     if (fields.priority) fields.priority.value = "Normal";
     if (fields.status) fields.status.value = STATUS_ORDER.includes(status) ? status : "To Do";
     if (fields.notes) fields.notes.value = "";
+    aavgoCloseAllDatePickers();
     syncDeadlineTrigger();
     closeDeadlinePopover();
   };
@@ -2999,6 +3227,10 @@ function initializeDeveloperWorkspace() {
     setFeedback("Due date cleared.", false);
   });
 
+  deadlineClose?.addEventListener("click", () => {
+    closeDeadlinePopover();
+  });
+
   deadlineGrid?.addEventListener("click", event => {
     const button = event.target.closest("button[data-deadline-day]");
     if (!button) return;
@@ -3168,6 +3400,7 @@ initializeLiveSignals();
 initializeThemeToggle();
 initializeSidebarToggle();
 initializeToolbarMenu();
+initializeCustomDatePickers();
 initializeDeveloperTodoList();
 initializeDeveloperWorkspace();
 

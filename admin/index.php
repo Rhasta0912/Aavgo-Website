@@ -563,7 +563,29 @@ $bootstrapJson = json_encode(
           <div class="dashboard-control-grid dashboard-control-grid-double">
             <label class="dashboard-control-field">
               <span>Date</span>
-              <input id="hours-editor-date" type="date">
+              <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Date" data-empty-label="Choose a date">
+                <input id="hours-editor-date" type="date" readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+                <button type="button" class="dashboard-deadline-trigger" id="hours-editor-date-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
+                  Choose a date
+                </button>
+                <div class="dashboard-deadline-popover" id="hours-editor-date-popover" data-date-popover hidden>
+                  <div class="dashboard-deadline-header">
+                    <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">‹</button>
+                    <strong id="hours-editor-date-month">Month</strong>
+                    <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">›</button>
+                  </div>
+                  <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                  </div>
+                  <div class="dashboard-deadline-grid" id="hours-editor-date-grid"></div>
+                  <div class="dashboard-deadline-footer">
+                    <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
+                  </div>
+                </div>
+              </div>
             </label>
             <label class="dashboard-control-field">
               <span>Mode</span>
@@ -602,7 +624,29 @@ $bootstrapJson = json_encode(
           <div class="dashboard-control-grid dashboard-control-grid-double">
             <label class="dashboard-control-field">
               <span>Date</span>
-              <input id="hours-remove-date" type="date">
+              <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Date" data-empty-label="Choose a date">
+                <input id="hours-remove-date" type="date" readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+                <button type="button" class="dashboard-deadline-trigger" id="hours-remove-date-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
+                  Choose a date
+                </button>
+                <div class="dashboard-deadline-popover" id="hours-remove-date-popover" data-date-popover hidden>
+                  <div class="dashboard-deadline-header">
+                    <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">‹</button>
+                    <strong id="hours-remove-date-month">Month</strong>
+                    <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">›</button>
+                  </div>
+                  <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                  </div>
+                  <div class="dashboard-deadline-grid" id="hours-remove-date-grid"></div>
+                  <div class="dashboard-deadline-footer">
+                    <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
+                    <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
+                  </div>
+                </div>
+              </div>
             </label>
             <label class="dashboard-control-field">
               <span>Mode</span>

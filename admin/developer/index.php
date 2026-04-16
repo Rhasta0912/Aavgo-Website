@@ -194,7 +194,29 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         </label>
         <label class="dashboard-control-field">
           <span>Start date</span>
-          <input id="developer-task-start" type="date">
+          <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Start" data-empty-label="Choose a start date">
+            <input id="developer-task-start" type="date" readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+            <button type="button" class="dashboard-deadline-trigger" id="developer-task-start-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
+              Choose a start date
+            </button>
+            <div class="dashboard-deadline-popover" id="developer-task-start-popover" data-date-popover hidden>
+              <div class="dashboard-deadline-header">
+                <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">‹</button>
+                <strong id="developer-task-start-month">Month</strong>
+                <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">›</button>
+              </div>
+              <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="dashboard-deadline-grid" id="developer-task-start-grid"></div>
+              <div class="dashboard-deadline-footer">
+                <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
+                <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
+                <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
+                <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
+              </div>
+            </div>
+          </div>
         </label>
         <label class="dashboard-control-field dashboard-control-field-wide">
           <span>Due date</span>
@@ -217,6 +239,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
                 <button type="button" class="dashboard-deadline-chip" data-deadline-today>Today</button>
                 <button type="button" class="dashboard-deadline-chip" data-deadline-nextweek>Next week</button>
                 <button type="button" class="dashboard-deadline-chip" data-deadline-clear>Clear</button>
+                <button type="button" class="dashboard-deadline-chip" data-deadline-close>Hide calendar</button>
               </div>
             </div>
           </div>
