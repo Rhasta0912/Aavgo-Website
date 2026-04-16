@@ -183,7 +183,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <button type="button" class="dashboard-modal-close" data-developer-task-modal-close aria-label="Close task form">Close</button>
       </div>
 
-      <form id="developer-task-form" class="dashboard-developer-form-grid" novalidate>
+      <form id="developer-task-form" class="dashboard-developer-form-grid" novalidate onsubmit="return false;">
         <label class="dashboard-control-field dashboard-control-field-wide">
           <span>Task</span>
           <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
