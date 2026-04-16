@@ -5206,6 +5206,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 0.85rem;
   align-items: start;
+  grid-auto-rows: 1fr;
 }
 
 .dashboard-hotel-lane-card {
@@ -5254,6 +5255,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
+  min-height: 2.65rem;
 }
 
 .dashboard-hotel-lane-head strong,
@@ -5264,6 +5266,11 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-hotel-lane-head strong {
   font-size: 0.98rem;
   line-height: 1.1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .dashboard-hotel-lane-head span {
@@ -5315,6 +5322,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-hotel-lane-staff-wrap {
   display: grid;
   gap: 0.42rem;
+  min-height: 7.25rem;
 }
 
 .dashboard-hotel-lane-staff-label {
@@ -5330,6 +5338,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   flex-wrap: wrap;
   gap: 0.4rem;
   min-width: 0;
+  align-content: start;
 }
 
 .dashboard-hotel-staff-chip {
@@ -5402,6 +5411,14 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   font-size: 0.66rem;
   line-height: 1.2;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-hotel-staff-chip-more {
+  border-color: rgba(216, 176, 95, 0.18);
+  background: rgba(216, 176, 95, 0.05);
 }
 
 .dashboard-hotel-lane-empty {

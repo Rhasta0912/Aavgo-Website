@@ -1670,9 +1670,9 @@ function renderHotelLaneCards(lanes) {
         </div>
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(String((Array.isArray(group?.lanes) ? group.lanes.length : 0)))} hotels</span>
       </div>
-      <div class="dashboard-hotel-lane-grid">
-        ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => `
-          <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
+        <div class="dashboard-hotel-lane-grid">
+          ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => `
+            <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
             <div class="dashboard-hotel-lane-head">
               <div class="dashboard-hotel-lane-head-copy">
                 <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
@@ -1704,8 +1704,12 @@ function renderHotelLaneCards(lanes) {
             <div class="dashboard-hotel-lane-staff-wrap">
               <div class="dashboard-hotel-lane-staff-label">Staff</div>
               ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
+                ${(() => {
+                  const visibleStaff = lane.staff.slice(0, 3);
+                  const remainingStaff = Math.max(0, lane.staff.length - visibleStaff.length);
+                  return `
                 <ul class="dashboard-hotel-lane-staff">
-                  ${lane.staff.slice(0, 4).map(person => `
+                  ${visibleStaff.map(person => `
                   <li
                     class="dashboard-hotel-staff-chip${String(person?.assignedHotelId || "") && String(person?.linkedHotelId || "") && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId) ? " is-mismatched" : ""}"
                     draggable="true"
@@ -1727,7 +1731,18 @@ function renderHotelLaneCards(lanes) {
                     </small>
                   </li>
                   `).join("")}
+                  ${remainingStaff > 0 ? `
+                    <li class="dashboard-hotel-staff-chip dashboard-hotel-staff-chip-more" title="${escapeAttr(`${remainingStaff} more staff member(s)`) }">
+                      <div class="dashboard-hotel-staff-chip-main">
+                        <span>+${remainingStaff} more</span>
+                        <strong>More</strong>
+                      </div>
+                      <small class="dashboard-hotel-staff-chip-meta">Hidden to keep the lane compact</small>
+                    </li>
+                  ` : ""}
                 </ul>
+                  `;
+                })()}
               ` : `
                 <div class="dashboard-hotel-lane-empty">
                   <strong>No assigned staff yet</strong>
