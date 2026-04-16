@@ -3595,6 +3595,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   margin-bottom: 1rem;
 }
 
+.dashboard-view-switch-developer {
+  width: fit-content;
+}
+
 .dashboard-view-tab {
   min-height: 2.85rem;
   padding: 0 1rem;
@@ -4170,6 +4174,17 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+.dashboard-developer-task-remove-danger {
+  color: #ffb8ae;
+}
+
+.dashboard-developer-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
 }
 
 .dashboard-developer-task-labels {
@@ -5170,7 +5185,15 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .workspace-page-developer .dashboard-panel-history .dashboard-panel-heading {
-  align-items: flex-end;
+  align-items: center;
+}
+
+.workspace-page-developer .dashboard-panel-history .dashboard-empty-state {
+  min-height: 16rem;
+}
+
+.workspace-page-developer .dashboard-view-panel[data-developer-view-panel="archive"] {
+  padding-top: 0.2rem;
 }
 
 .theme-light .dashboard-developer-task-card.is-urgent {

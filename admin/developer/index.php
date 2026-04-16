@@ -96,7 +96,13 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
             </div>
           </div>
 
-          <div class="dashboard-developer-task-list" id="developer-task-list">
+          <section class="dashboard-view-switch dashboard-view-switch-developer" aria-label="Developer view switcher">
+            <button class="dashboard-view-tab is-active" type="button" data-developer-view="board">Roadmap board</button>
+            <button class="dashboard-view-tab" type="button" data-developer-view="archive">Archive</button>
+          </section>
+
+          <div class="dashboard-view-panel is-active" data-developer-view-panel="board">
+            <div class="dashboard-developer-task-list" id="developer-task-list">
             <div class="dashboard-developer-board">
               <section class="dashboard-developer-lane" data-developer-lane="To Do" data-developer-lane-dropzone="To Do">
                 <header class="dashboard-developer-lane-head">
@@ -151,11 +157,12 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               </section>
             </div>
           </div>
+          </div>
 
-          <section class="dashboard-panel dashboard-panel-history">
+          <section class="dashboard-view-panel dashboard-panel dashboard-panel-history" data-developer-view-panel="archive">
             <div class="dashboard-panel-heading">
               <div>
-                <p class="dashboard-kicker">History</p>
+                <p class="dashboard-kicker">Archive</p>
                 <h2>Archived roadmap items.</h2>
               </div>
               <span class="dashboard-chip dashboard-chip-accent" id="developer-history-count">0 archived</span>

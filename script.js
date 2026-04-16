@@ -2704,8 +2704,11 @@ function initializeDeveloperWorkspace() {
   const historyList = document.getElementById("developer-task-history");
   const historyCount = document.getElementById("developer-history-count");
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
+  const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
+  const viewPanels = Array.from(document.querySelectorAll("[data-developer-view-panel]"));
   const STORAGE_KEY = "aavgo_developer_tasks";
   const HISTORY_KEY = "aavgo_developer_task_history";
+  const VIEW_KEY = "aavgo_developer_view";
   const STATUS_ORDER = ["To Do", "Doing", "Done"];
   const STATUS_ALIAS_MAP = new Map([
     ["backlog", "To Do"],
@@ -2832,6 +2835,19 @@ function initializeDeveloperWorkspace() {
     if (historyCount) {
       historyCount.textContent = `${items.length} archived`;
     }
+  };
+
+  const setDeveloperView = (view = "board") => {
+    const normalized = view === "archive" ? "archive" : "board";
+    localStorage.setItem(VIEW_KEY, normalized);
+    viewTabs.forEach(tab => {
+      const active = String(tab.getAttribute("data-developer-view") || "") === normalized;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    viewPanels.forEach(panel => {
+      panel.classList.toggle("is-active", String(panel.getAttribute("data-developer-view-panel") || "") === normalized);
+    });
   };
 
   const setFeedback = (message, isError = false) => {
@@ -2977,6 +2993,15 @@ function initializeDeveloperWorkspace() {
     render(items);
   };
 
+  const deleteArchivedTask = (taskId) => {
+    const history = loadHistory();
+    const nextHistory = history.filter(item => String(item.id || "") !== String(taskId || ""));
+    if (nextHistory.length === history.length) return;
+    setFeedback("Archived task deleted.", false);
+    setHistoryState(nextHistory);
+    render(load());
+  };
+
   const renderTaskCard = (item) => `
     <article class="dashboard-developer-task-card" data-task-id="${escapeHtml(item.id)}" draggable="true">
       <div class="dashboard-developer-task-labels">
@@ -3052,7 +3077,10 @@ function initializeDeveloperWorkspace() {
             ${item.archivedAt ? ` &middot; Archived ${escapeHtml(toDateLabel(item.archivedAt))}` : ""}
           </p>
         </div>
-        <button type="button" class="dashboard-developer-task-remove" data-developer-task-restore="${escapeHtml(item.id)}" aria-label="Restore task">Restore</button>
+        <div class="dashboard-developer-history-actions">
+          <button type="button" class="dashboard-developer-task-remove" data-developer-task-restore="${escapeHtml(item.id)}" aria-label="Restore task">Restore</button>
+          <button type="button" class="dashboard-developer-task-remove dashboard-developer-task-remove-danger" data-developer-task-delete="${escapeHtml(item.id)}" aria-label="Delete archived task">Delete</button>
+        </div>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
       ${Array.isArray(item.attachments) && item.attachments.length ? `
@@ -3123,7 +3151,7 @@ function initializeDeveloperWorkspace() {
       historyList.innerHTML = archived.length ? archived.map(renderDeveloperHistoryCard).join("") : `
         <div class="dashboard-empty-state">
           <strong>No archived tasks yet.</strong>
-          <p>When a task is finished, it moves here instead of being deleted.</p>
+          <p>When a task is finished, it moves here for restore or deletion.</p>
         </div>
       `;
     }
@@ -3134,7 +3162,14 @@ function initializeDeveloperWorkspace() {
     button.addEventListener("click", () => openModal("To Do"));
   });
 
+  viewTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      setDeveloperView(String(tab.getAttribute("data-developer-view") || "board"));
+    });
+  });
+
   render(load());
+  setDeveloperView(localStorage.getItem(VIEW_KEY) || "board");
 
   const readAttachments = async () => {
     const files = Array.from(fields.attachments?.files || []);
@@ -3231,6 +3266,13 @@ function initializeDeveloperWorkspace() {
     if (!restoreButton) return;
     const taskId = String(restoreButton.getAttribute("data-developer-task-restore") || "");
     restoreTask(taskId);
+  });
+
+  historyList?.addEventListener("click", event => {
+    const deleteButton = event.target.closest("button[data-developer-task-delete]");
+    if (!deleteButton) return;
+    const taskId = String(deleteButton.getAttribute("data-developer-task-delete") || "");
+    deleteArchivedTask(taskId);
   });
 
   list.addEventListener("dragstart", event => {
