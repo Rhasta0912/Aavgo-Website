@@ -458,6 +458,46 @@ function normalizeHotelLaneOptions(hotels) {
   return lanes;
 }
 
+const HOTEL_TEAM_GROUPS = [
+  {
+    key: "team-1",
+    label: "Team 1",
+    hotels: [
+      "Indianhead/Magnuson",
+      "The Garden Inn At Campsite",
+      "Ramada / Super 8",
+      "Travelodge",
+      "Day Inns Bishop"
+    ]
+  },
+  {
+    key: "team-2",
+    label: "Team 2",
+    hotels: [
+      "Prospero Flagship",
+      "Glendale / The Leef Hotel",
+      "Inn at the Fingerlakes",
+      "Value Suites",
+      "Bayside / Townhouse",
+      "Anchor Beach / Pacific Inn"
+    ]
+  },
+  {
+    key: "team-3",
+    label: "Team 3",
+    hotels: [
+      "Econolodge",
+      "Buenavista",
+      "Quality Russelville",
+      "Thousand Oaks"
+    ]
+  }
+];
+
+function normalizeHotelLabel(value) {
+  return normalizeForSearch(String(value || "").trim());
+}
+
 function deriveHotelLaneCards(people, hotels = []) {
   const buckets = new Map();
   const aliasLookup = new Map();
@@ -527,6 +567,30 @@ function deriveHotelLaneCards(people, hotels = []) {
       staff: (Array.isArray(lane.staff) ? lane.staff : []).sort((left, right) => String(left?.displayName || "").localeCompare(String(right?.displayName || "")))
     }))
     .sort((left, right) => String(left.label || "").localeCompare(String(right.label || "")));
+}
+
+function groupHotelLanesByTeam(lanes) {
+  const groups = HOTEL_TEAM_GROUPS.map(group => ({
+    ...group,
+    lanes: []
+  }));
+  const otherGroup = {
+    key: "other-hotels",
+    label: "Other hotels",
+    hotels: [],
+    lanes: []
+  };
+
+  (Array.isArray(lanes) ? lanes : []).forEach(lane => {
+    const normalizedLabel = normalizeHotelLabel(lane?.label || "");
+    const matchedGroup = groups.find(group => group.hotels.some(hotel => normalizeHotelLabel(hotel) === normalizedLabel));
+    (matchedGroup || otherGroup).lanes.push(lane);
+  });
+
+  return [...groups, ...(otherGroup.lanes.length > 0 ? [otherGroup] : [])].map(group => ({
+    ...group,
+    lanes: group.lanes.sort((left, right) => String(left.label || "").localeCompare(String(right.label || "")))
+  }));
 }
 
 function getDayNumbersForFullHours(people) {
@@ -1516,55 +1580,73 @@ function renderHotelLaneCards(lanes) {
     return;
   }
 
-  container.innerHTML = lanes.map(lane => `
-    <article class="dashboard-hotel-lane-card">
-      <div class="dashboard-hotel-lane-head">
-        <div class="dashboard-hotel-lane-head-copy">
-          <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
-          <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
+  const groupedLanes = groupHotelLanesByTeam(lanes);
+  container.innerHTML = groupedLanes.map(group => `
+    <section class="dashboard-hotel-team-section">
+      <div class="dashboard-hotel-team-head">
+        <div class="dashboard-hotel-team-copy">
+          <span class="dashboard-kicker">${escapeHtml(group?.label || "Other hotels")}</span>
+          <h3>${escapeHtml(
+            Array.isArray(group?.hotels) && group.hotels.length > 0
+              ? group.hotels.join(" / ")
+              : "Hotels that do not fit the current team map"
+          )}</h3>
         </div>
-        <button
-          class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
-          type="button"
-          data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
-          ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
-        >
-          Force logout
-        </button>
+        <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(String((Array.isArray(group?.lanes) ? group.lanes.length : 0)))} hotels</span>
       </div>
-      <div class="dashboard-hotel-lane-metrics">
-        <span>
-          <strong>${escapeHtml(String(lane?.activeNow ?? 0))}</strong>
-          <small>Active now</small>
-        </span>
-        <span>
-          <strong>${formatHours(lane?.todayHours)}</strong>
-          <small>Today</small>
-        </span>
-        <span>
-          <strong>${formatHours(lane?.weeklyHours)}</strong>
-          <small>Week</small>
-        </span>
+      <div class="dashboard-hotel-lane-grid">
+        ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => `
+          <article class="dashboard-hotel-lane-card">
+            <div class="dashboard-hotel-lane-head">
+              <div class="dashboard-hotel-lane-head-copy">
+                <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
+                <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
+              </div>
+              <button
+                class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
+                type="button"
+                data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
+                ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
+              >
+                Force logout
+              </button>
+            </div>
+            <div class="dashboard-hotel-lane-metrics">
+              <span>
+                <strong>${escapeHtml(String(lane?.activeNow ?? 0))}</strong>
+                <small>Active now</small>
+              </span>
+              <span>
+                <strong>${formatHours(lane?.todayHours)}</strong>
+                <small>Today</small>
+              </span>
+              <span>
+                <strong>${formatHours(lane?.weeklyHours)}</strong>
+                <small>Week</small>
+              </span>
+            </div>
+            <div class="dashboard-hotel-lane-staff-wrap">
+              <div class="dashboard-hotel-lane-staff-label">Staff</div>
+              ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
+                <ul class="dashboard-hotel-lane-staff">
+                  ${lane.staff.slice(0, 4).map(person => `
+                  <li>
+                    <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+                    <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                  </li>
+                  `).join("")}
+                </ul>
+              ` : `
+                <div class="dashboard-hotel-lane-empty">
+                  <strong>No assigned staff yet</strong>
+                  <span>This hotel is still waiting for its first visible row.</span>
+                </div>
+              `}
+            </div>
+          </article>
+        `).join("")}
       </div>
-      <div class="dashboard-hotel-lane-staff-wrap">
-        <div class="dashboard-hotel-lane-staff-label">Staff</div>
-        ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
-          <ul class="dashboard-hotel-lane-staff">
-            ${lane.staff.slice(0, 4).map(person => `
-            <li>
-              <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-              <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
-            </li>
-            `).join("")}
-          </ul>
-        ` : `
-          <div class="dashboard-hotel-lane-empty">
-            <strong>No assigned staff yet</strong>
-            <span>This hotel is still waiting for its first visible row.</span>
-          </div>
-        `}
-      </div>
-    </article>
+    </section>
   `).join("");
 }
 

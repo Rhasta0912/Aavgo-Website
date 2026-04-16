@@ -519,8 +519,8 @@ $bootstrapJson = json_encode(
             </div>
             <span class="dashboard-chip dashboard-chip-accent">All hotels</span>
           </div>
-          <p class="dashboard-panel-copy">Each hotel keeps a compact lane so every property stays visible, assigned agents are easy to scan, and logout actions stay readable without crowding the main leadership board.</p>
-          <div class="dashboard-hotel-lane-grid" id="hours-hotel-lanes">
+          <p class="dashboard-panel-copy">Hotels are grouped by team so every property stays visible, assigned agents are easy to scan, and logout actions stay readable without crowding the main leadership board.</p>
+          <div class="dashboard-hotel-lanes" id="hours-hotel-lanes">
             <div class="dashboard-empty-state">
               <strong>Waiting for hotel lane data.</strong>
               <p>Once the board snapshot is ready, hotel command cards will appear here.</p>
