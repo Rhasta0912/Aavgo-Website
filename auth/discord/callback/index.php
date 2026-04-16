@@ -185,7 +185,7 @@ if (is_array($fallbackSessionUser)) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="<?= htmlspecialchars(aavgo_asset_url('/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="workspace-page workspace-page-access">
   <main class="workspace-message-shell">
@@ -216,7 +216,7 @@ if (is_array($fallbackSessionUser)) {
       try { window.close(); } catch (_) {}
     }, 1200);
   </script>
-  <script src="/script.js"></script>
+<script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
 HTML;

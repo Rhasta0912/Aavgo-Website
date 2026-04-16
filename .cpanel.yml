@@ -15,6 +15,8 @@ deployment:
     - /bin/mkdir -p $DEPLOYPATH/auth/discord/login
     - /bin/mkdir -p $DEPLOYPATH/auth/discord/callback
     - /bin/mkdir -p $DEPLOYPATH/auth/logout
+    - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
+    - /bin/cp -f index.php $DEPLOYPATH/index.php
     - /bin/cp -f index.html $DEPLOYPATH/index.html
     - /bin/cp -f styles.css $DEPLOYPATH/styles.css
     - /bin/cp -f script.js $DEPLOYPATH/script.js

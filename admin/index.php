@@ -57,7 +57,7 @@ $bootstrapJson = json_encode(
     href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="<?= htmlspecialchars(aavgo_asset_url('/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="workspace-page workspace-dashboard workspace-page-admin">
   <div class="dashboard-shell dashboard-shell-admin">
@@ -644,6 +644,6 @@ $bootstrapJson = json_encode(
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
   </script>
-  <script src="/script.js"></script>
+<script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
