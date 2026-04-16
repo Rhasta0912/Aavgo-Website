@@ -65,21 +65,27 @@ $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
 $curlError = curl_error($curl);
 curl_close($curl);
 
-if ($response === false || $curlError !== '') {
-    aavgo_json_response([
-      'ok' => false,
-      'error' => 'The hours update could not reach the bot.',
-    ], 502);
-    return;
+if ($response !== false && $curlError === '') {
+    $decodedResponse = json_decode((string) $response, true);
+    if (is_array($decodedResponse) && ($httpCode >= 200 && $httpCode < 300)) {
+        aavgo_json_response($decodedResponse, $httpCode);
+        return;
+    }
 }
 
-$decodedResponse = json_decode((string) $response, true);
-if (!is_array($decodedResponse)) {
-    aavgo_json_response([
-        'ok' => false,
-        'error' => 'The bot returned an invalid hours response.',
-    ], 502);
-    return;
-}
+$queuedCommand = aavgo_enqueue_admin_command($action, $payload, [
+    'discordId' => (string) ($user['id'] ?? ''),
+    'name' => aavgo_display_name($user),
+    'roleSummary' => aavgo_user_role_summary($user),
+]);
 
-aavgo_json_response($decodedResponse, $httpCode > 0 ? $httpCode : 200);
+aavgo_json_response([
+    'ok' => true,
+    'queued' => true,
+    'message' => 'The hours bridge is busy right now, so the update was queued for bot sync.',
+    'command' => [
+        'id' => $queuedCommand['id'] ?? '',
+        'action' => $queuedCommand['action'] ?? $action,
+        'status' => $queuedCommand['status'] ?? 'pending',
+    ],
+]);
