@@ -700,12 +700,12 @@ h2 {
 }
 
 .workspace-dashboard.workspace-page-admin {
-  --workspace-accent: #d8b05f;
-  --workspace-accent-soft: rgba(216, 176, 95, 0.16);
-  --workspace-secondary: #6d78ff;
+  --workspace-accent: #97a0ad;
+  --workspace-accent-soft: rgba(151, 160, 173, 0.14);
+  --workspace-secondary: #66707e;
   background:
-    radial-gradient(circle at 12% 8%, rgba(109, 120, 255, 0.04), transparent 22%),
-    radial-gradient(circle at 85% 12%, rgba(216, 176, 95, 0.04), transparent 24%),
+    radial-gradient(circle at 12% 8%, rgba(151, 160, 173, 0.03), transparent 22%),
+    radial-gradient(circle at 85% 12%, rgba(102, 112, 126, 0.03), transparent 24%),
     linear-gradient(180deg, #0c0e12 0%, #12141a 54%, #16181e 100%);
 }
 
@@ -911,6 +911,14 @@ h2 {
   border-radius: 0 18px 18px 0;
   border-left: none;
   background: linear-gradient(180deg, rgba(17, 18, 22, 0.98) 0%, rgba(14, 15, 20, 0.96) 100%);
+  transition:
+    width 240ms ease,
+    min-width 240ms ease,
+    padding 240ms ease,
+    gap 240ms ease,
+    border-radius 240ms ease,
+    box-shadow 240ms ease,
+    background 240ms ease;
 }
 
 .dashboard-brand {
@@ -920,6 +928,7 @@ h2 {
   font-weight: 800;
   letter-spacing: -0.05em;
   color: #fff8ef;
+  transition: opacity 180ms ease, transform 180ms ease, max-height 180ms ease, margin 180ms ease;
 }
 
 .dashboard-profile-card,
@@ -976,6 +985,7 @@ h2 {
   margin: 0.35rem 0 0;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.55;
+  transition: opacity 180ms ease, transform 180ms ease, max-height 180ms ease, margin 180ms ease, padding 180ms ease;
 }
 
 .dashboard-sidebar-meta {
@@ -1036,7 +1046,15 @@ h2 {
   background: rgba(255, 255, 255, 0.03);
   color: rgba(255, 255, 255, 0.76);
   font-weight: 700;
-  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    width 240ms ease,
+    padding 240ms ease,
+    gap 240ms ease;
 }
 
 .dashboard-toolbar-link.dashboard-toolbar-toggle {
@@ -2167,15 +2185,80 @@ h2 {
 
 body.sidebar-collapsed .dashboard-shell-admin,
 body.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-columns: 92px minmax(0, 1fr) !important;
   gap: 0 !important;
 }
 
 body.sidebar-collapsed .dashboard-sidebar-admin,
 body.sidebar-collapsed .dashboard-sidebar-user {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  width: 92px !important;
+  min-width: 92px !important;
+  max-width: 92px !important;
+  padding: 1rem 0.45rem 1rem 0.45rem !important;
+  gap: 0.85rem !important;
+  overflow: hidden !important;
+  border-radius: 0 18px 18px 0 !important;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-admin > :not(.dashboard-nav),
+body.sidebar-collapsed .dashboard-sidebar-user > :not(.dashboard-nav) {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body.sidebar-collapsed .dashboard-brand {
+  opacity: 0;
+  transform: translateX(-8px);
+  max-height: 0;
+  margin: 0;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-meta {
+  opacity: 0;
+  transform: translateX(-8px);
+  max-height: 0;
+  margin: 0;
+}
+
+body.sidebar-collapsed .dashboard-side-note,
+body.sidebar-collapsed .dashboard-profile-card {
+  opacity: 0;
+  transform: translateX(-8px);
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body.sidebar-collapsed .dashboard-nav {
+  gap: 0.45rem;
+  margin-top: 0;
+}
+
+body.sidebar-collapsed .dashboard-nav-link {
+  justify-content: center;
+  width: 3rem;
+  min-height: 3rem;
+  padding: 0;
+  margin-inline: auto;
+  border-radius: 999px;
+}
+
+body.sidebar-collapsed .dashboard-nav-link span:last-child {
+  opacity: 0;
+  transform: translateX(-10px);
+  max-width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin,
@@ -2278,7 +2361,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   inset: 0 auto 0 0;
   width: 4px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(216, 176, 95, 0.95) 0%, rgba(109, 120, 255, 0.72) 100%);
+  background: linear-gradient(180deg, rgba(159, 168, 182, 0.95) 0%, rgba(104, 113, 126, 0.78) 100%);
 }
 
 .workspace-dashboard .dashboard-sidebar-meta {
@@ -2309,6 +2392,11 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .workspace-dashboard .dashboard-nav-emoji {
   width: 1.25rem;
+}
+
+.workspace-dashboard .dashboard-nav-link span:last-child {
+  display: inline-block;
+  transition: opacity 180ms ease, transform 180ms ease, max-width 220ms ease, margin 220ms ease;
 }
 
 .workspace-dashboard .dashboard-nav-link.is-active {
@@ -3640,10 +3728,26 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-view-panel {
   display: none;
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .dashboard-view-panel.is-active {
   display: block;
+  opacity: 1;
+  transform: translateY(0);
+  animation: dashboardPanelEnter 240ms ease;
+}
+
+@keyframes dashboardPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dashboard-filter-shell {
