@@ -3254,17 +3254,13 @@ function initializeDeveloperWorkspace() {
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(item.archivedFrom || item.status || "Archived")}</span>
         <span class="dashboard-chip ${priorityClass(item.priority)}">${escapeHtml(priorityLabel(item.priority))}</span>
       </div>
-      <div class="dashboard-developer-task-top">
+      <div class="dashboard-developer-task-top dashboard-developer-task-top-archive">
         <div>
           <strong>${escapeHtml(item.title || "Untitled card")}</strong>
           <p class="dashboard-developer-task-meta">
             Owner: ${escapeHtml(item.owner || "Unassigned")}
             ${item.archivedAt ? ` &middot; Archived ${escapeHtml(toDateLabel(item.archivedAt))}` : ""}
           </p>
-        </div>
-        <div class="dashboard-developer-history-actions">
-          <button type="button" class="dashboard-developer-task-remove" data-developer-task-restore="${escapeHtml(item.id)}" aria-label="Restore task">Restore</button>
-          <button type="button" class="dashboard-developer-task-remove dashboard-developer-task-remove-danger" data-developer-task-delete="${escapeHtml(item.id)}" aria-label="Delete archived task">Delete</button>
         </div>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
@@ -3286,6 +3282,10 @@ function initializeDeveloperWorkspace() {
           `).join("")}
         </div>
       ` : ""}
+      <div class="dashboard-developer-history-actions">
+        <button type="button" class="dashboard-developer-task-remove" data-developer-task-restore="${escapeHtml(item.id)}" aria-label="Restore task">Restore</button>
+        <button type="button" class="dashboard-developer-task-remove dashboard-developer-task-remove-danger" data-developer-task-delete="${escapeHtml(item.id)}" aria-label="Delete archived task">Delete</button>
+      </div>
     </article>
   `;
   };
