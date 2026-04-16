@@ -4393,17 +4393,23 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-developer-detail-hero {
   display: grid;
-  gap: 0.7rem;
-  padding: 1rem 1.05rem;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem 1rem;
   border-radius: 18px;
   border: 1px solid rgba(216, 176, 95, 0.16);
   background:
     linear-gradient(180deg, rgba(216, 176, 95, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
 }
 
+.dashboard-developer-detail-title-row {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .dashboard-developer-detail-hero strong {
-  font-size: 1.45rem;
-  line-height: 1.1;
+  font-size: 0.84rem;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
 }
 
 .dashboard-developer-detail-hero p {
@@ -4412,23 +4418,34 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   line-height: 1.65;
 }
 
+.dashboard-developer-detail-note-panel {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 176, 95, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .dashboard-developer-detail-note {
-  color: rgba(255, 248, 239, 0.92);
-  font-size: 0.98rem;
+  color: rgba(255, 248, 239, 0.97);
+  font-size: 1.08rem;
+  line-height: 1.78;
+  white-space: pre-wrap;
 }
 
 .dashboard-developer-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .dashboard-developer-detail-block,
 .dashboard-developer-detail-block-wide {
   display: grid;
-  gap: 0.7rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 18px;
+  gap: 0.6rem;
+  padding: 0.78rem 0.9rem;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.03);
 }
@@ -4464,31 +4481,67 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   font-weight: 700;
 }
 
+.dashboard-developer-detail-toggle {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dashboard-developer-detail-toggle > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.64rem 0.78rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: inherit;
+}
+
+.dashboard-developer-detail-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-developer-detail-toggle > summary span:first-child {
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-developer-detail-toggle[open] > summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-developer-detail-toggle > dl {
+  padding: 0.72rem 0.78rem 0.84rem;
+}
+
 .dashboard-developer-detail-activity {
   margin: 0;
-  padding-left: 0.95rem;
+  padding: 0.72rem 0.8rem 0.82rem 1rem;
   display: grid;
-  gap: 0.55rem;
+  gap: 0.38rem;
+  max-height: 190px;
+  overflow: auto;
 }
 
 .dashboard-developer-detail-activity li {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.12rem;
 }
 
 .dashboard-developer-detail-activity li strong {
-  font-size: 0.95rem;
+  font-size: 0.86rem;
 }
 
 .dashboard-developer-detail-activity li span {
   color: rgba(255, 255, 255, 0.56);
-  font-size: 0.84rem;
+  font-size: 0.76rem;
 }
 
 .dashboard-developer-detail-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.38rem;
   justify-content: flex-end;
 }
 
@@ -4497,10 +4550,10 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-inline-button-small {
-  min-height: 1.8rem;
-  padding: 0 0.7rem;
+  min-height: 1.45rem;
+  padding: 0 0.45rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   letter-spacing: 0.01em;
 }
 
@@ -4514,7 +4567,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.8rem 0.9rem;
+  padding: 0.56rem 0.78rem;
   cursor: pointer;
   list-style: none;
   font-weight: 700;
@@ -4530,7 +4583,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-developer-detail-activity-toggle > .dashboard-developer-detail-activity {
-  padding: 0.8rem 0.9rem 0.9rem 1.05rem;
+  padding: 0.55rem 0.78rem 0.72rem;
 }
 
 .dashboard-modal-dialog.dashboard-developer-detail-modal {

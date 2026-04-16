@@ -3020,19 +3020,28 @@ function initializeDeveloperWorkspace() {
           <span class="dashboard-chip ${priorityClass(task.priority)}">${escapeHtml(priorityLabel(task.priority))}</span>
           ${task.deadlineDate ? `<span class="dashboard-chip ${getTaskTimingState(task).isOverdue ? "dashboard-chip-danger" : ""}">${escapeHtml(task.deadlineDate)}</span>` : ""}
         </div>
-        <strong>${escapeHtml(task.title || "Untitled card")}</strong>
-        <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No post note yet.")}</p>
+        <div class="dashboard-developer-detail-title-row">
+          <span class="dashboard-kicker">Card title</span>
+          <strong>${escapeHtml(task.title || "Untitled card")}</strong>
+        </div>
+        <div class="dashboard-developer-detail-note-panel">
+          <span class="dashboard-kicker">Note</span>
+          <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No note added yet.")}</p>
+        </div>
       </div>
       <div class="dashboard-developer-detail-grid">
-        <article class="dashboard-developer-detail-block">
-          <p class="dashboard-kicker">Details</p>
+        <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-toggle">
+          <summary>
+            <span>Details</span>
+            <span class="dashboard-chip dashboard-chip-muted">Show</span>
+          </summary>
           <dl>
             <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
             <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
             <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
             <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
           </dl>
-        </article>
+        </details>
         <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-activity-toggle">
           <summary>
             <span>Activity</span>
