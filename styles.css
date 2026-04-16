@@ -4042,6 +4042,15 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   align-items: start;
 }
 
+.workspace-page-developer .dashboard-developer-form-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.85rem 0.8rem;
+}
+
+.workspace-page-developer .dashboard-developer-form-grid .dashboard-control-field {
+  grid-column: span 6;
+}
+
 .dashboard-control-field-wide {
   grid-column: 1 / -1;
 }
@@ -5080,6 +5089,15 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   .dashboard-bulk-controls,
   .dashboard-control-grid-double {
     grid-template-columns: 1fr;
+  }
+
+  .workspace-page-developer .dashboard-developer-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-page-developer .dashboard-developer-form-grid .dashboard-control-field,
+  .workspace-page-developer .dashboard-developer-form-grid .dashboard-control-field-wide {
+    grid-column: auto;
   }
 
   .dashboard-control-field-wide {

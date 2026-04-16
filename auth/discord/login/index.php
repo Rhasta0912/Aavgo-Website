@@ -41,6 +41,8 @@ $safeAuthorizeUrl = htmlspecialchars($authorizeUrl, ENT_QUOTES, 'UTF-8');
 $safeState = htmlspecialchars($state, ENT_QUOTES, 'UTF-8');
 $safePollUrl = htmlspecialchars('/auth/discord/poll/?state=' . rawurlencode($state), ENT_QUOTES, 'UTF-8');
 $safeClaimUrl = htmlspecialchars('/auth/discord/claim/?state=' . rawurlencode($state), ENT_QUOTES, 'UTF-8');
+$stylesHref = htmlspecialchars(aavgo_asset_url('/styles.css'), ENT_QUOTES, 'UTF-8');
+$scriptSrc = htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8');
 $jsAuthorizeUrl = json_encode($authorizeUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $jsPollUrl = json_encode('/auth/discord/poll/?state=' . rawurlencode($state), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 $jsClaimUrl = json_encode('/auth/discord/claim/?state=' . rawurlencode($state), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
@@ -56,7 +58,7 @@ echo <<<HTML
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= htmlspecialchars(aavgo_asset_url('/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
+  <link rel="stylesheet" href="{$stylesHref}">
 </head>
 <body class="workspace-page workspace-page-access">
   <main class="workspace-message-shell">
@@ -159,7 +161,7 @@ echo <<<HTML
       window.setTimeout(poll, 800);
     })();
   </script>
-<script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="{$scriptSrc}"></script>
 </body>
 </html>
 HTML;
