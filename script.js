@@ -959,31 +959,19 @@ async function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
     return;
   }
 
-  const delta = roundHoursStep(Math.abs(safeNext - safeCurrent));
-  if (delta === 0) {
+  if (roundHoursStep(safeNext - safeCurrent) === 0) {
     setEditorFeedback("That day already has that total.", false);
     return;
   }
 
   const reason = "Quick full-hours grid update";
-  if (safeNext > safeCurrent) {
-    return sendAdminCommand("add_manual_hours", {
-      discordId: person.discordId,
-      shiftDate,
-      loginTime: "00:00",
-      logoutTime: hoursToClock(delta),
-      mode: "training",
-      hotelId: "",
-      reason
-    }, { feedback: "editor" });
-  }
-
-  return sendAdminCommand("remove_manual_hours", {
+  return sendAdminHoursAction("set_day_hours", {
     discordId: person.discordId,
     shiftDate,
-    hours: delta,
-    mode: "training",
-    reason
+    hours: safeNext,
+    mode: "shift",
+    reason,
+    previousHours: safeCurrent
   }, { feedback: "editor" });
 }
 
@@ -1947,6 +1935,58 @@ async function sendAdminCommand(action, payload = {}, options = {}) {
   }
 }
 
+async function sendAdminHoursAction(action, payload = {}, options = {}) {
+  if (!window.AAVGO_ADMIN_HOURS_ENDPOINT || adminBoardState.actionInFlight) return;
+
+  const feedbackChannel = String(options.feedback || "action");
+  const setFeedback = (message, isError = false) => {
+    if (feedbackChannel === "bulk") {
+      setBulkFeedback(message, isError);
+      return;
+    }
+    if (feedbackChannel === "editor") {
+      setEditorFeedback(message, isError);
+      return;
+    }
+    setActionFeedback(message, isError);
+  };
+
+  adminBoardState.actionInFlight = true;
+  setActionControlsDisabled(true);
+
+  try {
+    const response = await fetch(window.AAVGO_ADMIN_HOURS_ENDPOINT, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ action, payload })
+    });
+
+    const data = await response.json().catch(() => ({
+      ok: false,
+      error: "The hours update returned an unreadable response."
+    }));
+
+    if (!response.ok || !data?.ok) {
+      setFeedback(data?.error || "The hours update failed.", true);
+      return false;
+    }
+
+    setFeedback(data?.message || "Hours updated.", false);
+    window.setTimeout(refreshAdminBoard, 700);
+    return true;
+  } catch (_) {
+    setFeedback("The hours update could not be sent right now.", true);
+    return false;
+  } finally {
+    adminBoardState.actionInFlight = false;
+    setActionControlsDisabled(false);
+  }
+}
+
 function initializeAdminBoard() {
   if (!document.getElementById("hours-board-rows")) return;
 
@@ -2254,7 +2294,7 @@ function initializeAdminBoard() {
       return;
     }
 
-    sendAdminCommand("add_manual_hours", {
+    sendAdminHoursAction("add_manual_hours", {
       discordId: person.discordId,
       shiftDate,
       loginTime,
@@ -2281,7 +2321,7 @@ function initializeAdminBoard() {
       return;
     }
 
-    sendAdminCommand("remove_manual_hours", {
+    sendAdminHoursAction("remove_manual_hours", {
       discordId: person.discordId,
       shiftDate,
       hours,
@@ -2948,7 +2988,7 @@ function initializeDeveloperWorkspace() {
   };
 
   const setDeveloperView = (view = "board") => {
-    const normalized = view === "archive" ? "archive" : "board";
+    const normalized = ["board", "archive", "audit"].includes(view) ? view : "board";
     localStorage.setItem(VIEW_KEY, normalized);
     viewTabs.forEach(tab => {
       const active = String(tab.getAttribute("data-developer-view") || "") === normalized;

@@ -5613,6 +5613,14 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   padding-top: 0.2rem;
 }
 
+.workspace-page-developer .dashboard-view-panel[data-developer-view-panel="audit"] {
+  padding-top: 0.2rem;
+}
+
+.workspace-page-developer .dashboard-view-panel[data-developer-view-panel="audit"] .dashboard-developer-audit-list {
+  min-height: 18rem;
+}
+
 .workspace-page-developer [data-developer-archive-dropzone].is-drop-target {
   border-color: rgba(216, 176, 95, 0.55);
   box-shadow: 0 0 0 1px rgba(216, 176, 95, 0.12), 0 18px 40px rgba(0, 0, 0, 0.22);

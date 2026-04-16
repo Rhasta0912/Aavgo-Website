@@ -99,6 +99,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <section class="dashboard-view-switch dashboard-view-switch-developer" aria-label="Developer view switcher">
             <button class="dashboard-view-tab is-active" type="button" data-developer-view="board">Roadmap board</button>
             <button class="dashboard-view-tab" type="button" data-developer-view="archive">Archive</button>
+            <button class="dashboard-view-tab" type="button" data-developer-view="audit">Audit</button>
           </section>
 
           <div class="dashboard-view-panel is-active" data-developer-view-panel="board">
@@ -174,18 +175,23 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
                 <p>When a task is finished, it moves here instead of being deleted.</p>
               </div>
             </div>
-            <details class="dashboard-developer-audit" id="developer-task-audit">
-              <summary>
-                <span>Board activity</span>
-                <span class="dashboard-chip dashboard-chip-muted" id="developer-audit-count">0 events</span>
-              </summary>
-              <div class="dashboard-developer-audit-list" id="developer-task-audit-list">
-                <div class="dashboard-empty-state">
-                  <strong>No activity yet.</strong>
-                  <p>Created, moved, archived, restored, and deleted actions will appear here.</p>
-                </div>
+          </section>
+
+          <section class="dashboard-view-panel dashboard-panel dashboard-panel-history" data-developer-view-panel="audit">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Audit</p>
+                <h2>Leadership activity trail.</h2>
+                <p class="dashboard-panel-copy">Created, moved, archived, restored, and deleted actions land here for quick review.</p>
               </div>
-            </details>
+              <span class="dashboard-chip dashboard-chip-accent" id="developer-audit-count">0 events</span>
+            </div>
+            <div class="dashboard-developer-audit-list" id="developer-task-audit-list">
+              <div class="dashboard-empty-state">
+                <strong>No activity yet.</strong>
+                <p>Every leadership action will appear here once it happens.</p>
+              </div>
+            </div>
           </section>
         </section>
       </section>
