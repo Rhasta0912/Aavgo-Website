@@ -271,13 +271,14 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
           <input id="developer-task-attachments" type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.json,image/*,application/pdf,text/plain">
           <small class="dashboard-control-hint">Upload files or screenshots that support the note.</small>
         </label>
+      </form>
+
         <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
         <div class="dashboard-control-row">
-        <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button" onclick="return window.__aavgoSubmitDeveloperTask ? (window.__aavgoSubmitDeveloperTask(), false) : false">Add task</button>
+          <button class="button button-primary dashboard-inline-button" id="developer-task-add" type="button" onclick="return window.__aavgoSubmitDeveloperTask ? (window.__aavgoSubmitDeveloperTask(), false) : false">Add task</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-sync-all" type="button">Resync Discord roles</button>
           <button class="button button-secondary dashboard-inline-button" id="developer-push-snapshot" type="button">Refresh snapshot now</button>
         </div>
-      </form>
     </div>
   </div>
 
