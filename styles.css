@@ -5143,8 +5143,8 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 
 .dashboard-hotel-lane-card {
   display: grid;
-  gap: 0.55rem;
-  padding: 0.7rem 0.78rem;
+  gap: 0.45rem;
+  padding: 0.62rem 0.7rem;
   border-radius: 13px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.025);
@@ -5154,7 +5154,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
 .dashboard-hotel-lane-head strong,
@@ -5163,12 +5163,38 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-hotel-lane-head strong {
-  font-size: 0.96rem;
+  font-size: 0.94rem;
 }
 
 .dashboard-hotel-lane-head span {
   color: rgba(255, 255, 255, 0.56);
+  font-size: 0.74rem;
+}
+
+.dashboard-hotel-lane-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.dashboard-hotel-lane-staff {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-hotel-lane-logout {
+  flex: 0 0 auto;
+}
+
+.dashboard-hotel-lane-card .dashboard-inline-list-staff li {
+  padding: 0.16rem 0;
   font-size: 0.78rem;
+}
+
+.dashboard-hotel-lane-card .dashboard-inline-list-staff li span,
+.dashboard-hotel-lane-card .dashboard-inline-list-staff li strong {
+  line-height: 1.15;
 }
 
 .dashboard-hotel-lane-card .dashboard-inline-button-small {
@@ -5176,25 +5202,25 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-hotel-lane-card .dashboard-mini-metrics {
-  margin-top: 0.15rem;
-  gap: 0.2rem;
+  margin-top: 0.08rem;
+  gap: 0.15rem;
 }
 
 .dashboard-hotel-lane-card .dashboard-mini-metrics span {
-  font-size: 0.8rem;
+  font-size: 0.74rem;
 }
 
 .dashboard-hotel-lane-card .dashboard-inline-list-staff {
-  gap: 0.28rem;
+  gap: 0.16rem;
 }
 
 .dashboard-hotel-lane-card .dashboard-inline-list-staff li {
-  padding: 0.18rem 0;
-  font-size: 0.82rem;
+  padding: 0.12rem 0;
+  font-size: 0.78rem;
 }
 
 .dashboard-hotel-lane-card .dashboard-inline-list-staff li strong {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
 }
 
 .dashboard-inline-list-staff {

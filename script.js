@@ -1459,28 +1459,30 @@ function renderHotelLaneCards(lanes) {
           <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
           <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
         </div>
-        <button
-          class="button button-secondary dashboard-inline-button dashboard-inline-button-small"
-          type="button"
-          data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
-          ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
-        >
-          Force logout
-        </button>
       </div>
       <div class="dashboard-mini-metrics">
         <span>Active <strong>${escapeHtml(String(lane?.activeNow ?? 0))}</strong></span>
         <span>Today <strong>${formatHours(lane?.todayHours)}</strong></span>
         <span>Week <strong>${formatHours(lane?.weeklyHours)}</strong></span>
       </div>
-      <ul class="dashboard-inline-list dashboard-inline-list-staff">
-        ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 4) : []).map(person => `
+      <div class="dashboard-hotel-lane-footer">
+        <ul class="dashboard-inline-list dashboard-inline-list-staff dashboard-hotel-lane-staff">
+          ${(Array.isArray(lane?.staff) ? lane.staff.slice(0, 3) : []).map(person => `
           <li>
             <span>${escapeHtml(person?.displayName || "Unknown")}</span>
             <strong>${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
           </li>
-        `).join("")}
-      </ul>
+          `).join("")}
+        </ul>
+        <button
+          class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
+          type="button"
+          data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
+          ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
+        >
+          Logout
+        </button>
+      </div>
     </article>
   `).join("");
 }

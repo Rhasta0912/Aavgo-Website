@@ -1097,6 +1097,7 @@ function aavgo_build_admin_board_payload(array $user): array
 function aavgo_normalize_hotel_options(array $hotels): array
 {
     $normalized = [];
+    $seenLabels = [];
 
     foreach ($hotels as $hotel) {
         if (!is_array($hotel)) {
@@ -1122,10 +1123,16 @@ function aavgo_normalize_hotel_options(array $hotels): array
             $name = $id;
         }
 
+        $labelKey = strtolower($name);
+        if (isset($seenLabels[$labelKey])) {
+            continue;
+        }
+
         $normalized[$id] = [
             'id' => $id,
             'name' => $name,
         ];
+        $seenLabels[$labelKey] = true;
     }
 
     $defaults = [
