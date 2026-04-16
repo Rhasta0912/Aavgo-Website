@@ -3010,6 +3010,7 @@ function initializeDeveloperWorkspace() {
     viewingTaskId = String(task.id || "");
     const activity = Array.isArray(task.activity) ? task.activity.map(normalizeActivityEntry).filter(entry => entry.message) : [];
     const attachments = Array.isArray(task.attachments) ? task.attachments : [];
+    const isArchived = loadHistory().some(item => String(item.id || "") === String(task.id || ""));
     const creator = activity.find(entry => entry.type === "created") || activity[activity.length - 1] || null;
     detailTitle.textContent = task.title || "Untitled card";
     detailBody.innerHTML = `
@@ -3020,23 +3021,10 @@ function initializeDeveloperWorkspace() {
           ${task.deadlineDate ? `<span class="dashboard-chip ${getTaskTimingState(task).isOverdue ? "dashboard-chip-danger" : ""}">${escapeHtml(task.deadlineDate)}</span>` : ""}
         </div>
         <strong>${escapeHtml(task.title || "Untitled card")}</strong>
-        <p>${escapeHtml(task.notes || "No post note yet.")}</p>
+        <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No post note yet.")}</p>
       </div>
       <div class="dashboard-developer-detail-grid">
-        <article class="dashboard-developer-detail-block">
-          <p class="dashboard-kicker">Overview</p>
-          <dl>
-            <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
-            <div><dt>Status</dt><dd>${escapeHtml(task.status || task.archivedFrom || "To Do")}</dd></div>
-            <div><dt>Priority</dt><dd>${escapeHtml(priorityLabel(task.priority))}</dd></div>
-            <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
-            <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
-            <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
-            <div><dt>Start date</dt><dd>${escapeHtml(task.startDate || "Not set")}</dd></div>
-            <div><dt>Due date</dt><dd>${escapeHtml(task.deadlineDate || "Not set")}</dd></div>
-          </dl>
-        </article>
-        <article class="dashboard-developer-detail-block">
+        <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
           <p class="dashboard-kicker">Activity</p>
           ${activity.length ? `
             <ol class="dashboard-developer-detail-activity">
@@ -3054,6 +3042,15 @@ function initializeDeveloperWorkspace() {
             </div>
           `}
         </article>
+        <article class="dashboard-developer-detail-block">
+          <p class="dashboard-kicker">Details</p>
+          <dl>
+            <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
+            <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
+            <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
+            <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
+          </dl>
+        </article>
       </div>
       ${attachments.length ? `
         <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
@@ -3070,7 +3067,7 @@ function initializeDeveloperWorkspace() {
       ` : ""}
       <div class="dashboard-developer-detail-actions">
         <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>
-        ${loadHistory().some(item => String(item.id || "") === String(task.id || "")) ? `
+        ${isArchived ? `
           <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-restore="${escapeHtml(task.id)}">Restore</button>
           <button type="button" class="button button-secondary dashboard-inline-button" data-developer-task-detail-delete="${escapeHtml(task.id)}">Delete</button>
         ` : `
@@ -3539,15 +3536,15 @@ function initializeDeveloperWorkspace() {
         notes: note,
         attachments,
         updatedAt: now,
-        activity: [
-          {
-            id: createHistoryId(),
-            type: "edited",
-            message: note ? `Edited card with a note: ${note}` : "Edited roadmap card.",
-            createdAt: now,
-            actorName,
-            actorRole
-          },
+      activity: [
+        {
+          id: createHistoryId(),
+          type: "edited",
+          message: "Edited roadmap card.",
+          createdAt: now,
+          actorName,
+          actorRole
+        },
           ...(Array.isArray(existing.activity) ? existing.activity : [])
         ].slice(0, 12)
       };
@@ -3558,7 +3555,7 @@ function initializeDeveloperWorkspace() {
         taskId: nextItem.id,
         fromStatus: existing.status || "To Do",
         toStatus: nextStatus,
-        message: note ? `Edited card with a note: ${note}` : "Edited roadmap card.",
+        message: "Edited roadmap card.",
         createdAt: now,
         actorName,
         actorRole
@@ -3579,7 +3576,7 @@ function initializeDeveloperWorkspace() {
           {
             id: createHistoryId(),
             type: "created",
-            message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+            message: "Created roadmap card.",
             createdAt: now,
             actorName,
             actorRole
@@ -3594,7 +3591,7 @@ function initializeDeveloperWorkspace() {
         title,
         taskId: nextItem.id,
         toStatus: nextStatus,
-        message: note ? `Created with a note: ${note}` : "Created roadmap card.",
+        message: "Created roadmap card.",
         createdAt: now,
         actorName,
         actorRole
