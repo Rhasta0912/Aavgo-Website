@@ -5205,7 +5205,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 0.85rem;
-  align-items: stretch;
+  align-items: start;
 }
 
 .dashboard-hotel-lane-card {
@@ -5219,7 +5219,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
   position: relative;
   overflow: hidden;
-  min-height: 260px;
+  min-height: 244px;
   grid-template-rows: auto auto 1fr;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
@@ -5254,7 +5254,6 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
-  min-height: 2.5rem;
 }
 
 .dashboard-hotel-lane-head strong,
@@ -5265,11 +5264,6 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-hotel-lane-head strong {
   font-size: 0.98rem;
   line-height: 1.1;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  word-break: break-word;
 }
 
 .dashboard-hotel-lane-head span {
