@@ -2555,6 +2555,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 .dashboard-control-field {
   display: grid;
   gap: 0.4rem;
+  min-width: 0;
 }
 
 .dashboard-control-field span {
@@ -2592,6 +2593,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   position: relative;
   display: grid;
   gap: 0.55rem;
+  min-width: 0;
   overflow: visible;
 }
 
@@ -2622,7 +2624,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-deadline-trigger::after {
-  content: "â–¾";
+  content: "\25BE";
   font-size: 0.8rem;
   opacity: 0.75;
 }
@@ -2637,11 +2639,13 @@ body.sidebar-collapsed .dashboard-sidebar-user {
 }
 
 .dashboard-deadline-popover {
-  position: static;
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  right: 0;
   display: grid;
   gap: 0.85rem;
   width: 100%;
-  margin-top: 0.55rem;
   padding: 0.95rem;
   max-height: min(24rem, calc(100vh - 11rem));
   overflow: auto;
@@ -4035,6 +4039,7 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
+  align-items: start;
 }
 
 .dashboard-control-field-wide {

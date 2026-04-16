@@ -2651,11 +2651,9 @@ function initializeDeveloperWorkspace() {
   render(load());
 
     addButton.addEventListener("click", () => {
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-        return;
-      }
-      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      aavgoCloseAllDatePickers();
+      closeDeadlinePopover();
+      void submitTask();
     });
 
   list.addEventListener("click", event => {
@@ -3266,6 +3264,8 @@ function initializeDeveloperWorkspace() {
   };
 
   const submitTask = async () => {
+    aavgoCloseAllDatePickers();
+    closeDeadlinePopover();
     const title = String(fields.title?.value || "").trim();
     const deadlineDate = String(fields.deadline?.value || "").trim();
     if (!title) {
@@ -3314,6 +3314,8 @@ function initializeDeveloperWorkspace() {
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
+    aavgoCloseAllDatePickers();
+    closeDeadlinePopover();
     await submitTask();
   });
 

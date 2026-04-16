@@ -201,9 +201,9 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
             </button>
             <div class="dashboard-deadline-popover" id="developer-task-start-popover" data-date-popover hidden>
               <div class="dashboard-deadline-header">
-                <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">‹</button>
+                <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">&lsaquo;</button>
                 <strong id="developer-task-start-month">Month</strong>
-                <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">›</button>
+                <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">&rsaquo;</button>
               </div>
               <div class="dashboard-deadline-weekdays" aria-hidden="true">
                 <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
@@ -227,9 +227,9 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
             </button>
             <div class="dashboard-deadline-popover" id="developer-task-deadline-popover" hidden>
               <div class="dashboard-deadline-header">
-                <button type="button" class="dashboard-deadline-nav" data-deadline-prev aria-label="Previous month">‹</button>
+                <button type="button" class="dashboard-deadline-nav" data-deadline-prev aria-label="Previous month">&lsaquo;</button>
                 <strong id="developer-task-deadline-month">Month</strong>
-                <button type="button" class="dashboard-deadline-nav" data-deadline-next aria-label="Next month">›</button>
+                <button type="button" class="dashboard-deadline-nav" data-deadline-next aria-label="Next month">&rsaquo;</button>
               </div>
               <div class="dashboard-deadline-weekdays" aria-hidden="true">
                 <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
@@ -288,3 +288,4 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
+
