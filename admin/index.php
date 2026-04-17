@@ -67,13 +67,6 @@ $bootstrapJson = json_encode(
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       </div>
 
-      <section class="dashboard-profile-card dashboard-profile-card-plain">
-        <div class="dashboard-profile-copy">
-          <strong><?php echo $safeDisplayName; ?></strong>
-          <p><?php echo $safeRoleSummary; ?></p>
-        </div>
-      </section>
-
       <section class="dashboard-sidebar-status" aria-label="Workspace status">
         <div class="dashboard-status-pill">
           <strong>Private</strong>
@@ -108,13 +101,23 @@ $bootstrapJson = json_encode(
           <a class="dashboard-nav-link" href="/admin/developer/"><span class="dashboard-nav-emoji" aria-hidden="true">🧭</span><span>Developer panel</span></a>
         <?php endif; ?>
         <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
-        <a class="dashboard-nav-link" href="/auth/logout/"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
       </nav>
 
       <section class="dashboard-side-section">
         <p class="dashboard-kicker">🗂️ Control mode</p>
         <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
         <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
+      </section>
+
+      <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
+        <section class="dashboard-profile-card dashboard-profile-card-plain">
+          <div class="dashboard-profile-copy">
+            <strong><?php echo $safeDisplayName; ?></strong>
+            <p><?php echo $safeRoleSummary; ?></p>
+          </div>
+        </section>
+
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
       </section>
     </aside>
 
