@@ -81,8 +81,8 @@ $bootstrapJson = json_encode(
       <section class="dashboard-side-section">
         <details class="dashboard-side-toggle">
           <summary class="dashboard-side-toggle-summary">
-            <span class="dashboard-kicker">??? Control mode</span>
-            <span class="dashboard-side-toggle-chevron" aria-hidden="true">?</span>
+            <span class="dashboard-kicker">? Control mode</span>
+            <span class="dashboard-side-toggle-chevron" aria-hidden="true">v</span>
           </summary>
           <div class="dashboard-side-toggle-body">
             <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
