@@ -115,13 +115,45 @@ $bootstrapJson = json_encode(
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
-        <a class="dashboard-nav-link is-active" href="/admin/"><span class="dashboard-nav-emoji" aria-hidden="true">🏛️</span><span>Leadership board</span></a>
-        <a class="dashboard-nav-link" href="#leadership-full-hours"><span class="dashboard-nav-emoji" aria-hidden="true">📊</span><span>Full hours</span></a>
+        <div class="dashboard-sidebar-shortcuts is-open" data-sidebar-leadership-group>
+          <button class="dashboard-nav-link dashboard-sidebar-shortcut-toggle is-active" type="button" data-sidebar-leadership-toggle aria-expanded="true" aria-controls="sidebar-leadership-shortcuts">
+            <span>Leadership board</span>
+          </button>
+          <div class="dashboard-sidebar-shortcuts-panel" id="sidebar-leadership-shortcuts" data-sidebar-leadership-panel>
+            <button class="dashboard-nav-link dashboard-sidebar-shortcut" type="button" data-hours-view="full-hours">
+              <span>Full hours</span>
+            </button>
+            <button class="dashboard-nav-link dashboard-sidebar-shortcut" type="button" data-hours-view="hotel-lanes">
+              <span>Hotel lanes</span>
+            </button>
+          </div>
+        </div>
         <?php if ($isDeveloper): ?>
-          <a class="dashboard-nav-link" href="/admin/developer/"><span class="dashboard-nav-emoji" aria-hidden="true">🧭</span><span>Developer panel</span></a>
+          <a class="dashboard-nav-link" href="/admin/developer/"><span>Developer panel</span></a>
         <?php endif; ?>
-        <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
+        <a class="dashboard-nav-link" href="/user/"><span>User workspace</span></a>
       </nav>
+      <section class="dashboard-sidebar-glance" aria-label="Quick glance">
+        <div class="dashboard-sidebar-glance-head">
+          <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
+          <p class="dashboard-kicker">Quick glance</p>
+        </div>
+        <strong>Visible: <?php echo htmlspecialchars((string) ($summary['totalPeople'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?> staff</strong>
+        <dl class="dashboard-sidebar-glance-grid">
+          <div>
+            <dt>Role</dt>
+            <dd><?php echo $safeSidebarRoleLabel; ?></dd>
+          </div>
+          <div>
+            <dt>View</dt>
+            <dd>Leadership board</dd>
+          </div>
+          <div>
+            <dt>Sync</dt>
+            <dd><?php echo htmlspecialchars($generatedAtLabel, ENT_QUOTES, 'UTF-8'); ?></dd>
+          </div>
+        </dl>
+      </section>
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
         <div class="dashboard-sidebar-footer-copy">
           <strong><?php echo $safeDisplayName; ?></strong>

@@ -1046,6 +1046,7 @@ h2 {
   background: rgba(255, 255, 255, 0.03);
   color: rgba(255, 255, 255, 0.76);
   font-weight: 700;
+  cursor: pointer;
   transition:
     transform 180ms ease,
     background 180ms ease,
@@ -1100,6 +1101,198 @@ h2 {
   text-align: center;
   font-size: 1rem;
   line-height: 1;
+}
+
+.dashboard-sidebar-shortcuts {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dashboard-sidebar-shortcuts-panel {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 0.28rem;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-0.25rem);
+  overflow: hidden;
+  transition:
+    max-height 260ms ease,
+    opacity 200ms ease,
+    transform 220ms ease;
+}
+
+.dashboard-sidebar-shortcuts.is-open .dashboard-sidebar-shortcuts-panel {
+  max-height: 8.5rem;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-sidebar-shortcut-toggle,
+.dashboard-sidebar-shortcut {
+  position: relative;
+}
+
+.dashboard-sidebar-shortcut-toggle {
+  padding-right: 2.15rem;
+}
+
+.dashboard-sidebar-shortcut-toggle::after {
+  content: "";
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid rgba(255, 248, 239, 0.82);
+  border-bottom: 2px solid rgba(255, 248, 239, 0.82);
+  transform: translateY(-60%) rotate(45deg);
+  transition: transform 220ms ease, opacity 220ms ease;
+  opacity: 0.72;
+}
+
+.dashboard-sidebar-shortcuts.is-open .dashboard-sidebar-shortcut-toggle::after {
+  transform: translateY(-42%) rotate(225deg);
+}
+
+.dashboard-sidebar-shortcut {
+  min-height: 2.55rem;
+  padding: 0 0.9rem 0 2.95rem;
+  border-radius: 11px;
+  justify-content: flex-start;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-sidebar-shortcut::before {
+  left: 0.9rem;
+}
+
+.dashboard-sidebar-shortcut-toggle::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='3.5'/%3E%3Cpath d='M8 8h8'/%3E%3Cpath d='M8 12h8'/%3E%3Cpath d='M8 16h8'/%3E%3C/svg%3E");
+}
+
+.dashboard-sidebar-shortcut[data-hours-view="full-hours"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='3'/%3E%3Cpath d='M8 5v14'/%3E%3Cpath d='M4 9h16'/%3E%3Cpath d='M4 13h16'/%3E%3C/svg%3E");
+}
+
+.dashboard-sidebar-shortcut[data-hours-view="hotel-lanes"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 18V8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5V18'/%3E%3Cpath d='M8 18v-5h8v5'/%3E%3Cpath d='M8 11h8'/%3E%3C/svg%3E");
+}
+
+.dashboard-sidebar-glance {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1rem 1.05rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 16px 28px rgba(0, 0, 0, 0.12);
+  animation: sidebarGlancePulse 8s ease-in-out infinite;
+}
+
+.dashboard-sidebar-glance::after {
+  content: "";
+  position: absolute;
+  width: 8.75rem;
+  height: 8.75rem;
+  right: -3.5rem;
+  bottom: -4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(171, 114, 255, 0.16) 0%, rgba(171, 114, 255, 0) 72%);
+  pointer-events: none;
+}
+
+.dashboard-sidebar-glance-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dashboard-sidebar-glance-dot {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(171, 114, 255, 0.95) 0%, rgba(117, 79, 228, 0.8) 100%);
+  box-shadow: 0 0 0 0 rgba(171, 114, 255, 0.34);
+  animation: sidebarGlanceDot 2.8s ease-in-out infinite;
+}
+
+.dashboard-sidebar-glance strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: #fff8ef;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-sidebar-glance-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.dashboard-sidebar-glance-grid div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-top: 0.42rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-sidebar-glance-grid div:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dashboard-sidebar-glance-grid dt {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-sidebar-glance-grid dd {
+  margin: 0;
+  color: rgba(255, 248, 239, 0.92);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+@keyframes sidebarGlanceDot {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(171, 114, 255, 0.24);
+  }
+
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 0.45rem rgba(171, 114, 255, 0);
+  }
+}
+
+@keyframes sidebarGlancePulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
 }
 
 .dashboard-toolbar-link {
@@ -2322,6 +2515,18 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   text-shadow: 0 0 0 #f5f5f5;
 }
 
+body.sidebar-collapsed .dashboard-sidebar-shortcut-toggle::after {
+  opacity: 0;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-shortcuts {
+  gap: 0.45rem;
+}
+
+body.sidebar-collapsed .dashboard-sidebar-shortcuts-panel {
+  padding-left: 0;
+}
+
 .workspace-dashboard .dashboard-sidebar-admin,
 .workspace-dashboard .dashboard-sidebar-user {
   position: sticky;
@@ -2649,6 +2854,18 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 6H5.5A2.5 2.5 0 0 0 3 8.5v7A2.5 2.5 0 0 0 5.5 18H8'/%3E%3Cpath d='M12 12h8'/%3E%3Cpath d='M16 8l4 4-4 4'/%3E%3C/svg%3E");
 }
 
+.workspace-dashboard .dashboard-sidebar-shortcut-toggle::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='3.5'/%3E%3Cpath d='M8 8h8'/%3E%3Cpath d='M8 12h8'/%3E%3Cpath d='M8 16h8'/%3E%3C/svg%3E");
+}
+
+.workspace-dashboard .dashboard-sidebar-shortcut[data-hours-view="full-hours"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='3'/%3E%3Cpath d='M8 5v14'/%3E%3Cpath d='M4 9h16'/%3E%3Cpath d='M4 13h16'/%3E%3C/svg%3E");
+}
+
+.workspace-dashboard .dashboard-sidebar-shortcut[data-hours-view="hotel-lanes"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 18V8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5V18'/%3E%3Cpath d='M8 18v-5h8v5'/%3E%3Cpath d='M8 11h8'/%3E%3C/svg%3E");
+}
+
 .workspace-dashboard .dashboard-nav-link .dashboard-nav-emoji {
   width: 1rem;
   font-size: 0.88rem;
@@ -2691,7 +2908,10 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/"]:
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/user/"]::before,
-body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
+body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before,
+body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut-toggle::before,
+body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hours-view="full-hours"]::before,
+body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hours-view="hotel-lanes"]::before {
   color: #f5f5f5 !important;
   filter: none !important;
 }
@@ -2704,6 +2924,18 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logo
 .workspace-dashboard .dashboard-nav-link.is-active {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.035) 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.workspace-dashboard .dashboard-sidebar-shortcuts.is-open .dashboard-sidebar-shortcut-toggle {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.workspace-dashboard .dashboard-sidebar-shortcuts.is-open .dashboard-sidebar-shortcut-toggle:not(:hover):not(:focus-visible) {
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.workspace-dashboard .dashboard-sidebar-shortcut {
+  margin-left: 0.15rem;
 }
 
 .workspace-dashboard .dashboard-main-admin,
@@ -2816,7 +3048,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logo
 
 .dashboard-filter-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) repeat(4, minmax(0, 0.58fr)) auto;
+  grid-template-columns: minmax(260px, 1.55fr) minmax(0, 0.48fr) minmax(0, 0.48fr) minmax(0, 0.42fr) minmax(0, 0.4fr) auto;
   gap: 0.65rem;
   align-items: end;
 }
@@ -4074,7 +4306,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logo
 .dashboard-filter-grid {
   gap: 0.75rem;
   align-items: end;
-  grid-template-columns: minmax(250px, 1.25fr) repeat(4, minmax(150px, 0.72fr)) max-content;
+  grid-template-columns: minmax(250px, 1.35fr) minmax(0, 0.48fr) minmax(0, 0.48fr) minmax(0, 0.42fr) minmax(0, 0.4fr) max-content;
 }
 
 .dashboard-filter-field-search {

@@ -807,6 +807,40 @@ function initializeSidebarToggle() {
   });
 }
 
+function initializeSidebarLeadershipGroup() {
+  const group = document.querySelector("[data-sidebar-leadership-group]");
+  const toggle = document.querySelector("[data-sidebar-leadership-toggle]");
+  const panel = document.querySelector("[data-sidebar-leadership-panel]");
+  if (!group || !toggle || !panel) return;
+
+  const setOpen = (open) => {
+    group.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+
+    if (open) {
+      panel.hidden = false;
+      window.requestAnimationFrame(() => {
+        group.classList.add("is-open");
+      });
+      return;
+    }
+
+    group.classList.remove("is-open");
+    window.setTimeout(() => {
+      if (!group.classList.contains("is-open")) {
+        panel.hidden = true;
+      }
+    }, 230);
+  };
+
+  toggle.addEventListener("click", event => {
+    event.preventDefault();
+    setOpen(!group.classList.contains("is-open"));
+  });
+
+  setOpen(group.classList.contains("is-open"));
+}
+
 function initializeToolbarMenu() {
   const shell = document.querySelector("[data-toolbar-menu]");
   const toggle = document.querySelector("[data-toolbar-menu-toggle]");
@@ -4196,6 +4230,7 @@ initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();
 initializeSidebarToggle();
+initializeSidebarLeadershipGroup();
 initializeToolbarMenu();
 initializeCustomDatePickers();
 initializeDeveloperTodoList();
