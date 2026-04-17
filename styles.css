@@ -2430,15 +2430,15 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before {
-  content: "⌂";
+  content: "▣";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before {
-  content: "▤";
+  content: "▥";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before {
-  content: "◆";
+  content: "⌘";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/user/"]::before {
@@ -2446,7 +2446,7 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
-  content: "⎋";
+  content: "↪";
 }
 
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before,
