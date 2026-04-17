@@ -2389,29 +2389,25 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   margin-top: auto;
   display: flex;
   align-items: stretch;
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .dashboard-sidebar-bottom .dashboard-profile-card {
   flex: 1 1 auto;
-  min-height: 3.55rem;
-  padding: 0.8rem 0.9rem;
+  min-height: 3.35rem;
+  padding: 0.72rem 0.85rem;
 }
 
 .dashboard-sidebar-logout {
-  flex: 0 0 3.35rem;
+  flex: 0 0 3rem;
   justify-content: center;
   padding: 0;
   border-radius: 16px;
-  min-height: 3.55rem;
+  min-height: 3.35rem;
 }
 
 .dashboard-sidebar-logout .dashboard-nav-emoji {
   width: auto;
-}
-
-.dashboard-sidebar-logout span:last-child {
-  display: none;
 }
 
 .workspace-dashboard .dashboard-profile-card-plain {
@@ -2482,50 +2478,8 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   }
 }
 
-.dashboard-sidebar-status {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.dashboard-status-pill {
-  display: grid;
-  gap: 0.18rem;
-  padding: 0.72rem 0.75rem 0.68rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-}
-
-.dashboard-status-pill strong {
-  font-size: 0.82rem;
-  letter-spacing: -0.02em;
-  color: #fff8ef;
-}
-
-.dashboard-status-pill span {
-  font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.58);
-  line-height: 1.15;
-}
-
-.workspace-dashboard .dashboard-sidebar-meta {
-  margin-bottom: 0.15rem;
-}
-
-.workspace-dashboard .dashboard-chip {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.dashboard-chip-muted {
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 248, 239, 0.72);
-}
-
 .workspace-dashboard .dashboard-nav {
-  gap: 0.42rem;
+  gap: 0.34rem;
   min-height: 0;
   overflow-y: auto;
   padding-right: 0.25rem;
@@ -2533,14 +2487,14 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-nav-link {
-  min-height: 2.55rem;
-  padding: 0 0.85rem;
-  border-radius: 11px;
+  min-height: 2.3rem;
+  padding: 0 0.75rem;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   background: rgba(255, 255, 255, 0.015);
   position: relative;
-  padding-left: 2.7rem;
+  padding-left: 2.4rem;
 }
 
 .workspace-dashboard .dashboard-side-section {
@@ -2559,8 +2513,74 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   line-height: 1.35;
 }
 
+.workspace-dashboard .dashboard-side-toggle {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.workspace-dashboard .dashboard-side-toggle > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  cursor: pointer;
+}
+
+.workspace-dashboard .dashboard-side-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-dashboard .dashboard-side-toggle-chevron {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.52);
+  transition: transform 180ms ease;
+}
+
+.workspace-dashboard .dashboard-side-toggle[open] .dashboard-side-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.workspace-dashboard .dashboard-side-toggle-body {
+  display: grid;
+  gap: 0.72rem;
+}
+
 .workspace-dashboard .dashboard-sidebar-bottom {
   align-self: end;
+}
+
+.workspace-dashboard .dashboard-side-toggle {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.workspace-dashboard .dashboard-side-toggle > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  cursor: pointer;
+}
+
+.workspace-dashboard .dashboard-side-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+
+.workspace-dashboard .dashboard-side-toggle-chevron {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.55);
+  transition: transform 180ms ease;
+}
+
+.workspace-dashboard .dashboard-side-toggle[open] .dashboard-side-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.workspace-dashboard .dashboard-side-toggle-body {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .workspace-dashboard .dashboard-nav-emoji {
@@ -2573,11 +2593,12 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 
 .workspace-dashboard .dashboard-nav-link.dashboard-sidebar-logout .dashboard-nav-emoji {
   display: inline-flex;
+  font-size: 1rem;
 }
 
 .workspace-dashboard .dashboard-nav-link .dashboard-nav-emoji {
-  width: 1.1rem;
-  font-size: 0.92rem;
+  width: 1rem;
+  font-size: 0.88rem;
 }
 
 .workspace-dashboard .dashboard-nav-link::before {

@@ -78,11 +78,17 @@ $bootstrapJson = json_encode(
         <?php endif; ?>
         <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
       </nav>
-
       <section class="dashboard-side-section">
-        <p class="dashboard-kicker">🗂️ Control mode</p>
-        <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
-        <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
+        <details class="dashboard-side-toggle">
+          <summary class="dashboard-side-toggle-summary">
+            <span class="dashboard-kicker">??? Control mode</span>
+            <span class="dashboard-side-toggle-chevron" aria-hidden="true">?</span>
+          </summary>
+          <div class="dashboard-side-toggle-body">
+            <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
+            <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
+          </div>
+        </details>
       </section>
 
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
@@ -93,7 +99,7 @@ $bootstrapJson = json_encode(
           </div>
         </section>
 
-        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"><span class="dashboard-nav-emoji" aria-hidden="true">??</span></a>
       </section>
     </aside>
 
@@ -672,3 +678,4 @@ $bootstrapJson = json_encode(
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
 </html>
+
