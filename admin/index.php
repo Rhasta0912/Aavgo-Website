@@ -124,9 +124,8 @@ $bootstrapJson = json_encode(
       </nav>
       <section class="dashboard-side-section">
         <div class="dashboard-side-toggle is-open" data-sidebar-control>
-          <button class="dashboard-side-toggle-summary" type="button" data-sidebar-control-toggle aria-expanded="true" aria-controls="dashboard-side-control-body-admin">
-            <span class="dashboard-kicker">Control mode</span>
-            <span class="dashboard-side-toggle-chevron" aria-hidden="true"></span>
+          <button class="dashboard-side-toggle-summary" type="button" data-sidebar-control-toggle aria-expanded="true" aria-controls="dashboard-side-control-body-admin" aria-label="Toggle control mode">
+            <span class="dashboard-side-toggle-icon" aria-hidden="true">◉</span>
           </button>
           <div class="dashboard-side-toggle-body" id="dashboard-side-control-body-admin">
             <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
@@ -136,13 +135,10 @@ $bootstrapJson = json_encode(
       </section>
 
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
-        <section class="dashboard-profile-card dashboard-profile-card-plain">
-          <div class="dashboard-profile-copy">
-            <strong><?php echo $safeDisplayName; ?></strong>
-            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($sidebarRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeSidebarRoleLabel; ?></p>
-          </div>
-        </section>
-
+        <div class="dashboard-sidebar-footer-copy">
+          <strong><?php echo $safeDisplayName; ?></strong>
+          <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($sidebarRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeSidebarRoleLabel; ?></p>
+        </div>
         <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
       </section>
     </aside>
