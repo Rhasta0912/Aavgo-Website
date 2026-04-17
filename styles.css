@@ -2261,6 +2261,11 @@ body.sidebar-collapsed .dashboard-nav-link span:last-child {
   white-space: nowrap;
 }
 
+body.sidebar-collapsed .dashboard-nav-link::before {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .workspace-dashboard .dashboard-sidebar-admin,
 .workspace-dashboard .dashboard-sidebar-user {
   position: sticky;
@@ -2388,10 +2393,43 @@ body.sidebar-collapsed .dashboard-nav-link span:last-child {
   border-radius: 12px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.015);
+  position: relative;
+  padding-left: 3rem;
 }
 
 .workspace-dashboard .dashboard-nav-emoji {
+  display: none;
+}
+
+.workspace-dashboard .dashboard-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 1rem;
   width: 1.25rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/admin/"]::before {
+  content: "🏛";
+}
+
+.workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before {
+  content: "📊";
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before {
+  content: "🧭";
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/user/"]::before {
+  content: "👤";
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
+  content: "🚪";
 }
 
 .workspace-dashboard .dashboard-nav-link span:last-child {
