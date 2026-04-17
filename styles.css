@@ -2253,6 +2253,9 @@ body.sidebar-collapsed .dashboard-nav-link {
   font-size: 0 !important;
   line-height: 0 !important;
   color: transparent !important;
+  background: #050505 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
 }
 
 body.sidebar-collapsed .dashboard-nav-link span,
@@ -2273,8 +2276,9 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   left: 50%;
   transform: translateX(-50%);
   font-size: 1rem;
-  color: rgba(244, 244, 244, 0.92);
-  filter: grayscale(1) saturate(0) brightness(0.12) contrast(2);
+  color: #000 !important;
+  filter: none !important;
+  text-shadow: 0 0 0 #000;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin,
@@ -2421,27 +2425,28 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   font-size: 1rem;
   line-height: 1;
   color: rgba(255, 255, 255, 0.68);
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", sans-serif;
   transition: left 180ms ease, transform 180ms ease, color 180ms ease;
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before {
-  content: "🏛";
+  content: "⌂";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before {
-  content: "📊";
+  content: "▤";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before {
-  content: "🧭";
+  content: "◆";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/user/"]::before {
-  content: "👤";
+  content: "◉";
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
-  content: "🚪";
+  content: "⎋";
 }
 
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before,
@@ -2449,7 +2454,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="#leadershi
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/user/"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
-  filter: grayscale(1) saturate(0) brightness(0.12) contrast(2);
+  color: #000 !important;
+  filter: none !important;
 }
 
 .workspace-dashboard .dashboard-nav-link span:last-child {
