@@ -2276,9 +2276,9 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   left: 50%;
   transform: translateX(-50%);
   font-size: 1rem;
-  color: #000 !important;
+  color: #f5f5f5 !important;
   filter: none !important;
-  text-shadow: 0 0 0 #000;
+  text-shadow: 0 0 0 #f5f5f5;
 }
 
 .workspace-dashboard .dashboard-sidebar-admin,
@@ -2454,7 +2454,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="#leadershi
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/user/"]::before,
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
-  color: #000 !important;
+  color: #f5f5f5 !important;
   filter: none !important;
 }
 
