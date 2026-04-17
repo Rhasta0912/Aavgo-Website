@@ -21,6 +21,7 @@ jobs:
           cp index.html deploy/index.html
           cp styles.css deploy/styles.css
           cp script.js deploy/script.js
+          cp -R portfolio deploy/portfolio
           cp -R admin deploy/admin
           cp -R user deploy/user
           cp -R api deploy/api
