@@ -2298,9 +2298,14 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   border-radius: 0 22px 22px 0;
   border-left: none;
   border-right: none;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
+  background:
+    radial-gradient(circle at 12% 2%, rgba(255, 255, 255, 0.08) 0, transparent 28%),
+    radial-gradient(circle at 92% 100%, rgba(255, 255, 255, 0.04) 0, transparent 32%),
+    linear-gradient(180deg, rgba(18, 20, 25, 0.98) 0%, rgba(12, 14, 18, 0.98) 100%);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.05),
+    0 22px 52px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
   overflow: visible;
   transition:
     width 220ms ease,
@@ -2380,6 +2385,11 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 .workspace-dashboard .dashboard-profile-card-plain {
   position: relative;
   padding-left: 1.05rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .workspace-dashboard .dashboard-profile-card-plain::before {
@@ -2389,6 +2399,34 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   width: 4px;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(159, 168, 182, 0.95) 0%, rgba(104, 113, 126, 0.78) 100%);
+}
+
+.dashboard-sidebar-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.dashboard-status-pill {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.72rem 0.75rem 0.68rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-status-pill strong {
+  font-size: 0.82rem;
+  letter-spacing: -0.02em;
+  color: #fff8ef;
+}
+
+.dashboard-status-pill span {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.15;
 }
 
 .workspace-dashboard .dashboard-sidebar-meta {

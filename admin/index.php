@@ -74,6 +74,21 @@ $bootstrapJson = json_encode(
         </div>
       </section>
 
+      <section class="dashboard-sidebar-status" aria-label="Workspace status">
+        <div class="dashboard-status-pill">
+          <strong>Private</strong>
+          <span>Discord gated</span>
+        </div>
+        <div class="dashboard-status-pill">
+          <strong>Live</strong>
+          <span>Role sync</span>
+        </div>
+        <div class="dashboard-status-pill">
+          <strong>Calm</strong>
+          <span>Low clutter</span>
+        </div>
+      </section>
+
       <div class="dashboard-sidebar-meta">
         <?php foreach ($roleLabels as $roleLabel): ?>
           <?php $roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleLabel)); ?>
