@@ -4192,27 +4192,10 @@ function initializeDeveloperWorkspace() {
   });
 }
 
-function initializeSidebarControlToggle() {
-  document.querySelectorAll("[data-sidebar-control]").forEach(container => {
-    const toggle = container.querySelector("[data-sidebar-control-toggle]");
-    if (!toggle) return;
-
-    const setOpen = open => {
-      container.classList.toggle("is-open", open);
-      toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    };
-
-    toggle.addEventListener("click", () => {
-      setOpen(!container.classList.contains("is-open"));
-    });
-  });
-}
-
 initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();
 initializeSidebarToggle();
-initializeSidebarControlToggle();
 initializeToolbarMenu();
 initializeCustomDatePickers();
 initializeDeveloperTodoList();

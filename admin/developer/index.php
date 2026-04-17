@@ -91,18 +91,6 @@ $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabe
         <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
       </nav>
 
-      <section class="dashboard-side-section">
-        <div class="dashboard-side-toggle is-open" data-sidebar-control>
-          <button class="dashboard-side-toggle-summary" type="button" data-sidebar-control-toggle aria-expanded="true" aria-controls="dashboard-side-control-body-developer" aria-label="Toggle control mode">
-            <span class="dashboard-side-toggle-icon" aria-hidden="true">◉</span>
-          </button>
-          <div class="dashboard-side-toggle-body" id="dashboard-side-control-body-developer">
-            <strong>Roadmap work stays open.</strong>
-            <p>Use the board, archive, and audit tabs to keep tasks clean and trackable.</p>
-          </div>
-        </div>
-      </section>
-
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
         <div class="dashboard-sidebar-footer-copy">
           <strong><?php echo $safeDisplayName; ?></strong>
