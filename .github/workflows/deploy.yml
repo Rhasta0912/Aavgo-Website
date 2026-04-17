@@ -47,6 +47,6 @@ jobs:
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
-          mirror -R --verbose deploy/ /
+          mirror -R --verbose deploy/ public_html/
           bye
           "
