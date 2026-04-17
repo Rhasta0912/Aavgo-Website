@@ -2437,15 +2437,15 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before {
-  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='4' width='18' height='16' rx='4'/%3E%3Crect x='6' y='7' width='4' height='4' rx='1'/%3E%3Crect x='12' y='7' width='6' height='4' rx='1'/%3E%3Crect x='6' y='13' width='12' height='3' rx='1'/%3E%3C/svg%3E");
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='3.5'/%3E%3Cpath d='M8 8h8'/%3E%3Cpath d='M8 12h8'/%3E%3Cpath d='M8 16h8'/%3E%3C/svg%3E");
 }
 
 .workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before {
-  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='5' width='18' height='15' rx='4'/%3E%3Crect x='6' y='3' width='2' height='4' rx='1'/%3E%3Crect x='16' y='3' width='2' height='4' rx='1'/%3E%3Crect x='6' y='10' width='12' height='1.8' rx='0.9'/%3E%3Crect x='6' y='14' width='12' height='1.8' rx='0.9'/%3E%3C/svg%3E");
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='7.5'/%3E%3Cpath d='M12 8v4l2.5 1.5'/%3E%3C/svg%3E");
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/admin/developer/"]::before {
-  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 6L4 12l5 6'/%3E%3Cpath d='M15 6l5 6-5 6'/%3E%3Crect x='11' y='4' width='2' height='16' rx='1'/%3E%3C/svg%3E");
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 7L3.5 12 8 17'/%3E%3Cpath d='M16 7l4.5 5-4.5 5'/%3E%3Cpath d='M10.5 6.5l3 11'/%3E%3C/svg%3E");
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/user/"]::before {
