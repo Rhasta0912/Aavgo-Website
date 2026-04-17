@@ -11,20 +11,46 @@ $roleLabels = aavgo_user_role_labels($user);
 $roleSummary = aavgo_user_role_summary($user);
 $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
 $viewerPerson = aavgo_find_hours_person_for_user($user);
-$sidebarRoleLabel = '';
+$sidebarRoleCandidates = [];
+if (aavgo_user_is_developer($user)) {
+    $sidebarRoleCandidates[] = 'Developer';
+}
+foreach ($roleLabels as $roleLabelCandidate) {
+    $roleLabelCandidate = trim((string) $roleLabelCandidate);
+    if ($roleLabelCandidate !== '') {
+        $sidebarRoleCandidates[] = $roleLabelCandidate;
+    }
+}
 if (is_array($viewerPerson)) {
     $snapshotRoleLabels = is_array($viewerPerson['roleLabels'] ?? null) ? array_values(array_filter(array_map('trim', $viewerPerson['roleLabels']))) : [];
-    if ($snapshotRoleLabels !== []) {
-        $sidebarRoleLabel = $snapshotRoleLabels[0];
-    } else {
-        $snapshotRole = trim((string) ($viewerPerson['role'] ?? ''));
-        if ($snapshotRole !== '') {
-            $sidebarRoleLabel = $snapshotRole;
-        }
+    foreach ($snapshotRoleLabels as $snapshotRoleLabel) {
+        $sidebarRoleCandidates[] = $snapshotRoleLabel;
+    }
+
+    $snapshotRole = trim((string) ($viewerPerson['role'] ?? ''));
+    if ($snapshotRole !== '') {
+        $sidebarRoleCandidates[] = $snapshotRole;
+    }
+}
+$sidebarRoleLabel = '';
+$fallbackSidebarRoleLabel = '';
+foreach ($sidebarRoleCandidates as $candidate) {
+    $candidate = trim((string) $candidate);
+    if ($candidate === '') {
+        continue;
+    }
+
+    if (!in_array($candidate, ['Leadership', 'User'], true)) {
+        $sidebarRoleLabel = $candidate;
+        break;
+    }
+
+    if ($fallbackSidebarRoleLabel === '') {
+        $fallbackSidebarRoleLabel = $candidate;
     }
 }
 if ($sidebarRoleLabel === '') {
-    $sidebarRoleLabel = $roleLabels[0] ?? '';
+    $sidebarRoleLabel = $fallbackSidebarRoleLabel;
 }
 if ($sidebarRoleLabel === '') {
     $sidebarRoleLabel = aavgo_user_access_level($user) === 'admin' ? 'Leadership' : 'User';
@@ -97,16 +123,16 @@ $bootstrapJson = json_encode(
         <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
       </nav>
       <section class="dashboard-side-section">
-        <details class="dashboard-side-toggle">
-          <summary class="dashboard-side-toggle-summary">
+        <div class="dashboard-side-toggle is-open" data-sidebar-control>
+          <button class="dashboard-side-toggle-summary" type="button" data-sidebar-control-toggle aria-expanded="true" aria-controls="dashboard-side-control-body-admin">
             <span class="dashboard-kicker">Control mode</span>
             <span class="dashboard-side-toggle-chevron" aria-hidden="true"></span>
-          </summary>
-          <div class="dashboard-side-toggle-body">
+          </button>
+          <div class="dashboard-side-toggle-body" id="dashboard-side-control-body-admin">
             <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
             <p>The rail stays anchored, the board stays calm, and the controls stay close to the data they affect.</p>
           </div>
-        </details>
+        </div>
       </section>
 
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">

@@ -11,8 +11,56 @@ if (!aavgo_user_is_developer($user)) {
 
 $displayName = aavgo_display_name($user);
 $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+$roleLabels = aavgo_user_role_labels($user);
 $roleSummary = aavgo_user_role_summary($user);
 $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
+$viewerPerson = aavgo_find_hours_person_for_user($user);
+$sidebarRoleCandidates = [];
+if (aavgo_user_is_developer($user)) {
+    $sidebarRoleCandidates[] = 'Developer';
+}
+foreach ($roleLabels as $roleLabelCandidate) {
+    $roleLabelCandidate = trim((string) $roleLabelCandidate);
+    if ($roleLabelCandidate !== '') {
+        $sidebarRoleCandidates[] = $roleLabelCandidate;
+    }
+}
+if (is_array($viewerPerson)) {
+    $snapshotRoleLabels = is_array($viewerPerson['roleLabels'] ?? null) ? array_values(array_filter(array_map('trim', $viewerPerson['roleLabels']))) : [];
+    foreach ($snapshotRoleLabels as $snapshotRoleLabel) {
+        $sidebarRoleCandidates[] = $snapshotRoleLabel;
+    }
+
+    $snapshotRole = trim((string) ($viewerPerson['role'] ?? ''));
+    if ($snapshotRole !== '') {
+        $sidebarRoleCandidates[] = $snapshotRole;
+    }
+}
+$sidebarRoleLabel = '';
+$fallbackSidebarRoleLabel = '';
+foreach ($sidebarRoleCandidates as $candidate) {
+    $candidate = trim((string) $candidate);
+    if ($candidate === '') {
+        continue;
+    }
+
+    if (!in_array($candidate, ['Leadership', 'User'], true)) {
+        $sidebarRoleLabel = $candidate;
+        break;
+    }
+
+    if ($fallbackSidebarRoleLabel === '') {
+        $fallbackSidebarRoleLabel = $candidate;
+    }
+}
+if ($sidebarRoleLabel === '') {
+    $sidebarRoleLabel = $fallbackSidebarRoleLabel;
+}
+if ($sidebarRoleLabel === '') {
+    $sidebarRoleLabel = aavgo_user_is_developer($user) ? 'Developer' : 'Leadership';
+}
+$safeSidebarRoleLabel = htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8');
+$sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabel));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,19 +85,35 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       </div>
 
-      <section class="dashboard-profile-card dashboard-profile-card-plain">
-        <div class="dashboard-profile-copy">
-          <strong><?php echo $safeDisplayName; ?></strong>
-          <p><?php echo $safeRoleSummary; ?></p>
+      <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Developer navigation">
+        <a class="dashboard-nav-link" href="/admin/"><span class="dashboard-nav-emoji" aria-hidden="true">🏛️</span><span>Leadership board</span></a>
+        <a class="dashboard-nav-link is-active" href="/admin/developer/"><span class="dashboard-nav-emoji" aria-hidden="true">🧭</span><span>Developer panel</span></a>
+        <a class="dashboard-nav-link" href="/user/"><span class="dashboard-nav-emoji" aria-hidden="true">👤</span><span>User workspace</span></a>
+      </nav>
+
+      <section class="dashboard-side-section">
+        <div class="dashboard-side-toggle is-open" data-sidebar-control>
+          <button class="dashboard-side-toggle-summary" type="button" data-sidebar-control-toggle aria-expanded="true" aria-controls="dashboard-side-control-body-developer">
+            <span class="dashboard-kicker">Control mode</span>
+            <span class="dashboard-side-toggle-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="dashboard-side-toggle-body" id="dashboard-side-control-body-developer">
+            <strong>Roadmap work stays open, breathable, and easy to move.</strong>
+            <p>Use the board, archive, and audit tabs to keep tasks clean and trackable.</p>
+          </div>
         </div>
       </section>
 
-      <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Developer navigation">
-        <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
-        <a class="dashboard-nav-link is-active" href="/admin/developer/">Developer panel</a>
-        <a class="dashboard-nav-link" href="/user/">User workspace</a>
-        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
-      </nav>
+      <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
+        <section class="dashboard-profile-card dashboard-profile-card-plain">
+          <div class="dashboard-profile-copy">
+            <strong><?php echo $safeDisplayName; ?></strong>
+            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($sidebarRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeSidebarRoleLabel; ?></p>
+          </div>
+        </section>
+
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
+      </section>
 
     </aside>
 
@@ -71,7 +135,7 @@ $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
               <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
               <span class="dashboard-toolbar-profile-copy">
                 <strong><?php echo $safeDisplayName; ?></strong>
-                <small><?php echo $safeRoleSummary; ?></small>
+                <small><?php echo $safeSidebarRoleLabel; ?></small>
               </span>
             </button>
             <div class="dashboard-toolbar-dropdown" data-toolbar-menu-panel hidden>
