@@ -10,6 +10,9 @@ $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $roleLabels = aavgo_user_role_labels($user);
 $roleSummary = aavgo_user_role_summary($user);
 $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
+$primaryRoleLabel = $roleLabels[0] ?? 'Leadership';
+$safePrimaryRoleLabel = htmlspecialchars($primaryRoleLabel, ENT_QUOTES, 'UTF-8');
+$primaryRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $primaryRoleLabel));
 $boardPayload = aavgo_build_admin_board_payload($user);
 $hoursData = is_array($boardPayload['data'] ?? null) ? $boardPayload['data'] : [];
 $summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
@@ -67,33 +70,6 @@ $bootstrapJson = json_encode(
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       </div>
 
-      <section class="dashboard-sidebar-status" aria-label="Workspace status">
-        <div class="dashboard-status-pill">
-          <strong>Private</strong>
-          <span>Discord gated</span>
-        </div>
-        <div class="dashboard-status-pill">
-          <strong>Live</strong>
-          <span>Role sync</span>
-        </div>
-        <div class="dashboard-status-pill">
-          <strong>Calm</strong>
-          <span>Low clutter</span>
-        </div>
-      </section>
-
-      <div class="dashboard-sidebar-meta">
-        <?php foreach ($roleLabels as $roleLabel): ?>
-          <?php $roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleLabel)); ?>
-          <span
-            class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>"
-            data-role="<?php echo htmlspecialchars($roleKey, ENT_QUOTES, 'UTF-8'); ?>"
-          >
-            <?php echo htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8'); ?>
-          </span>
-        <?php endforeach; ?>
-      </div>
-
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="Leadership navigation">
         <a class="dashboard-nav-link is-active" href="/admin/"><span class="dashboard-nav-emoji" aria-hidden="true">🏛️</span><span>Leadership board</span></a>
         <a class="dashboard-nav-link" href="#leadership-full-hours"><span class="dashboard-nav-emoji" aria-hidden="true">📊</span><span>Full hours</span></a>
@@ -113,11 +89,11 @@ $bootstrapJson = json_encode(
         <section class="dashboard-profile-card dashboard-profile-card-plain">
           <div class="dashboard-profile-copy">
             <strong><?php echo $safeDisplayName; ?></strong>
-            <p><?php echo $safeRoleSummary; ?></p>
+            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($primaryRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safePrimaryRoleLabel; ?></p>
           </div>
         </section>
 
-        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"><span class="dashboard-nav-emoji" aria-hidden="true">🚪</span><span>Log out</span></a>
       </section>
     </aside>
 
