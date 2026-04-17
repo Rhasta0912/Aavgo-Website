@@ -98,7 +98,7 @@ $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabe
             <span class="dashboard-side-toggle-chevron" aria-hidden="true"></span>
           </button>
           <div class="dashboard-side-toggle-body" id="dashboard-side-control-body-developer">
-            <strong>Roadmap work stays open, breathable, and easy to move.</strong>
+            <strong>Roadmap work stays open.</strong>
             <p>Use the board, archive, and audit tabs to keep tasks clean and trackable.</p>
           </div>
         </div>

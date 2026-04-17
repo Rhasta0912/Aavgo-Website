@@ -151,7 +151,7 @@ $bootstrapJson = json_encode(
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
           <p class="dashboard-breadcrumb">Dashboard / Leadership / Operations</p>
-          <h1 class="dashboard-title dashboard-title-wide">Leadership board for live hours, clean reassignment, and safer control.</h1>
+          <h1 class="dashboard-title dashboard-title-wide">Leadership board for live hours, clean reassignment, safer control.</h1>
           <p class="dashboard-subtitle">
             The clutter is stripped back. This is now about actual staff, actual hotel/team decisions, and a visible audit trail for every action.
           </p>
