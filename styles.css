@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #efe7d9;
   --bg-soft: rgba(255, 250, 242, 0.8);
   --surface: rgba(255, 250, 242, 0.78);
@@ -2390,12 +2390,22 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   display: flex;
   align-items: stretch;
   gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.018) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 12px 26px rgba(0, 0, 0, 0.12);
 }
 
 .dashboard-sidebar-bottom .dashboard-profile-card {
   flex: 1 1 auto;
   min-height: 3.35rem;
-  padding: 0.72rem 0.85rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.05rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .dashboard-sidebar-logout {
@@ -2412,12 +2422,10 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 
 .workspace-dashboard .dashboard-profile-card-plain {
   position: relative;
-  padding-left: 1.05rem;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.03) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 12px 28px rgba(0, 0, 0, 0.16);
+  padding-left: 1rem;
+  padding-right: 0.25rem;
+  background: transparent;
+  box-shadow: none;
 }
 
 .workspace-dashboard .dashboard-profile-card-plain::before {
@@ -2532,13 +2540,24 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-side-toggle-chevron {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.52);
+  position: relative;
+  width: 0.6rem;
+  height: 0.6rem;
+  flex: 0 0 auto;
+}
+
+.workspace-dashboard .dashboard-side-toggle-chevron::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-right: 2px solid rgba(255, 255, 255, 0.52);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.52);
+  transform: rotate(45deg);
   transition: transform 180ms ease;
 }
 
-.workspace-dashboard .dashboard-side-toggle[open] .dashboard-side-toggle-chevron {
-  transform: rotate(180deg);
+.workspace-dashboard .dashboard-side-toggle[open] .dashboard-side-toggle-chevron::before {
+  transform: rotate(-135deg);
 }
 
 .workspace-dashboard .dashboard-side-toggle-body {
@@ -2546,42 +2565,6 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   gap: 0.72rem;
 }
 
-.workspace-dashboard .dashboard-sidebar-bottom {
-  align-self: end;
-}
-
-.workspace-dashboard .dashboard-side-toggle {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.workspace-dashboard .dashboard-side-toggle > summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  cursor: pointer;
-}
-
-.workspace-dashboard .dashboard-side-toggle > summary::-webkit-details-marker {
-  display: none;
-}
-
-.workspace-dashboard .dashboard-side-toggle-chevron {
-  font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.55);
-  transition: transform 180ms ease;
-}
-
-.workspace-dashboard .dashboard-side-toggle[open] .dashboard-side-toggle-chevron {
-  transform: rotate(180deg);
-}
-
-.workspace-dashboard .dashboard-side-toggle-body {
-  display: grid;
-  gap: 0.75rem;
-}
 
 .workspace-dashboard .dashboard-nav-emoji {
   display: none;
@@ -2589,11 +2572,11 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 
 .workspace-dashboard .dashboard-nav-link.dashboard-sidebar-logout {
   padding-left: 0;
+  min-height: 3.35rem;
 }
 
-.workspace-dashboard .dashboard-nav-link.dashboard-sidebar-logout .dashboard-nav-emoji {
-  display: inline-flex;
-  font-size: 1rem;
+.workspace-dashboard .dashboard-nav-link.dashboard-sidebar-logout::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 6H5.5A2.5 2.5 0 0 0 3 8.5v7A2.5 2.5 0 0 0 5.5 18H8'/%3E%3Cpath d='M12 12h8'/%3E%3Cpath d='M16 8l4 4-4 4'/%3E%3C/svg%3E");
 }
 
 .workspace-dashboard .dashboard-nav-link .dashboard-nav-emoji {
@@ -2631,7 +2614,7 @@ body.sidebar-collapsed .dashboard-nav-link::before {
 }
 
 .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
-  content: "↩";
+  content: "?";
   width: auto;
   height: auto;
   background: none;
@@ -6372,4 +6355,5 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/auth/logo
   border-color: rgba(24, 32, 44, 0.08);
   background: rgba(255, 252, 248, 0.9);
 }
+
 

@@ -10,9 +10,27 @@ $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
 $roleLabels = aavgo_user_role_labels($user);
 $roleSummary = aavgo_user_role_summary($user);
 $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
-$primaryRoleLabel = $roleLabels[0] ?? 'Leadership';
-$safePrimaryRoleLabel = htmlspecialchars($primaryRoleLabel, ENT_QUOTES, 'UTF-8');
-$primaryRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $primaryRoleLabel));
+$viewerPerson = aavgo_find_hours_person_for_user($user);
+$sidebarRoleLabel = '';
+if (is_array($viewerPerson)) {
+    $snapshotRoleLabels = is_array($viewerPerson['roleLabels'] ?? null) ? array_values(array_filter(array_map('trim', $viewerPerson['roleLabels']))) : [];
+    if ($snapshotRoleLabels !== []) {
+        $sidebarRoleLabel = $snapshotRoleLabels[0];
+    } else {
+        $snapshotRole = trim((string) ($viewerPerson['role'] ?? ''));
+        if ($snapshotRole !== '') {
+            $sidebarRoleLabel = $snapshotRole;
+        }
+    }
+}
+if ($sidebarRoleLabel === '') {
+    $sidebarRoleLabel = $roleLabels[0] ?? '';
+}
+if ($sidebarRoleLabel === '') {
+    $sidebarRoleLabel = aavgo_user_access_level($user) === 'admin' ? 'Leadership' : 'User';
+}
+$safeSidebarRoleLabel = htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8');
+$sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabel));
 $boardPayload = aavgo_build_admin_board_payload($user);
 $hoursData = is_array($boardPayload['data'] ?? null) ? $boardPayload['data'] : [];
 $summary = is_array($hoursData['summary'] ?? null) ? $hoursData['summary'] : [];
@@ -81,8 +99,8 @@ $bootstrapJson = json_encode(
       <section class="dashboard-side-section">
         <details class="dashboard-side-toggle">
           <summary class="dashboard-side-toggle-summary">
-            <span class="dashboard-kicker">? Control mode</span>
-            <span class="dashboard-side-toggle-chevron" aria-hidden="true">v</span>
+            <span class="dashboard-kicker">Control mode</span>
+            <span class="dashboard-side-toggle-chevron" aria-hidden="true"></span>
           </summary>
           <div class="dashboard-side-toggle-body">
             <strong>Leadership actions now stay in one lane: live hours, clean reassignment, and readable audit history.</strong>
@@ -95,11 +113,11 @@ $bootstrapJson = json_encode(
         <section class="dashboard-profile-card dashboard-profile-card-plain">
           <div class="dashboard-profile-copy">
             <strong><?php echo $safeDisplayName; ?></strong>
-            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($primaryRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safePrimaryRoleLabel; ?></p>
+            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars($sidebarRoleKey, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeSidebarRoleLabel; ?></p>
           </div>
         </section>
 
-        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"><span class="dashboard-nav-emoji" aria-hidden="true">??</span></a>
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
       </section>
     </aside>
 
@@ -123,7 +141,7 @@ $bootstrapJson = json_encode(
               <span class="dashboard-toolbar-avatar"><?php echo htmlspecialchars(strtoupper(substr($displayName, 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
               <span class="dashboard-toolbar-profile-copy">
                 <strong><?php echo $safeDisplayName; ?></strong>
-                <small><?php echo $safeRoleSummary; ?></small>
+                <small><?php echo $safeSidebarRoleLabel; ?></small>
               </span>
             </button>
             <div class="dashboard-toolbar-dropdown" data-toolbar-menu-panel hidden>
