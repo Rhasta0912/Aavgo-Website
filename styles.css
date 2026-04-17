@@ -5606,20 +5606,6 @@ body.sidebar-collapsed .dashboard-nav-link::before {
   margin-top: 1rem;
 }
 
-/* Video 68 polish: fuller collapse, warmer light mode, wider spreadsheet, and Trello-style dev lanes */
-body.sidebar-collapsed .dashboard-shell-admin,
-body.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 0 !important;
-}
-
-body.sidebar-collapsed .dashboard-sidebar-admin,
-body.sidebar-collapsed .dashboard-sidebar-user {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 .workspace-dashboard .dashboard-sidebar .dashboard-theme-toggle {
   display: none;
 }
@@ -6131,34 +6117,6 @@ body.sidebar-collapsed .dashboard-sidebar-user {
   border-color: rgba(190, 118, 22, 0.22);
 }
 
-body.sidebar-collapsed .dashboard-shell-admin,
-body.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 0 !important;
-}
-
-body.sidebar-collapsed .dashboard-sidebar-admin,
-body.sidebar-collapsed .dashboard-sidebar-user,
-.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-admin,
-.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-user {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  overflow: hidden !important;
-}
-
-body.sidebar-collapsed .dashboard-main-admin,
-body.sidebar-collapsed .dashboard-main-user {
-  width: 100% !important;
-  min-width: 0 !important;
-}
-
 .workspace-page-developer .dashboard-panel-history {
   margin-top: 0.2rem;
 }
@@ -6195,33 +6153,5 @@ body.sidebar-collapsed .dashboard-main-user {
 .theme-light .dashboard-developer-activity {
   border-color: rgba(24, 32, 44, 0.08);
   background: rgba(255, 252, 248, 0.9);
-}
-
-body.sidebar-collapsed .dashboard-shell-admin,
-body.sidebar-collapsed .dashboard-shell-user {
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 0 !important;
-}
-
-body.sidebar-collapsed .dashboard-sidebar-admin,
-body.sidebar-collapsed .dashboard-sidebar-user,
-.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-admin,
-.workspace-dashboard body.sidebar-collapsed .dashboard-sidebar-user {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  overflow: hidden !important;
-}
-
-body.sidebar-collapsed .dashboard-main-admin,
-body.sidebar-collapsed .dashboard-main-user {
-  width: 100% !important;
-  min-width: 0 !important;
 }
 
