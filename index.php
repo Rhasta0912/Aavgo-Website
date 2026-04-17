@@ -49,6 +49,7 @@ $scriptSrc = htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8'
 
           <div class="hero-actions hero-actions-centered frontdoor-actions">
             <a class="button button-primary frontdoor-button" href="/auth/discord/login/">Log in with Discord</a>
+            <a class="button button-secondary frontdoor-button" href="/portfolio/">View portfolio</a>
           </div>
 
           <p class="locked-note frontdoor-note">

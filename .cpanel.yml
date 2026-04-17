@@ -16,6 +16,7 @@ deployment:
     - /bin/mkdir -p $DEPLOYPATH/auth/discord/login
     - /bin/mkdir -p $DEPLOYPATH/auth/discord/callback
     - /bin/mkdir -p $DEPLOYPATH/auth/logout
+    - /bin/mkdir -p $DEPLOYPATH/portfolio
     - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
     - /bin/cp -f index.php $DEPLOYPATH/index.php
     - /bin/cp -f index.html $DEPLOYPATH/index.html
@@ -32,3 +33,4 @@ deployment:
     - /bin/cp -f auth/discord/login/index.php $DEPLOYPATH/auth/discord/login/index.php
     - /bin/cp -f auth/discord/callback/index.php $DEPLOYPATH/auth/discord/callback/index.php
     - /bin/cp -f auth/logout/index.php $DEPLOYPATH/auth/logout/index.php
+    - /bin/cp -f portfolio/index.php $DEPLOYPATH/portfolio/index.php
