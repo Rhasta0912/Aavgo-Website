@@ -4591,35 +4591,35 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hours-sheet thead th:nth-child(3),
 .dashboard-hours-sheet tbody td:nth-child(3) {
-  position: sticky;
-  left: 241px;
-  z-index: 6;
+  position: static;
+  left: auto;
+  z-index: 1;
   width: 82px;
   min-width: 82px;
   max-width: 82px;
-  background: #10131a;
+  background: transparent;
 }
 
 .dashboard-hours-sheet thead th:nth-child(4),
 .dashboard-hours-sheet tbody td:nth-child(4) {
-  position: sticky;
-  left: 323px;
-  z-index: 6;
+  position: static;
+  left: auto;
+  z-index: 1;
   width: 94px;
   min-width: 94px;
   max-width: 94px;
-  background: #10131a;
+  background: transparent;
 }
 
 .dashboard-hours-sheet thead th:nth-child(5),
 .dashboard-hours-sheet tbody td:nth-child(5) {
-  position: sticky;
-  left: 417px;
-  z-index: 6;
+  position: static;
+  left: auto;
+  z-index: 1;
   width: 124px;
   min-width: 124px;
   max-width: 124px;
-  background: #10131a;
+  background: transparent;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
@@ -4630,10 +4630,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 }
 
 .dashboard-hours-sheet thead th:nth-child(1),
-.dashboard-hours-sheet thead th:nth-child(2),
-.dashboard-hours-sheet thead th:nth-child(3),
-.dashboard-hours-sheet thead th:nth-child(4),
-.dashboard-hours-sheet thead th:nth-child(5) {
+.dashboard-hours-sheet thead th:nth-child(2) {
   z-index: 7;
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
 }
@@ -4655,8 +4652,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   background: rgba(216, 176, 95, 0.08);
 }
 
-.dashboard-hours-sheet tbody tr:hover td:nth-child(-n+5),
-.dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+5) {
+.dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
+.dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+2) {
   background: #141821;
 }
 
@@ -5907,8 +5904,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 }
 
 .theme-light .dashboard-hours-sheet thead th,
-.theme-light .dashboard-hours-sheet thead th:nth-child(-n+5),
-.theme-light .dashboard-hours-sheet tbody td:nth-child(-n+5) {
+.theme-light .dashboard-hours-sheet thead th:nth-child(-n+2),
+.theme-light .dashboard-hours-sheet tbody td:nth-child(-n+2) {
   background: #e8e1d4;
   color: rgba(24, 32, 44, 0.9);
 }
@@ -5922,8 +5919,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   background: rgba(191, 90, 50, 0.08);
 }
 
-.theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+5),
-.theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+5) {
+.theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
+.theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+2) {
   background: #e5ddcf;
 }
 
@@ -6740,8 +6737,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   border-color: rgba(24, 32, 44, 0.06);
 }
 
-.theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+5),
-.theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+5) {
+.theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
+.theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+2) {
   background: rgba(239, 229, 215, 0.9);
 }
 
