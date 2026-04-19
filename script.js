@@ -1721,12 +1721,6 @@ function renderHotelLaneCards(lanes) {
     return;
   }
 
-  const getInitials = (value) => {
-    const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "A";
-    return parts.slice(0, 2).map(part => part[0] || "").join("").toUpperCase() || "A";
-  };
-
   const groupedLanes = groupHotelLanesByTeam(lanes);
   container.innerHTML = groupedLanes.map(group => `
     <section class="dashboard-hotel-team-section">
@@ -1748,9 +1742,7 @@ function renderHotelLaneCards(lanes) {
       <div class="dashboard-hotel-lane-grid">
         ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => {
           const stats = getHotelLaneStats(lane);
-          const laneStaff = Array.isArray(lane?.staff) ? lane.staff : [];
           const liveCount = Number(stats.liveStaffCount || 0);
-          const idleCount = Number(stats.idleStaffCount || 0);
           const overtimeCount = Number(stats.overtimeStaffCount || 0);
           return `
             <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
@@ -1787,48 +1779,9 @@ function renderHotelLaneCards(lanes) {
                   <small>Week</small>
                 </span>
               </div>
-              <div class="dashboard-hotel-lane-roster">
-                <div class="dashboard-hotel-lane-staff-label">
-                  <span>Live roster</span>
-                  <small>${escapeHtml(String(idleCount))} idle - longest live ${formatHours(stats.longestLiveHours)}</small>
-                </div>
-                ${laneStaff.length > 0 ? `
-                  <ul class="dashboard-hotel-lane-staff">
-                    ${laneStaff.map(person => {
-                      const liveLabel = getHotelStaffStatusLabel(person);
-                      const isOvertime = Boolean(person?.activeNow) && (
-                        Number(person?.activeSession?.elapsedHours || 0) >= HOTEL_OVERTIME_HOURS ||
-                        Number(person?.weeklyHours || 0) >= 40
-                      );
-                      return `
-                        <li
-                          class="dashboard-hotel-staff-chip${String(person?.assignedHotelId || "") && String(person?.linkedHotelId || "") && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId) ? " is-mismatched" : ""}${isOvertime ? " is-overtime" : ""}"
-                          draggable="true"
-                          data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
-                          data-hotel-agent-name="${escapeHtml(person?.displayName || "Unknown")}"
-                          data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
-                          title="Drag to another hotel"
-                        >
-                          <div class="dashboard-hotel-staff-chip-avatar" aria-hidden="true">${escapeHtml(getInitials(person?.displayName || person?.username || "Unknown"))}</div>
-                          <div class="dashboard-hotel-staff-chip-copy">
-                            <div class="dashboard-hotel-staff-chip-main">
-                              <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-                              <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
-                            </div>
-                            <small class="dashboard-hotel-staff-chip-meta">
-                              ${escapeHtml(liveLabel)}
-                            </small>
-                          </div>
-                        </li>
-                      `;
-                    }).join("")}
-                  </ul>
-                ` : `
-                  <div class="dashboard-hotel-lane-empty">
-                    <strong>No assigned staff yet</strong>
-                    <span>This hotel is still waiting for its first visible row. Drag a staff chip here once one becomes visible.</span>
-                  </div>
-                `}
+              <div class="dashboard-hotel-lane-foot">
+                <span>Live focus: ${escapeHtml(String(liveCount))} active sessions logged in</span>
+                <small>Longest live ${formatHours(stats.longestLiveHours)} - idle ${escapeHtml(String(stats.idleStaffCount || 0))}</small>
               </div>
             </article>
           `;
