@@ -1850,10 +1850,11 @@ h2 {
 }
 
 .dashboard-hours-table-wrap {
-  overflow-x: hidden;
+  overflow: auto;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.025);
+  position: relative;
 }
 
 .dashboard-hours-table {
@@ -1894,27 +1895,47 @@ h2 {
 
 .dashboard-hours-table thead th:nth-child(1),
 .dashboard-hours-table tbody td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 3;
   width: 5.5rem;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(2),
 .dashboard-hours-table tbody td:nth-child(2) {
+  position: sticky;
+  left: 5.5rem;
+  z-index: 3;
   width: 18rem;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(3),
 .dashboard-hours-table tbody td:nth-child(3) {
+  position: sticky;
+  left: calc(5.5rem + 18rem);
+  z-index: 3;
   width: 9rem;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(4),
 .dashboard-hours-table tbody td:nth-child(4) {
+  position: sticky;
+  left: calc(5.5rem + 18rem + 9rem);
+  z-index: 3;
   width: 9rem;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(5),
 .dashboard-hours-table tbody td:nth-child(5) {
+  position: sticky;
+  left: calc(5.5rem + 18rem + 9rem + 9rem);
+  z-index: 3;
   width: 10rem;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(n+6),
@@ -4390,6 +4411,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
   max-height: 640px;
+  position: relative;
 }
 
 .dashboard-hours-sheet {
@@ -4440,7 +4462,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet tbody td:nth-child(1) {
   position: sticky;
   left: 0;
-  z-index: 3;
+  z-index: 6;
   width: 92px;
   min-width: 92px;
   max-width: 92px;
@@ -4451,7 +4473,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet tbody td:nth-child(2) {
   position: sticky;
   left: 92px;
-  z-index: 3;
+  z-index: 6;
   width: 280px;
   min-width: 280px;
   max-width: 280px;
@@ -4462,7 +4484,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet tbody td:nth-child(3) {
   position: sticky;
   left: 372px;
-  z-index: 3;
+  z-index: 6;
   width: 190px;
   min-width: 190px;
   max-width: 190px;
@@ -4473,7 +4495,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet tbody td:nth-child(4) {
   position: sticky;
   left: 562px;
-  z-index: 3;
+  z-index: 6;
   width: 220px;
   min-width: 220px;
   max-width: 220px;
@@ -4484,7 +4506,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet tbody td:nth-child(5) {
   position: sticky;
   left: 782px;
-  z-index: 3;
+  z-index: 6;
   width: 280px;
   min-width: 280px;
   max-width: 280px;
@@ -4503,7 +4525,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hours-sheet thead th:nth-child(3),
 .dashboard-hours-sheet thead th:nth-child(4),
 .dashboard-hours-sheet thead th:nth-child(5) {
-  z-index: 4;
+  z-index: 7;
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
