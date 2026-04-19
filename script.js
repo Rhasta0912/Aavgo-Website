@@ -1598,8 +1598,6 @@ function renderHoursRows(people, selectedDiscordId) {
       ? `${escapeHtml(activeSession.kind || "Live Shift")} - ${formatHours(activeSession.elapsedHours)}`
       : escapeHtml(person?.agentStatus || "Offline");
     const isSelected = String(person?.discordId || "") === String(selectedDiscordId || "");
-    const roleSummary = getRoleSummary(person);
-    const roleSecondary = roleSummary !== String(person?.role || "") ? roleSummary : "";
 
     return `
       <tr class="${activeNow ? "is-live" : ""} ${isSelected ? "is-selected" : ""}" data-discord-id="${escapeHtml(person?.discordId || "")}">
@@ -1611,8 +1609,7 @@ function renderHoursRows(people, selectedDiscordId) {
         </td>
         <td>
           <div class="dashboard-inline-stack">
-            <strong>${escapeHtml(person?.role || "Agent")}</strong>
-            ${roleSecondary ? `<span>${escapeHtml(roleSecondary)}</span>` : ""}
+            <strong>${escapeHtml(getCompactRoleSummary(person))}</strong>
           </div>
         </td>
         <td>${escapeHtml(person?.team || "Unassigned")}</td>
