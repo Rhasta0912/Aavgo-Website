@@ -4532,8 +4532,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hours-sheet-split {
   display: grid;
-  grid-template-columns: minmax(0, 698px) minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: 760px minmax(0, 1fr);
+  gap: 0.5rem;
   align-items: start;
   min-width: 0;
   padding: 0;
@@ -4553,8 +4553,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 }
 
 .dashboard-hours-sheet-pane-left .dashboard-hours-sheet {
-  width: 100%;
-  min-width: 0;
+  width: 760px;
+  min-width: 760px;
 }
 
 .dashboard-hours-sheet-pane-right .dashboard-hours-sheet {

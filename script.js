@@ -1594,11 +1594,11 @@ function renderFullHoursRows(people) {
 
   const dayNumbers = getDayNumbersForFullHours(people);
   leftCols.innerHTML = `
-      <col style="width:80px">
-      <col style="width:230px">
-      <col style="width:150px">
-      <col style="width:150px">
-      <col style="width:190px">
+      <col style="width:72px">
+      <col style="width:220px">
+      <col style="width:130px">
+      <col style="width:140px">
+      <col style="width:198px">
   `;
   rightCols.innerHTML = `
       ${dayNumbers.map(() => `<col style="width:132px">`).join("")}
