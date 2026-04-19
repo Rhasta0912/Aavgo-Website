@@ -1721,6 +1721,12 @@ function renderHotelLaneCards(lanes) {
     return;
   }
 
+  const getInitials = (value) => {
+    const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "A";
+    return parts.slice(0, 2).map(part => part[0] || "").join("").toUpperCase() || "A";
+  };
+
   const groupedLanes = groupHotelLanesByTeam(lanes);
   container.innerHTML = groupedLanes.map(group => `
     <section class="dashboard-hotel-team-section">
@@ -1728,7 +1734,7 @@ function renderHotelLaneCards(lanes) {
         <div class="dashboard-hotel-team-copy">
           <span class="dashboard-kicker">${escapeHtml(group?.label || "Other hotels")}</span>
           <h3>${escapeHtml(group?.label || "Other hotels")}</h3>
-          <p>See who is in each hotel, how long they have been live, and which rooms need overtime attention.</p>
+          <p>Occupancy, overtime, and live status stay visible at a glance without turning the board into a wall of text.</p>
           <div class="dashboard-hotel-team-hotels">
             ${(Array.isArray(group?.hotels) && group.hotels.length > 0
               ? group.hotels
@@ -1743,12 +1749,16 @@ function renderHotelLaneCards(lanes) {
         ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => {
           const stats = getHotelLaneStats(lane);
           const laneStaff = Array.isArray(lane?.staff) ? lane.staff : [];
+          const liveCount = Number(stats.liveStaffCount || 0);
+          const idleCount = Number(stats.idleStaffCount || 0);
+          const overtimeCount = Number(stats.overtimeStaffCount || 0);
           return `
             <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
               <div class="dashboard-hotel-lane-head">
                 <div class="dashboard-hotel-lane-head-copy">
+                  <span class="dashboard-hotel-lane-eyebrow">Hotel lane</span>
                   <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
-                  <span>${escapeHtml(String(lane?.people ?? 0))} tracked · ${escapeHtml(String(stats.liveStaffCount))} live now · ${escapeHtml(String(stats.overtimeStaffCount))} OT watch</span>
+                  <span>${escapeHtml(String(lane?.people ?? 0))} tracked - ${escapeHtml(String(liveCount))} live now - ${escapeHtml(String(overtimeCount))} OT watch</span>
                 </div>
                 <button
                   class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
@@ -1761,7 +1771,7 @@ function renderHotelLaneCards(lanes) {
               </div>
               <div class="dashboard-hotel-lane-metrics">
                 <span>
-                  <strong>${escapeHtml(String(stats.liveStaffCount))}</strong>
+                  <strong>${escapeHtml(String(liveCount))}</strong>
                   <small>Live now</small>
                 </span>
                 <span>
@@ -1769,7 +1779,7 @@ function renderHotelLaneCards(lanes) {
                   <small>Live hours</small>
                 </span>
                 <span>
-                  <strong>${escapeHtml(String(stats.overtimeStaffCount))}</strong>
+                  <strong>${escapeHtml(String(overtimeCount))}</strong>
                   <small>Overtime</small>
                 </span>
                 <span>
@@ -1780,7 +1790,7 @@ function renderHotelLaneCards(lanes) {
               <div class="dashboard-hotel-lane-roster">
                 <div class="dashboard-hotel-lane-staff-label">
                   <span>Live roster</span>
-                  <small>${escapeHtml(String(stats.idleStaffCount))} idle · longest shift ${formatHours(stats.longestLiveHours)}</small>
+                  <small>${escapeHtml(String(idleCount))} idle - longest live ${formatHours(stats.longestLiveHours)}</small>
                 </div>
                 ${laneStaff.length > 0 ? `
                   <ul class="dashboard-hotel-lane-staff">
@@ -1799,13 +1809,16 @@ function renderHotelLaneCards(lanes) {
                           data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
                           title="Drag to another hotel"
                         >
-                          <div class="dashboard-hotel-staff-chip-main">
-                            <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-                            <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                          <div class="dashboard-hotel-staff-chip-avatar" aria-hidden="true">${escapeHtml(getInitials(person?.displayName || person?.username || "Unknown"))}</div>
+                          <div class="dashboard-hotel-staff-chip-copy">
+                            <div class="dashboard-hotel-staff-chip-main">
+                              <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+                              <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                            </div>
+                            <small class="dashboard-hotel-staff-chip-meta">
+                              ${escapeHtml(liveLabel)}
+                            </small>
                           </div>
-                          <small class="dashboard-hotel-staff-chip-meta">
-                            ${escapeHtml(liveLabel)}
-                          </small>
                         </li>
                       `;
                     }).join("")}
