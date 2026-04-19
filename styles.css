@@ -4474,12 +4474,16 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hours-table-wrap,
 .dashboard-hours-sheet-wrap {
-  overflow: auto;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
   max-height: 640px;
   position: relative;
+}
+
+.dashboard-hours-sheet-wrap {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .dashboard-hours-sheet {
@@ -4524,6 +4528,54 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dashboard-hours-sheet-split {
+  display: grid;
+  grid-template-columns: minmax(0, 698px) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0;
+}
+
+.dashboard-hours-sheet-pane {
+  min-width: 0;
+}
+
+.dashboard-hours-sheet-pane-left {
+  overflow: hidden;
+}
+
+.dashboard-hours-sheet-pane-right {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet {
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet {
+  width: max-content;
+  min-width: 100%;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th,
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td,
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th,
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet tbody td {
+  position: static;
+  left: auto;
+  z-index: auto;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th,
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
 
 .dashboard-hours-sheet thead th:nth-child(1),
@@ -6503,6 +6555,69 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   width: 118px;
   min-width: 118px;
   max-width: 118px;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th:nth-child(1),
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td:nth-child(1) {
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th:nth-child(2),
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td:nth-child(2) {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th:nth-child(3),
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td:nth-child(3) {
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th:nth-child(4),
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td:nth-child(4) {
+  width: 130px;
+  min-width: 130px;
+  max-width: 130px;
+}
+
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet thead th:nth-child(5),
+.dashboard-hours-sheet-pane-left .dashboard-hours-sheet tbody td:nth-child(5) {
+  width: 170px;
+  min-width: 170px;
+  max-width: 170px;
+}
+
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th:nth-child(1),
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet tbody td:nth-child(1) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th:nth-child(2),
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet tbody td:nth-child(2) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th:nth-child(3),
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet tbody td:nth-child(3) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet thead th:nth-child(4),
+.dashboard-hours-sheet-pane-right .dashboard-hours-sheet tbody td:nth-child(4) {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
 }
 
 .dashboard-hours-cell-copy {

@@ -1584,32 +1584,40 @@ function renderHoursRows(people, selectedDiscordId) {
 }
 
 function renderFullHoursRows(people) {
-  const table = document.getElementById("hours-full-board");
-  const cols = document.getElementById("hours-full-board-cols");
-  const head = document.getElementById("hours-full-board-head");
-  const body = document.getElementById("hours-full-board-rows");
-  if (!table || !cols || !head || !body) return;
+  const leftCols = document.getElementById("hours-full-board-left-cols");
+  const leftHead = document.getElementById("hours-full-board-left-head");
+  const leftBody = document.getElementById("hours-full-board-left-rows");
+  const rightCols = document.getElementById("hours-full-board-right-cols");
+  const rightHead = document.getElementById("hours-full-board-right-head");
+  const rightBody = document.getElementById("hours-full-board-right-rows");
+  if (!leftCols || !leftHead || !leftBody || !rightCols || !rightHead || !rightBody) return;
 
   const dayNumbers = getDayNumbersForFullHours(people);
-  cols.innerHTML = `
-      <col style="width:124px">
-      <col style="width:300px">
-      <col style="width:204px">
-      <col style="width:232px">
-      <col style="width:260px">
+  leftCols.innerHTML = `
+      <col style="width:80px">
+      <col style="width:230px">
+      <col style="width:150px">
+      <col style="width:150px">
+      <col style="width:190px">
+  `;
+  rightCols.innerHTML = `
       ${dayNumbers.map(() => `<col style="width:132px">`).join("")}
       <col style="width:140px">
       <col style="width:140px">
       <col style="width:140px">
       <col style="width:140px">
   `;
-  head.innerHTML = `
+  leftHead.innerHTML = `
     <tr>
       <th>Select</th>
       <th>Staff</th>
       <th>Role</th>
       <th>Team</th>
       <th>Hotel</th>
+    </tr>
+  `;
+  rightHead.innerHTML = `
+    <tr>
       ${dayNumbers.map(day => `<th>D${day}</th>`).join("")}
       <th>1st - 15th</th>
       <th>16th - end</th>
@@ -1619,9 +1627,19 @@ function renderFullHoursRows(people) {
   `;
 
   if (!Array.isArray(people) || people.length === 0) {
-    body.innerHTML = `
+    leftBody.innerHTML = `
       <tr>
-        <td colspan="${dayNumbers.length + 9}">
+        <td colspan="5">
+          <div class="dashboard-empty-state">
+            <strong>No staff rows match this lane.</strong>
+            <p>Widen the filters or wait for the next snapshot to fill the full-hours sheet.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    rightBody.innerHTML = `
+      <tr>
+        <td colspan="${dayNumbers.length + 4}">
           <div class="dashboard-empty-state">
             <strong>No staff rows match this lane.</strong>
             <p>Widen the filters or wait for the next snapshot to fill the full-hours sheet.</p>
@@ -1633,14 +1651,15 @@ function renderFullHoursRows(people) {
   }
 
   const selectedIds = new Set(getSelectedBulkDiscordIds());
-  body.innerHTML = people.map(person => {
+  const leftRows = [];
+  const rightRows = [];
+  people.forEach(person => {
     const dayMap = new Map(
       (Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days : [])
         .map(day => [Number(day?.day || 0), Number(day?.totalHours || 0)])
     );
     const isSelected = selectedIds.has(String(person?.discordId || ""));
-
-    return `
+    leftRows.push(`
       <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
         <td>
           <label class="dashboard-checkbox">
@@ -1657,6 +1676,10 @@ function renderFullHoursRows(people) {
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getRoleSummary(person))}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(person?.team || "Unassigned")}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getPrimaryHotelLabel(person))}</div></td>
+      </tr>
+    `);
+    rightRows.push(`
+      <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
@@ -1669,8 +1692,10 @@ function renderFullHoursRows(people) {
         <td><div class="dashboard-hours-cell-copy">${formatHours(person?.monthlyHours)}</div></td>
         <td><div class="dashboard-hours-cell-copy">${formatHours(person?.allHours)}</div></td>
       </tr>
-    `;
-  }).join("");
+    `);
+  });
+  leftBody.innerHTML = leftRows.join("");
+  rightBody.innerHTML = rightRows.join("");
 }
 
 function renderHotelLaneCards(lanes) {
@@ -2345,11 +2370,86 @@ function initializeAdminBoard() {
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
-  document.getElementById("hours-full-board-rows")?.addEventListener("click", event => {
-    const cell = event.target.closest("td[data-day]");
-    if (cell) {
-      const row = cell.closest("tr[data-full-hours-row]");
-      const discordId = String(row?.getAttribute("data-full-hours-row") || "");
+  const hoursFullLeftPane = document.querySelector(".dashboard-hours-sheet-pane-left");
+  const hoursFullRightPane = document.querySelector(".dashboard-hours-sheet-pane-right");
+  let syncingFullHoursScroll = false;
+  const syncFullHoursScroll = (source, target) => {
+    if (!source || !target || syncingFullHoursScroll) return;
+    syncingFullHoursScroll = true;
+    target.scrollTop = source.scrollTop;
+    syncingFullHoursScroll = false;
+  };
+  hoursFullRightPane?.addEventListener("scroll", () => syncFullHoursScroll(hoursFullRightPane, hoursFullLeftPane));
+  hoursFullLeftPane?.addEventListener("scroll", () => syncFullHoursScroll(hoursFullLeftPane, hoursFullRightPane));
+
+  ["hours-full-board-left-rows", "hours-full-board-right-rows"].forEach(tableId => {
+    document.getElementById(tableId)?.addEventListener("click", event => {
+      const cell = event.target.closest("td[data-day]");
+      if (cell) {
+        const row = cell.closest("tr[data-full-hours-row]");
+        const discordId = String(row?.getAttribute("data-full-hours-row") || "");
+        const day = Number(cell.getAttribute("data-day") || 0);
+        const hours = Number(cell.getAttribute("data-hours") || 0);
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const maxDay = new Date(year, month + 1, 0).getDate();
+        const safeDay = Math.min(Math.max(day, 1), maxDay);
+        const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+
+        if (discordId) {
+          adminBoardState.selectedDiscordId = discordId;
+          adminBoardState.allowEmptySelection = false;
+          toggleSelectedBulkDiscordId(discordId, true);
+        }
+
+        const editorDate = document.getElementById("hours-editor-date");
+        if (editorDate) editorDate.value = dateValue;
+        const removeDate = document.getElementById("hours-remove-date");
+        if (removeDate) removeDate.value = dateValue;
+        const removeHours = document.getElementById("hours-remove-hours");
+        if (removeHours && hours > 0) removeHours.value = String(hours);
+        return;
+      }
+
+      const checkbox = event.target.closest("input[data-full-hours-select]");
+      if (checkbox) {
+        const discordId = checkbox.getAttribute("data-full-hours-select") || "";
+        toggleSelectedBulkDiscordId(discordId, checkbox.checked);
+        adminBoardState.selectedDiscordId = checkbox.checked ? String(discordId) : adminBoardState.selectedDiscordId;
+        adminBoardState.allowEmptySelection = !checkbox.checked;
+        if (!checkbox.checked && adminBoardState.selectedDiscordId === String(discordId)) {
+          adminBoardState.selectedDiscordId = "";
+        }
+        applyAdminBoardPayload(adminBoardState.payload);
+        return;
+      }
+
+      const row = event.target.closest("tr[data-full-hours-row]");
+      if (!row) return;
+      const discordId = String(row.getAttribute("data-full-hours-row") || "");
+      const isAlreadySelected = String(adminBoardState.selectedDiscordId) === discordId;
+      if (isAlreadySelected) {
+        toggleSelectedBulkDiscordId(discordId, false);
+        adminBoardState.selectedDiscordId = "";
+        adminBoardState.allowEmptySelection = true;
+      } else {
+        adminBoardState.selectedDiscordId = discordId;
+        adminBoardState.allowEmptySelection = false;
+        toggleSelectedBulkDiscordId(discordId, true);
+      }
+      applyAdminBoardPayload(adminBoardState.payload);
+    });
+  });
+
+  ["hours-full-board-left-rows", "hours-full-board-right-rows"].forEach(tableId => {
+    document.getElementById(tableId)?.addEventListener("dblclick", event => {
+      const cell = event.target.closest("td[data-day]");
+      const row = event.target.closest("tr[data-full-hours-row]");
+      if (!cell || !row) return;
+
+      const discordId = String(row.getAttribute("data-full-hours-row") || "");
+      const person = getAdminPeople().find(entry => String(entry?.discordId || "") === discordId) || null;
       const day = Number(cell.getAttribute("data-day") || 0);
       const hours = Number(cell.getAttribute("data-hours") || 0);
       const now = new Date();
@@ -2357,68 +2457,9 @@ function initializeAdminBoard() {
       const month = now.getMonth();
       const maxDay = new Date(year, month + 1, 0).getDate();
       const safeDay = Math.min(Math.max(day, 1), maxDay);
-      const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
-
-      if (discordId) {
-        adminBoardState.selectedDiscordId = discordId;
-        adminBoardState.allowEmptySelection = false;
-        toggleSelectedBulkDiscordId(discordId, true);
-      }
-
-      const editorDate = document.getElementById("hours-editor-date");
-      if (editorDate) editorDate.value = dateValue;
-      const removeDate = document.getElementById("hours-remove-date");
-      if (removeDate) removeDate.value = dateValue;
-      const removeHours = document.getElementById("hours-remove-hours");
-      if (removeHours && hours > 0) removeHours.value = String(hours);
-      return;
-    }
-
-    const checkbox = event.target.closest("input[data-full-hours-select]");
-    if (checkbox) {
-      const discordId = checkbox.getAttribute("data-full-hours-select") || "";
-      toggleSelectedBulkDiscordId(discordId, checkbox.checked);
-      adminBoardState.selectedDiscordId = checkbox.checked ? String(discordId) : adminBoardState.selectedDiscordId;
-      adminBoardState.allowEmptySelection = !checkbox.checked;
-      if (!checkbox.checked && adminBoardState.selectedDiscordId === String(discordId)) {
-        adminBoardState.selectedDiscordId = "";
-      }
-      applyAdminBoardPayload(adminBoardState.payload);
-      return;
-    }
-
-    const row = event.target.closest("tr[data-full-hours-row]");
-    if (!row) return;
-    const discordId = String(row.getAttribute("data-full-hours-row") || "");
-    const isAlreadySelected = String(adminBoardState.selectedDiscordId) === discordId;
-    if (isAlreadySelected) {
-      toggleSelectedBulkDiscordId(discordId, false);
-      adminBoardState.selectedDiscordId = "";
-      adminBoardState.allowEmptySelection = true;
-    } else {
-      adminBoardState.selectedDiscordId = discordId;
-      adminBoardState.allowEmptySelection = false;
-      toggleSelectedBulkDiscordId(discordId, true);
-    }
-    applyAdminBoardPayload(adminBoardState.payload);
-  });
-
-  document.getElementById("hours-full-board-rows")?.addEventListener("dblclick", event => {
-    const cell = event.target.closest("td[data-day]");
-    const row = event.target.closest("tr[data-full-hours-row]");
-    if (!cell || !row) return;
-
-    const discordId = String(row.getAttribute("data-full-hours-row") || "");
-    const person = getAdminPeople().find(entry => String(entry?.discordId || "") === discordId) || null;
-    const day = Number(cell.getAttribute("data-day") || 0);
-    const hours = Number(cell.getAttribute("data-hours") || 0);
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const maxDay = new Date(year, month + 1, 0).getDate();
-    const safeDay = Math.min(Math.max(day, 1), maxDay);
-    const shiftDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
-    openInlineHoursCellEditor(cell, person, shiftDate, hours);
+      const shiftDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+      openInlineHoursCellEditor(cell, person, shiftDate, hours);
+    });
   });
 
   ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]

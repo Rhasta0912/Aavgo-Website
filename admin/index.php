@@ -539,32 +539,55 @@ $bootstrapJson = json_encode(
           </div>
 
           <div class="dashboard-hours-sheet-wrap">
-            <table class="dashboard-hours-sheet" id="hours-full-board">
-              <colgroup id="hours-full-board-cols"></colgroup>
-              <thead id="hours-full-board-head">
-                <tr>
-                  <th>Select</th>
-                  <th>Staff</th>
-                  <th>Role</th>
-                  <th>Team</th>
-                  <th>Hotel</th>
-                  <th>1st - 15th</th>
-                  <th>16th - end</th>
-                  <th>Month</th>
-                  <th>All time</th>
-                </tr>
-              </thead>
-              <tbody id="hours-full-board-rows">
-                <tr>
-                  <td colspan="9">
-                    <div class="dashboard-empty-state">
-                      <strong>Loading the full hours sheet.</strong>
-                      <p>The complete month lane will appear here as soon as the first snapshot is applied.</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="dashboard-hours-sheet-split">
+              <div class="dashboard-hours-sheet-pane dashboard-hours-sheet-pane-left">
+                <table class="dashboard-hours-sheet" id="hours-full-board-left">
+                  <colgroup id="hours-full-board-left-cols"></colgroup>
+                  <thead id="hours-full-board-left-head">
+                    <tr>
+                      <th>Select</th>
+                      <th>Staff</th>
+                      <th>Role</th>
+                      <th>Team</th>
+                      <th>Hotel</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hours-full-board-left-rows">
+                    <tr>
+                      <td colspan="5">
+                        <div class="dashboard-empty-state">
+                          <strong>Loading the full hours sheet.</strong>
+                          <p>The complete month lane will appear here as soon as the first snapshot is applied.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="dashboard-hours-sheet-pane dashboard-hours-sheet-pane-right">
+                <table class="dashboard-hours-sheet" id="hours-full-board-right">
+                  <colgroup id="hours-full-board-right-cols"></colgroup>
+                  <thead id="hours-full-board-right-head">
+                    <tr>
+                      <th>1st - 15th</th>
+                      <th>16th - end</th>
+                      <th>Month</th>
+                      <th>All time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hours-full-board-right-rows">
+                    <tr>
+                      <td colspan="4">
+                        <div class="dashboard-empty-state">
+                          <strong>Loading the full hours sheet.</strong>
+                          <p>The complete month lane will appear here as soon as the first snapshot is applied.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </article>
 
