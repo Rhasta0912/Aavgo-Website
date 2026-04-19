@@ -1759,6 +1759,7 @@ h2 {
 .dashboard-filter-control input,
 .dashboard-filter-control select,
 .dashboard-filter-reset {
+  width: 100%;
   min-height: 3.1rem;
   padding: 0 0.95rem;
   border-radius: 12px;
@@ -1787,6 +1788,16 @@ h2 {
 
 .dashboard-filter-search {
   grid-column: span 2;
+}
+
+.dashboard-filter-field select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-filter-field {
+  min-width: 0;
 }
 
 .dashboard-filter-reset {
@@ -3557,13 +3568,25 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   background: rgba(255, 255, 255, 0.03);
 }
 
+.dashboard-period-days li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .dashboard-inline-list li span {
   color: rgba(255, 255, 255, 0.58);
+  min-width: 0;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-inline-list li strong {
   margin: 0;
   font-size: 1rem;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .dashboard-period-days,
@@ -3574,10 +3597,21 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   padding-right: 0.35rem;
 }
 
+.dashboard-period-days {
+  align-content: start;
+}
+
 .dashboard-period-days li,
 .dashboard-history-days li {
   padding: 0.55rem 0.65rem;
   font-size: 0.92rem;
+}
+
+.dashboard-period-card .dashboard-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dashboard-period-days::-webkit-scrollbar,
