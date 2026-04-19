@@ -1604,7 +1604,6 @@ function renderHoursRows(people, selectedDiscordId) {
         <td>
           <div class="dashboard-staff-cell">
             <strong title="${escapeHtml(person?.displayName || "Unknown")}">${escapeHtml(person?.displayName || "Unknown")}</strong>
-            <span title="${escapeHtml(person?.username || "")}">@${escapeHtml(person?.username || "")}</span>
           </div>
         </td>
         <td>
