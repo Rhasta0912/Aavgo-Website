@@ -4,22 +4,69 @@ declare(strict_types=1);
 
 require __DIR__ . '/../auth/bootstrap.php';
 
-$user = aavgo_require_access('user');
-$displayName = aavgo_display_name($user);
-$safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
-$roleLabels = aavgo_user_role_labels($user);
-$roleSummary = aavgo_user_role_summary($user);
-$safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
-$showAdminLink = aavgo_user_can_access($user, 'admin');
-$hoursPayload = aavgo_fetch_hours_bridge_payload();
-$personalHours = aavgo_find_hours_person_for_user($user);
-$hoursConnected = (bool) ($hoursPayload['ok'] ?? false) && is_array($personalHours);
-$payPeriods = is_array($personalHours['payPeriods'] ?? null) ? $personalHours['payPeriods'] : [];
-$firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []];
-$secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16th - end', 'totalHours' => 0, 'days' => []];
-$currentMonth = is_array($personalHours['currentMonth'] ?? null) ? $personalHours['currentMonth'] : ['label' => 'Current month', 'days' => []];
-$recentMonths = is_array($personalHours['recentMonths'] ?? null) ? $personalHours['recentMonths'] : [];
-$recentAdjustments = is_array($personalHours['recentAdjustments'] ?? null) ? $personalHours['recentAdjustments'] : [];
+$currentUser = aavgo_current_user();
+$guestMode = !is_array($currentUser);
+
+if ($guestMode) {
+    $displayName = 'Log in with Discord';
+    $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+    $roleLabels = [];
+    $roleSummary = 'Link your account to sync personal hours';
+    $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
+    $showAdminLink = false;
+    $hoursPayload = ['ok' => false, 'error' => 'Log in with Discord to sync personal hours.'];
+    $personalHours = [
+        'linkedHotel' => 'Log in to view your lane',
+        'team' => 'Guest view',
+        'role' => $roleSummary,
+        'agentStatus' => 'Sign in required',
+        'todayHours' => 0,
+        'weeklyHours' => 0,
+        'monthlyHours' => 0,
+        'allHours' => 0,
+        'payPeriods' => [
+            'firstHalf' => ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []],
+            'secondHalf' => ['label' => '16th - end', 'totalHours' => 0, 'days' => []],
+        ],
+        'currentMonth' => ['label' => 'Current month', 'days' => []],
+        'recentMonths' => [],
+        'recentAdjustments' => [],
+        'activeSession' => null,
+    ];
+    $hoursConnected = false;
+    $payPeriods = $personalHours['payPeriods'];
+    $firstHalf = $payPeriods['firstHalf'];
+    $secondHalf = $payPeriods['secondHalf'];
+    $currentMonth = $personalHours['currentMonth'];
+    $recentMonths = [];
+    $recentAdjustments = [];
+    $sessionSummary = 'Log in to view session details';
+} else {
+    $user = $currentUser;
+    $displayName = aavgo_display_name($user);
+    $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
+    $roleLabels = aavgo_user_role_labels($user);
+    $roleSummary = aavgo_user_role_summary($user);
+    $safeRoleSummary = htmlspecialchars($roleSummary, ENT_QUOTES, 'UTF-8');
+    $showAdminLink = aavgo_user_can_access($user, 'admin');
+    $hoursPayload = aavgo_fetch_hours_bridge_payload();
+    $personalHours = aavgo_find_hours_person_for_user($user);
+    $hoursConnected = (bool) ($hoursPayload['ok'] ?? false) && is_array($personalHours);
+    $payPeriods = is_array($personalHours['payPeriods'] ?? null) ? $personalHours['payPeriods'] : [];
+    $firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []];
+    $secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16th - end', 'totalHours' => 0, 'days' => []];
+    $currentMonth = is_array($personalHours['currentMonth'] ?? null) ? $personalHours['currentMonth'] : ['label' => 'Current month', 'days' => []];
+    $recentMonths = is_array($personalHours['recentMonths'] ?? null) ? $personalHours['recentMonths'] : [];
+    $recentAdjustments = is_array($personalHours['recentAdjustments'] ?? null) ? $personalHours['recentAdjustments'] : [];
+    $sessionSummary = 'Offline right now';
+    if (is_array($personalHours['activeSession'] ?? null)) {
+        $sessionSummary = sprintf(
+            '%s - %sh',
+            trim((string) ($personalHours['activeSession']['kind'] ?? 'Live Shift')),
+            aavgo_user_hours_label($personalHours['activeSession']['elapsedHours'] ?? 0)
+        );
+    }
+}
 
 function aavgo_user_hours_label(mixed $value): string
 {
@@ -60,14 +107,6 @@ function aavgo_render_hours_day_list(array $days): string
     return $html;
 }
 
-$sessionSummary = 'Offline right now';
-if (is_array($personalHours['activeSession'] ?? null)) {
-    $sessionSummary = sprintf(
-        '%s - %sh',
-        trim((string) ($personalHours['activeSession']['kind'] ?? 'Live Shift')),
-        aavgo_user_hours_label($personalHours['activeSession']['elapsedHours'] ?? 0)
-    );
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -129,22 +168,32 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         </dl>
       </section>
 
-      <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
-        <div class="dashboard-sidebar-footer-copy">
-          <strong><?php echo $safeDisplayName; ?></strong>
-          <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleSummary)), ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeRoleSummary; ?></p>
-        </div>
-        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
-      </section>
+      <?php if ($guestMode): ?>
+        <section class="dashboard-sidebar-bottom dashboard-sidebar-bottom-guest" aria-label="Profile and session actions">
+          <a class="dashboard-sidebar-login" href="/auth/discord/login/">
+            <p class="dashboard-kicker">Discord login</p>
+            <strong>Log in, sync, and link your account.</strong>
+            <span>Use Discord to unlock the private hours workspace.</span>
+          </a>
+        </section>
+      <?php else: ?>
+        <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
+          <div class="dashboard-sidebar-footer-copy">
+            <strong><?php echo $safeDisplayName; ?></strong>
+            <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleSummary)), ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeRoleSummary; ?></p>
+          </div>
+          <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
+        </section>
+      <?php endif; ?>
     </aside>
 
     <main class="dashboard-main dashboard-main-user">
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
-          <p class="dashboard-breadcrumb">Workspace / Personal hours</p>
-          <h1 class="dashboard-title dashboard-title-wide">Your hours, your current lane, and the two payroll cuts that matter.</h1>
+          <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Personal hours'; ?></p>
+          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Log in to see your hours, pay periods, and history.' : 'Your hours, your current lane, and the two payroll cuts that matter.'; ?></h1>
           <p class="dashboard-subtitle">
-            The user workspace is intentionally quiet now: just the hours you need, the pay periods you care about, and a clean log out path.
+            <?php echo $guestMode ? 'Aavgo keeps personal hours behind Discord. Log in to link your account, sync your role, and open the private workspace.' : 'The user workspace is intentionally quiet now: just the hours you need, the pay periods you care about, and a clean log out path.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -153,13 +202,34 @@ if (is_array($personalHours['activeSession'] ?? null)) {
             <span></span>
             <span></span>
           </button>
-          <?php if ($showAdminLink): ?>
-            <a class="dashboard-toolbar-link" href="/admin/">Leadership board</a>
+          <?php if ($guestMode): ?>
+            <a class="dashboard-toolbar-link" href="/auth/discord/login/">Log in with Discord</a>
+          <?php else: ?>
+            <?php if ($showAdminLink): ?>
+              <a class="dashboard-toolbar-link" href="/admin/">Leadership board</a>
+            <?php endif; ?>
+            <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
           <?php endif; ?>
-          <a class="dashboard-toolbar-link" href="/auth/logout/">Log out</a>
         </div>
       </header>
 
+      <?php if ($guestMode): ?>
+        <section class="dashboard-inline-notice reveal reveal-delay-1">
+          <strong>Log in to unlock personal hours.</strong>
+          <p>Your Discord account is the key to syncing roles, linking hours, and opening the private workspace.</p>
+        </section>
+
+        <section class="dashboard-panel dashboard-login-panel reveal reveal-delay-2">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Private access</p>
+              <h2>Continue with Discord</h2>
+            </div>
+          </div>
+          <p class="dashboard-panel-copy">Use the secure Discord handoff to connect your Aavgo account and come back to the same private workspace automatically.</p>
+          <a class="button button-primary dashboard-login-button" href="/auth/discord/login/">Log in with Discord</a>
+        </section>
+      <?php else: ?>
       <?php if (!$hoursConnected): ?>
         <section class="dashboard-inline-notice reveal reveal-delay-1">
           <strong>Your personal hours are still syncing.</strong>
@@ -342,6 +412,7 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </div>
         </article>
       </section>
+      <?php endif; ?>
     </main>
   </div>
 
