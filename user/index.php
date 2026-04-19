@@ -96,6 +96,17 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       </div>
 
+      <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
+        <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
+        <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
+        <a class="dashboard-nav-link" href="#user-history">Hour history</a>
+        <?php if ($showAdminLink): ?>
+          <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
+        <?php endif; ?>
+        <a class="dashboard-nav-link" href="/">Front door</a>
+        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
+      </nav>
+
       <section class="dashboard-sidebar-glance" aria-label="Quick glance">
         <div class="dashboard-sidebar-glance-head">
           <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
@@ -117,17 +128,6 @@ if (is_array($personalHours['activeSession'] ?? null)) {
           </div>
         </dl>
       </section>
-
-      <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
-        <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
-        <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
-        <a class="dashboard-nav-link" href="#user-history">Hour history</a>
-        <?php if ($showAdminLink): ?>
-          <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
-        <?php endif; ?>
-        <a class="dashboard-nav-link" href="/">Front door</a>
-        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
-      </nav>
 
       <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
         <div class="dashboard-sidebar-footer-copy">

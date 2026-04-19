@@ -2888,6 +2888,18 @@ body.sidebar-collapsed .dashboard-sidebar-shortcuts-panel {
   --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='3.5'/%3E%3Cpath d='M8 8h8'/%3E%3Cpath d='M8 12h8'/%3E%3Cpath d='M8 16h8'/%3E%3C/svg%3E");
 }
 
+.workspace-dashboard .dashboard-nav-link[href="#user-pay-periods"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='14' rx='3'/%3E%3Cpath d='M4 9h16'/%3E%3Cpath d='M8 5v14'/%3E%3C/svg%3E");
+}
+
+.workspace-dashboard .dashboard-nav-link[href="#user-history"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 6h12v12H6z'/%3E%3Cpath d='M9 10h6'/%3E%3Cpath d='M9 14h6'/%3E%3C/svg%3E");
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11.5 12 5l8 6.5'/%3E%3Cpath d='M6.5 10.5V19h11V10.5'/%3E%3Cpath d='M10 19v-5h4v5'/%3E%3C/svg%3E");
+}
+
 .workspace-dashboard .dashboard-nav-link[href="#leadership-full-hours"]::before {
   --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='7.5'/%3E%3Cpath d='M12 8v4l2.5 1.5'/%3E%3C/svg%3E");
 }
@@ -2902,6 +2914,10 @@ body.sidebar-collapsed .dashboard-sidebar-shortcuts-panel {
 
 .workspace-dashboard .dashboard-nav-link[href="/auth/logout/"]::before {
   --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6H6.5A2.5 2.5 0 0 0 4 8.5v7A2.5 2.5 0 0 0 6.5 18H9'/%3E%3Cpath d='M13 12h7'/%3E%3Cpath d='M16 9l4 3-4 3'/%3E%3C/svg%3E");
+}
+
+.workspace-dashboard .dashboard-nav-link[href="/user/"]::before {
+  --dashboard-nav-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='8.5' r='4.25'/%3E%3Cpath d='M4.5 20.5c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5'/%3E%3C/svg%3E");
 }
 
 body.sidebar-collapsed .workspace-dashboard .dashboard-nav-link[href="/admin/"]::before,
