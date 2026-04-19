@@ -4380,6 +4380,11 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   animation: dashboardPanelFade 220ms ease;
 }
 
+.dashboard-panel-full-hours.reveal,
+.dashboard-panel-full-hours.reveal.reveal-in {
+  transform: none;
+}
+
 @keyframes dashboardPanelFade {
   from {
     opacity: 0;
