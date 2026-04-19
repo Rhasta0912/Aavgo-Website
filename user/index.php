@@ -96,24 +96,27 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         <a class="dashboard-brand" href="/" aria-label="Aavgo home">Aavgo</a>
       </div>
 
-      <section class="dashboard-profile-card dashboard-profile-card-plain">
-        <div class="dashboard-profile-copy">
-          <strong><?php echo $safeDisplayName; ?></strong>
-          <p><?php echo $safeRoleSummary; ?></p>
+      <section class="dashboard-sidebar-glance" aria-label="Quick glance">
+        <div class="dashboard-sidebar-glance-head">
+          <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
+          <p class="dashboard-kicker">Personal view</p>
         </div>
+        <strong>Hours first. Clean pay cuts. Quiet workspace.</strong>
+        <dl class="dashboard-sidebar-glance-grid">
+          <div>
+            <dt>Role</dt>
+            <dd><?php echo $safeRoleSummary; ?></dd>
+          </div>
+          <div>
+            <dt>View</dt>
+            <dd>My hours</dd>
+          </div>
+          <div>
+            <dt>Sync</dt>
+            <dd><?php echo $hoursConnected ? 'Live' : 'Waiting'; ?></dd>
+          </div>
+        </dl>
       </section>
-
-      <div class="dashboard-sidebar-meta">
-        <?php foreach ($roleLabels as $roleLabel): ?>
-          <?php $roleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleLabel)); ?>
-          <span
-            class="dashboard-chip <?php echo $roleLabel === 'Developer' ? 'dashboard-chip-accent' : ''; ?>"
-            data-role="<?php echo htmlspecialchars($roleKey, ENT_QUOTES, 'UTF-8'); ?>"
-          >
-            <?php echo htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8'); ?>
-          </span>
-        <?php endforeach; ?>
-      </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
         <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
@@ -126,10 +129,12 @@ if (is_array($personalHours['activeSession'] ?? null)) {
         <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
 
-      <section class="dashboard-side-section">
-        <p class="dashboard-kicker">Staff mode</p>
-        <strong>Your own hours come first, with the pay-period view ready for payroll checks.</strong>
-        <p>Leadership tools stay out of the way unless your role opens that lane too.</p>
+      <section class="dashboard-sidebar-bottom" aria-label="Profile and session actions">
+        <div class="dashboard-sidebar-footer-copy">
+          <strong><?php echo $safeDisplayName; ?></strong>
+          <p class="dashboard-profile-role" data-role="<?php echo htmlspecialchars(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $roleSummary)), ENT_QUOTES, 'UTF-8'); ?>"><?php echo $safeRoleSummary; ?></p>
+        </div>
+        <a class="dashboard-nav-link dashboard-sidebar-logout" href="/auth/logout/" aria-label="Log out"></a>
       </section>
     </aside>
 
