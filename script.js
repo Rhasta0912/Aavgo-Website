@@ -3132,6 +3132,10 @@ function initializeDeveloperWorkspace() {
   const auditCount = document.getElementById("developer-audit-count");
   const detailTitle = document.getElementById("developer-task-detail-title");
   const detailBody = document.getElementById("developer-task-detail-body");
+  const attachmentViewerModal = document.getElementById("developer-attachment-viewer");
+  const attachmentViewerImage = document.getElementById("developer-attachment-viewer-image");
+  const attachmentViewerTitle = document.getElementById("developer-attachment-viewer-title");
+  const attachmentViewerCaption = document.getElementById("developer-attachment-viewer-caption");
   const archivePanel = document.querySelector("[data-developer-archive-dropzone]");
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
@@ -3328,6 +3332,24 @@ function initializeDeveloperWorkspace() {
       const typeLabel = escapeHtml(isExisting ? "Already attached" : "Selected now");
       const previewUrl = String(item.previewUrl || item.dataUrl || "").trim();
       const preview = previewUrl ? `<div class="dashboard-developer-attachment-thumb" style="background-image:url('${escapeAttr(previewUrl)}')"></div>` : `<div class="dashboard-developer-attachment-thumb dashboard-developer-attachment-thumb-file">${escapeHtml(String(item.name || "file").slice(0, 2).toUpperCase())}</div>`;
+      if (previewUrl) {
+        return `
+          <button
+            type="button"
+            class="dashboard-developer-attachment-preview-item is-image"
+            data-attachment-view="${escapeAttr(previewUrl)}"
+            data-attachment-name="${escapeAttr(item.name || "attachment")}"
+            data-attachment-type="${escapeAttr(item.type || "image")}"
+            aria-label="Open ${escapeAttr(item.name || "attachment")}"
+          >
+            ${preview}
+            <div>
+              <strong>${fileName}</strong>
+              <span>${sizeLabel} Â· ${typeLabel}</span>
+            </div>
+          </button>
+        `;
+      }
       return `
         <article class="dashboard-developer-attachment-preview-item ${previewUrl ? "is-image" : ""}">
           ${preview}
@@ -3369,6 +3391,31 @@ function initializeDeveloperWorkspace() {
   const getActorName = () => currentUser.displayName || "Leadership";
   const getActorRole = () => currentUser.roleSummary || "Leadership";
 
+  const openAttachmentViewer = (attachment = {}) => {
+    if (!attachmentViewerModal || !attachmentViewerImage || !attachmentViewerTitle || !attachmentViewerCaption) return;
+    const previewUrl = String(attachment.dataUrl || attachment.previewUrl || "").trim();
+    if (!previewUrl || !isPreviewableAttachment(attachment)) return;
+    attachmentViewerImage.src = previewUrl;
+    attachmentViewerImage.alt = String(attachment.name || "Attachment preview").trim() || "Attachment preview";
+    attachmentViewerTitle.textContent = String(attachment.name || "Preview").trim() || "Preview";
+    attachmentViewerCaption.textContent = `${attachmentSizeLabel(attachment.size || 0)} · ${String(attachment.type || "image").trim() || "image"}`;
+    attachmentViewerModal.hidden = false;
+    document.body.classList.add("dashboard-modal-open");
+  };
+
+  const closeAttachmentViewer = () => {
+    if (!attachmentViewerModal || attachmentViewerModal.hidden) return;
+    attachmentViewerModal.hidden = true;
+    if (attachmentViewerImage) {
+      attachmentViewerImage.src = "";
+      attachmentViewerImage.alt = "";
+    }
+    if (attachmentViewerCaption) {
+      attachmentViewerCaption.textContent = "";
+    }
+    document.body.classList.remove("dashboard-modal-open");
+  };
+
   const normalizeActivityEntry = (entry = {}) => ({
     id: String(entry.id || createHistoryId()),
     type: String(entry.type || "note").trim() || "note",
@@ -3385,6 +3432,17 @@ function initializeDeveloperWorkspace() {
     type: String(attachment.type || "").trim(),
     createdAt: String(attachment.createdAt || nowIso()).trim()
   });
+
+  const isPreviewableAttachment = (attachment = {}) => {
+    const dataUrl = String(attachment.dataUrl || "").trim();
+    const type = String(attachment.type || "").trim().toLowerCase();
+    const name = String(attachment.name || "").trim().toLowerCase();
+    return Boolean(dataUrl) && (
+      type.startsWith("image/") ||
+      dataUrl.startsWith("data:image/") ||
+      /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)
+    );
+  };
 
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
@@ -3753,10 +3811,24 @@ function initializeDeveloperWorkspace() {
           <p class="dashboard-kicker">Attachments</p>
           <div class="dashboard-developer-attachments">
             ${attachments.map(attachment => `
-              <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
-                <strong>${escapeHtml(attachment.name)}</strong>
-                <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
-              </a>
+              ${isPreviewableAttachment(attachment) ? `
+                <button
+                  type="button"
+                  class="dashboard-developer-attachment dashboard-developer-attachment-previewable"
+                  data-attachment-view="${escapeAttr(attachment.dataUrl)}"
+                  data-attachment-name="${escapeAttr(attachment.name)}"
+                  data-attachment-type="${escapeAttr(attachment.type || "image")}"
+                  aria-label="Open ${escapeAttr(attachment.name)}"
+                >
+                  <strong>${escapeHtml(attachment.name)}</strong>
+                  <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
+                </button>
+              ` : `
+                <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
+                  <strong>${escapeHtml(attachment.name)}</strong>
+                  <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
+                </a>
+              `}
             `).join("")}
           </div>
         </article>
@@ -4455,6 +4527,35 @@ function initializeDeveloperWorkspace() {
     if (!deleteButton) return;
     const taskId = String(deleteButton.getAttribute("data-developer-task-delete") || "");
     deleteArchivedTask(taskId);
+  });
+
+  const handleAttachmentOpen = event => {
+    const trigger = event.target.closest("[data-attachment-view]");
+    if (!trigger) return;
+    const src = String(trigger.getAttribute("data-attachment-view") || "").trim();
+    if (!src) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openAttachmentViewer({
+      dataUrl: src,
+      name: String(trigger.getAttribute("data-attachment-name") || "Attachment").trim(),
+      type: String(trigger.getAttribute("data-attachment-type") || "image").trim()
+    });
+  };
+
+  fields.attachmentsPreview?.addEventListener("click", handleAttachmentOpen);
+  detailBody?.addEventListener("click", handleAttachmentOpen);
+
+  attachmentViewerModal?.addEventListener("click", event => {
+    if (event.target.closest("[data-attachment-viewer-close]")) {
+      closeAttachmentViewer();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && attachmentViewerModal && !attachmentViewerModal.hidden) {
+      closeAttachmentViewer();
+    }
   });
 
   const clearTaskDropTargets = () => {

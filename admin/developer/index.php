@@ -380,6 +380,23 @@ $developerBoardStore = aavgo_read_developer_board();
     </div>
   </div>
 
+  <div class="dashboard-modal dashboard-attachment-viewer" id="developer-attachment-viewer" hidden>
+    <div class="dashboard-modal-backdrop" data-attachment-viewer-close></div>
+    <div class="dashboard-modal-dialog dashboard-attachment-viewer-dialog" role="dialog" aria-modal="true" aria-labelledby="developer-attachment-viewer-title">
+      <div class="dashboard-panel-heading dashboard-panel-heading-tight">
+        <div>
+          <p class="dashboard-kicker">Attachment</p>
+          <h2 id="developer-attachment-viewer-title">Preview</h2>
+        </div>
+        <button type="button" class="dashboard-modal-close" data-attachment-viewer-close aria-label="Close attachment preview">Close</button>
+      </div>
+      <figure class="dashboard-attachment-viewer-figure">
+        <img id="developer-attachment-viewer-image" alt="">
+        <figcaption id="developer-attachment-viewer-caption"></figcaption>
+      </figure>
+    </div>
+  </div>
+
   <script>
     window.AAVGO_CURRENT_USER = <?php echo json_encode([
       'displayName' => $displayName,
