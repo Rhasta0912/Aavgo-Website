@@ -1909,43 +1909,43 @@ h2 {
   position: sticky;
   left: 0;
   z-index: 3;
-  width: 5.5rem;
+  width: 13.75rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(2),
 .dashboard-hours-table tbody td:nth-child(2) {
   position: sticky;
-  left: 5.5rem;
+  left: 13.75rem;
   z-index: 3;
-  width: 24rem;
+  width: 5.75rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(3),
 .dashboard-hours-table tbody td:nth-child(3) {
   position: sticky;
-  left: calc(5.5rem + 24rem);
+  left: calc(13.75rem + 5.75rem);
   z-index: 3;
-  width: 5rem;
+  width: 6rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(4),
 .dashboard-hours-table tbody td:nth-child(4) {
   position: sticky;
-  left: calc(5.5rem + 24rem + 5rem);
+  left: calc(13.75rem + 5.75rem + 6rem);
   z-index: 3;
-  width: 6rem;
+  width: 7rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(5),
 .dashboard-hours-table tbody td:nth-child(5) {
   position: sticky;
-  left: calc(5.5rem + 24rem + 5rem + 6rem);
+  left: calc(13.75rem + 5.75rem + 6rem + 7rem);
   z-index: 3;
-  width: 7rem;
+  width: 8.25rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
