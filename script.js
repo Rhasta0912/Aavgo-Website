@@ -2885,6 +2885,7 @@ function initializeDeveloperWorkspace() {
     deadlineDate: String(item.deadlineDate ?? item.deadline ?? "").trim(),
     priority: String(item.priority || "Normal").trim(),
     status: normalizeStatus(item.status),
+    order: Number(item.order ?? item.sortOrder ?? item.position ?? 0) || 0,
     notes: String(item.notes || "").trim(),
     attachments: Array.isArray(item.attachments)
       ? item.attachments.map(attachment => ({
@@ -2958,9 +2959,15 @@ function initializeDeveloperWorkspace() {
       const leftRank = statusRank.get(normalizeStatus(left.status)) ?? 999;
       const rightRank = statusRank.get(normalizeStatus(right.status)) ?? 999;
       if (leftRank !== rightRank) return leftRank - rightRank;
+      const leftOrder = Number(left.order || 0);
+      const rightOrder = Number(right.order || 0);
+      if (leftOrder !== rightOrder && (leftOrder !== 0 || rightOrder !== 0)) return leftOrder - rightOrder;
       const leftDeadline = String(left.deadlineDate || "");
       const rightDeadline = String(right.deadlineDate || "");
       if (leftDeadline !== rightDeadline) return leftDeadline.localeCompare(rightDeadline);
+      const leftCreatedAt = String(left.createdAt || "");
+      const rightCreatedAt = String(right.createdAt || "");
+      if (leftCreatedAt !== rightCreatedAt) return leftCreatedAt.localeCompare(rightCreatedAt);
       return String(left.title || "").localeCompare(String(right.title || ""));
     });
   };
@@ -3115,7 +3122,8 @@ function initializeDeveloperWorkspace() {
     priority: document.getElementById("developer-task-priority"),
     status: document.getElementById("developer-task-status"),
     notes: document.getElementById("developer-task-notes"),
-    attachments: document.getElementById("developer-task-attachments")
+    attachments: document.getElementById("developer-task-attachments"),
+    attachmentsPreview: document.getElementById("developer-task-attachments-preview")
   };
   const feedback = document.getElementById("developer-task-feedback");
   const historyList = document.getElementById("developer-task-history");
@@ -3157,6 +3165,8 @@ function initializeDeveloperWorkspace() {
   let boardSyncTimer = null;
   let boardSyncInFlight = false;
   let boardRefreshTimer = null;
+  let attachmentPreviewSeed = [];
+  let attachmentPreviewUrls = [];
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
   const currentUser = {
     displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
@@ -3187,6 +3197,16 @@ function initializeDeveloperWorkspace() {
 
   const createHistoryId = () => `${createTaskId()}_history`;
   const nowIso = () => new Date().toISOString();
+  const clearAttachmentPreviewUrls = () => {
+    attachmentPreviewUrls.forEach(url => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (_) {
+        // Ignore preview cleanup errors.
+      }
+    });
+    attachmentPreviewUrls = [];
+  };
   const toDateLabel = (value) => {
     if (!value) return "";
     const parsed = new Date(value);
@@ -3218,6 +3238,132 @@ function initializeDeveloperWorkspace() {
       isDueToday: Boolean(item.deadlineDate) && normalizeStatus(item.status) !== "Done" && deadlineDelta === 0,
       isStartingSoon: Boolean(item.startDate) && normalizeStatus(item.status) !== "Done" && startDelta !== null && startDelta >= 0 && startDelta <= 3
     };
+  };
+  const attachmentSizeLabel = (size = 0) => `${Math.max(1, Math.ceil(Number(size || 0) / 1024))} KB`;
+  const compareTaskOrder = (left = {}, right = {}) => {
+    const leftOrder = Number(left.order || 0);
+    const rightOrder = Number(right.order || 0);
+    if (leftOrder !== rightOrder && (leftOrder !== 0 || rightOrder !== 0)) {
+      return leftOrder - rightOrder;
+    }
+    const leftCreatedAt = String(left.createdAt || "");
+    const rightCreatedAt = String(right.createdAt || "");
+    if (leftCreatedAt !== rightCreatedAt) {
+      return leftCreatedAt.localeCompare(rightCreatedAt);
+    }
+    const leftDeadline = String(left.deadlineDate || "");
+    const rightDeadline = String(right.deadlineDate || "");
+    if (leftDeadline !== rightDeadline) {
+      return leftDeadline.localeCompare(rightDeadline);
+    }
+    return String(left.title || "").localeCompare(String(right.title || ""));
+  };
+  const getNextTaskOrder = (items = [], status = "To Do") => {
+    const normalizedStatus = normalizeStatus(status);
+    const laneOrders = (Array.isArray(items) ? items : [])
+      .filter(item => normalizeStatus(item.status) === normalizedStatus)
+      .map(item => Number(item.order || 0))
+      .filter(order => Number.isFinite(order) && order > 0);
+    const maxOrder = laneOrders.length ? Math.max(...laneOrders) : 0;
+    return maxOrder > 0 ? maxOrder + 1000 : ((Array.isArray(items) ? items.filter(item => normalizeStatus(item.status) === normalizedStatus).length : 0) + 1) * 1000;
+  };
+  const normalizeBoardOrdering = (items = []) => {
+    const grouped = new Map(STATUS_ORDER.map(status => [status, []]));
+    const extras = [];
+    (Array.isArray(items) ? items : []).map(normalizeTask).forEach(item => {
+      const status = normalizeStatus(item.status);
+      if (grouped.has(status)) {
+        grouped.get(status).push(item);
+      } else {
+        extras.push(item);
+      }
+    });
+    const ordered = [];
+    STATUS_ORDER.forEach(status => {
+      const lane = grouped.get(status).sort(compareTaskOrder);
+      lane.forEach((item, index) => {
+        ordered.push({
+          ...item,
+          status,
+          order: (index + 1) * 1000
+        });
+      });
+    });
+    return ordered.concat(extras);
+  };
+  const mergeAttachmentEntries = (existingAttachments = [], newAttachments = []) => {
+    const seen = new Set();
+    const merged = [];
+    [...(Array.isArray(existingAttachments) ? existingAttachments : []), ...(Array.isArray(newAttachments) ? newAttachments : [])].forEach(attachment => {
+      const normalized = normalizeAttachmentEntry(attachment);
+      if (!normalized.dataUrl) return;
+      const key = [normalized.name, normalized.size, normalized.type, normalized.dataUrl].join("|");
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(normalized);
+    });
+    return merged;
+  };
+  const renderAttachmentPreview = () => {
+    if (!fields.attachmentsPreview) return;
+    clearAttachmentPreviewUrls();
+    const existingAttachments = Array.isArray(attachmentPreviewSeed) ? attachmentPreviewSeed : [];
+    const selectedFiles = Array.from(fields.attachments?.files || []);
+    const selectedAttachments = selectedFiles.map(file => {
+      const isImage = String(file.type || "").toLowerCase().startsWith("image/");
+      const previewUrl = isImage ? URL.createObjectURL(file) : "";
+      if (previewUrl) {
+        attachmentPreviewUrls.push(previewUrl);
+      }
+      return {
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        size: file.size || 0,
+        previewUrl
+      };
+    });
+    const renderEntry = (item, isExisting = false) => {
+      const sizeLabel = attachmentSizeLabel(item.size || 0);
+      const fileName = escapeHtml(item.name || "attachment");
+      const typeLabel = escapeHtml(isExisting ? "Already attached" : "Selected now");
+      const previewUrl = String(item.previewUrl || item.dataUrl || "").trim();
+      const preview = previewUrl ? `<div class="dashboard-developer-attachment-thumb" style="background-image:url('${escapeAttr(previewUrl)}')"></div>` : `<div class="dashboard-developer-attachment-thumb dashboard-developer-attachment-thumb-file">${escapeHtml(String(item.name || "file").slice(0, 2).toUpperCase())}</div>`;
+      return `
+        <article class="dashboard-developer-attachment-preview-item ${previewUrl ? "is-image" : ""}">
+          ${preview}
+          <div>
+            <strong>${fileName}</strong>
+            <span>${sizeLabel} · ${typeLabel}</span>
+          </div>
+        </article>
+      `;
+    };
+    const existingMarkup = existingAttachments.length ? `
+      <div class="dashboard-developer-attachment-preview-group">
+        <span class="dashboard-kicker">Current attachments</span>
+        <div class="dashboard-developer-attachment-preview-list">
+          ${existingAttachments.map(item => renderEntry(item, true)).join("")}
+        </div>
+      </div>
+    ` : "";
+    const selectedMarkup = selectedAttachments.length ? `
+      <div class="dashboard-developer-attachment-preview-group">
+        <span class="dashboard-kicker">Selected now</span>
+        <div class="dashboard-developer-attachment-preview-list">
+          ${selectedAttachments.map(item => renderEntry(item, false)).join("")}
+        </div>
+      </div>
+    ` : "";
+    if (!existingMarkup && !selectedMarkup) {
+      fields.attachmentsPreview.innerHTML = `
+        <div class="dashboard-developer-attachment-preview-empty">
+          <strong>No attachments yet.</strong>
+          <p>PNG screenshots and supporting files will appear here once selected.</p>
+        </div>
+      `;
+      return;
+    }
+    fields.attachmentsPreview.innerHTML = `${existingMarkup}${selectedMarkup}`;
   };
   const escapeAttr = (value) => escapeHtml(String(value || ""));
   const getActorName = () => currentUser.displayName || "Leadership";
@@ -3519,11 +3665,17 @@ function initializeDeveloperWorkspace() {
     if (fields.priority) fields.priority.value = "Normal";
     if (fields.status) fields.status.value = STATUS_ORDER.includes(status) ? status : "To Do";
     if (fields.notes) fields.notes.value = "";
+    if (fields.attachments) fields.attachments.value = "";
+    attachmentPreviewSeed = [];
+    renderAttachmentPreview();
     aavgoCloseAllDatePickers();
   };
 
   const closeModal = () => {
     aavgoCloseAllDatePickers();
+    attachmentPreviewSeed = [];
+    clearAttachmentPreviewUrls();
+    renderAttachmentPreview();
     modal.hidden = true;
     document.body.classList.remove("dashboard-modal-open");
   };
@@ -3626,6 +3778,8 @@ function initializeDeveloperWorkspace() {
   const openModal = (status = "To Do") => {
     resetFields(status);
     editingTaskId = "";
+    attachmentPreviewSeed = [];
+    renderAttachmentPreview();
     if (addButton) {
       addButton.textContent = "Add task";
     }
@@ -3651,6 +3805,8 @@ function initializeDeveloperWorkspace() {
     if (fields.priority) fields.priority.value = String(task.priority || "Normal");
     if (fields.status) fields.status.value = normalizeStatus(task.status || "To Do");
     if (fields.notes) fields.notes.value = task.notes || "";
+    attachmentPreviewSeed = Array.isArray(task.attachments) ? task.attachments.map(normalizeAttachmentEntry).filter(attachment => attachment.dataUrl) : [];
+    renderAttachmentPreview();
     if (addButton) {
       addButton.textContent = "Save changes";
     }
@@ -3663,7 +3819,7 @@ function initializeDeveloperWorkspace() {
   };
 
   const save = (items) => {
-    developerBoardState.tasks = Array.isArray(items) ? items.map(item => normalizeTask(item)) : [];
+    developerBoardState.tasks = normalizeBoardOrdering(items);
     cacheDeveloperBoardState();
     render(load());
     scheduleDeveloperBoardSync();
@@ -3674,45 +3830,84 @@ function initializeDeveloperWorkspace() {
     render(load());
   };
 
-  const moveTaskToStatus = (taskId, status) => {
+  const moveTaskToStatus = (taskId, status, options = {}) => {
     const normalizedStatus = normalizeStatus(status);
-    const items = load();
-    let changed = false;
+    const items = load().map(item => normalizeTask(item));
+    const movingIndex = items.findIndex(item => String(item.id || "") === String(taskId || ""));
+    if (movingIndex < 0) return;
+    const movingTask = { ...items[movingIndex] };
+    const currentStatus = normalizeStatus(movingTask.status);
     const now = nowIso();
     const actorName = getActorName();
     const actorRole = getActorRole();
-    const nextItems = items.map(item => {
-      if (String(item.id || "") !== String(taskId || "")) return item;
-      changed = true;
-      return {
-        ...item,
-        status: normalizedStatus,
-        updatedAt: now,
-        activity: [
-          {
-            id: createHistoryId(),
-            type: "status",
-            message: `Moved to ${normalizedStatus}.`,
-            createdAt: now,
-            actorName,
-            actorRole
-          },
-          ...(Array.isArray(item.activity) ? item.activity : [])
-        ].slice(0, 12)
-      };
+    const targetTaskId = String(options.targetTaskId || "").trim();
+    const placement = String(options.placement || "append").toLowerCase();
+    const remaining = items.filter(item => String(item.id || "") !== String(taskId || ""));
+    const grouped = new Map(STATUS_ORDER.map(value => [value, []]));
+    remaining.forEach(item => {
+      const laneStatus = normalizeStatus(item.status);
+      grouped.get(laneStatus)?.push(item);
     });
-    if (!changed) return;
+    STATUS_ORDER.forEach(value => {
+      grouped.get(value)?.sort(compareTaskOrder);
+    });
+    const targetLane = grouped.get(normalizedStatus) || [];
+    let insertIndex = targetLane.length;
+    if (targetTaskId) {
+      const targetIndex = targetLane.findIndex(item => String(item.id || "") === targetTaskId);
+      if (targetIndex >= 0) {
+        insertIndex = placement === "before" ? targetIndex : targetIndex + 1;
+      }
+    }
+    targetLane.splice(Math.max(0, Math.min(insertIndex, targetLane.length)), 0, {
+      ...movingTask,
+      status: normalizedStatus,
+      updatedAt: now,
+      order: 0,
+      activity: [
+        {
+          id: createHistoryId(),
+          type: currentStatus === normalizedStatus ? "reorder" : "status",
+          message: currentStatus === normalizedStatus
+            ? `Reordered inside ${normalizedStatus}.`
+            : `Moved to ${normalizedStatus}.`,
+          createdAt: now,
+          actorName,
+          actorRole
+        },
+        ...(Array.isArray(movingTask.activity) ? movingTask.activity : [])
+      ].slice(0, 12)
+    });
+    const nextItems = [];
+    STATUS_ORDER.forEach(value => {
+      (grouped.get(value) || []).forEach((item, index) => {
+        nextItems.push({
+          ...item,
+          status: value,
+          order: (index + 1) * 1000
+        });
+      });
+    });
+    const currentSignature = sortTasks(items).map(item => `${normalizeStatus(item.status)}:${String(item.id || "")}`).join("|");
+    const nextSignature = sortTasks(nextItems).map(item => `${normalizeStatus(item.status)}:${String(item.id || "")}`).join("|");
+    if (currentSignature === nextSignature) {
+      return;
+    }
+    const updatedTask = nextItems.find(item => String(item.id || "") === String(taskId || ""));
     recordAuditEvent({
-      type: "status",
-      title: nextItems.find(item => String(item.id || "") === String(taskId || ""))?.title || "Roadmap card",
+      type: currentStatus === normalizedStatus ? "reorder" : "status",
+      title: updatedTask?.title || movingTask.title || "Roadmap card",
       taskId,
+      fromStatus: currentStatus,
       toStatus: normalizedStatus,
-      message: `Moved to ${normalizedStatus}.`,
+      message: currentStatus === normalizedStatus
+        ? `Reordered inside ${normalizedStatus}.`
+        : `Moved to ${normalizedStatus}.`,
       createdAt: now,
       actorName,
       actorRole
     });
-    setFeedback(`Task moved to ${normalizedStatus}.`, false);
+    setFeedback(currentStatus === normalizedStatus ? `Task reordered in ${normalizedStatus}.` : `Task moved to ${normalizedStatus}.`, false);
     save(nextItems);
   };
 
@@ -3753,10 +3948,10 @@ function initializeDeveloperWorkspace() {
       actorRole
     });
     setFeedback("Task moved to Archive instead of being deleted.", false);
-    developerBoardState.tasks = items.map(item => normalizeTask(item));
+    developerBoardState.tasks = normalizeBoardOrdering(items);
     setHistoryState(history);
     cacheDeveloperBoardState();
-    render(items);
+    render(load());
   };
 
   const restoreTask = (taskId) => {
@@ -3771,6 +3966,7 @@ function initializeDeveloperWorkspace() {
     items.unshift({
       ...task,
       status: normalizeStatus(task.archivedFrom || task.status || "To Do"),
+      order: getNextTaskOrder(items, task.archivedFrom || task.status || "To Do"),
       updatedAt: now,
       archivedAt: "",
       archivedFrom: "",
@@ -3797,10 +3993,10 @@ function initializeDeveloperWorkspace() {
       actorRole
     });
     setFeedback("Task restored from Archive.", false);
-    developerBoardState.tasks = items.map(item => normalizeTask(item));
+    developerBoardState.tasks = normalizeBoardOrdering(items);
     setHistoryState(history);
     cacheDeveloperBoardState();
-    render(items);
+    render(load());
   };
 
   const deleteArchivedTask = (taskId) => {
@@ -4074,6 +4270,12 @@ function initializeDeveloperWorkspace() {
     return Promise.all(files.map(readFileAsDataUrl));
   };
 
+  if (fields.attachments) {
+    fields.attachments.addEventListener("change", () => {
+      renderAttachmentPreview();
+    });
+  }
+
   const submitTask = async () => {
     aavgoCloseAllDatePickers();
     const title = String(fields.title?.value || "").trim();
@@ -4094,7 +4296,6 @@ function initializeDeveloperWorkspace() {
       setFeedback("Pick a valid due date from the calendar.", true);
       return;
     }
-    const attachments = await readAttachments().catch(() => []);
     const items = load();
     const now = nowIso();
     const actorName = getActorName();
@@ -4102,9 +4303,14 @@ function initializeDeveloperWorkspace() {
     const note = String(fields.notes?.value || "").trim();
     const nextStatus = normalizeStatus(fields.status?.value || "To Do");
     const editingIndex = editingTaskId ? items.findIndex(item => String(item.id || "") === String(editingTaskId || "")) : -1;
+    const attachments = await readAttachments().catch(() => []);
 
     if (editingIndex >= 0) {
       const existing = items[editingIndex];
+      const previousStatus = normalizeStatus(existing.status || "To Do");
+      const nextOrder = nextStatus !== previousStatus
+        ? getNextTaskOrder(items.filter(item => String(item.id || "") !== String(existing.id || "")), nextStatus)
+        : Number(existing.order || 0) || getNextTaskOrder(items.filter(item => String(item.id || "") !== String(existing.id || "")), nextStatus);
       const nextItem = {
         ...existing,
         title,
@@ -4114,7 +4320,8 @@ function initializeDeveloperWorkspace() {
         priority: String(fields.priority?.value || "Normal").trim(),
         status: nextStatus,
         notes: note,
-        attachments,
+        order: nextOrder,
+        attachments: mergeAttachmentEntries(existing.attachments, attachments),
         updatedAt: now,
       activity: [
         {
@@ -4150,6 +4357,7 @@ function initializeDeveloperWorkspace() {
         deadlineDate,
         priority: String(fields.priority?.value || "Normal").trim(),
         status: nextStatus,
+        order: getNextTaskOrder(items, nextStatus),
         notes: note,
         attachments,
         activity: [
@@ -4249,6 +4457,12 @@ function initializeDeveloperWorkspace() {
     deleteArchivedTask(taskId);
   });
 
+  const clearTaskDropTargets = () => {
+    list.querySelectorAll(".is-drop-target, .is-drop-before, .is-drop-after").forEach(node => {
+      node.classList.remove("is-drop-target", "is-drop-before", "is-drop-after");
+    });
+  };
+
   list.addEventListener("dragstart", event => {
     const card = event.target.closest(".dashboard-developer-task-card");
     if (!card || !card.dataset.taskId) return;
@@ -4265,25 +4479,51 @@ function initializeDeveloperWorkspace() {
     card?.classList.remove("is-dragging");
     draggingTaskId = "";
     document.body.classList.remove("developer-dragging");
-    list.querySelectorAll(".is-drop-target").forEach(node => node.classList.remove("is-drop-target"));
+    clearTaskDropTargets();
     archivePanel?.classList.remove("is-drop-target");
   });
 
   list.addEventListener("dragover", event => {
+    const card = event.target.closest(".dashboard-developer-task-card[data-task-id]");
+    if (card && draggingTaskId && String(card.dataset.taskId || "") !== String(draggingTaskId || "")) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      clearTaskDropTargets();
+      const rect = card.getBoundingClientRect();
+      const isBefore = event.clientY < rect.top + rect.height / 2;
+      card.classList.add(isBefore ? "is-drop-before" : "is-drop-after");
+      return;
+    }
     const lane = event.target.closest("[data-developer-lane-dropzone]");
     if (!lane) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
+    clearTaskDropTargets();
     lane.classList.add("is-drop-target");
   });
 
   list.addEventListener("dragenter", event => {
+    const card = event.target.closest(".dashboard-developer-task-card[data-task-id]");
+    if (card && draggingTaskId && String(card.dataset.taskId || "") !== String(draggingTaskId || "")) {
+      const rect = card.getBoundingClientRect();
+      const isBefore = event.clientY < rect.top + rect.height / 2;
+      clearTaskDropTargets();
+      card.classList.add(isBefore ? "is-drop-before" : "is-drop-after");
+      return;
+    }
     const lane = event.target.closest("[data-developer-lane-dropzone]");
     if (!lane) return;
+    clearTaskDropTargets();
     lane.classList.add("is-drop-target");
   });
 
   list.addEventListener("dragleave", event => {
+    const card = event.target.closest(".dashboard-developer-task-card[data-task-id]");
+    if (card) {
+      if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+      card.classList.remove("is-drop-before", "is-drop-after");
+      return;
+    }
     const lane = event.target.closest("[data-developer-lane-dropzone]");
     if (!lane) return;
     if (event.relatedTarget && lane.contains(event.relatedTarget)) return;
@@ -4291,13 +4531,28 @@ function initializeDeveloperWorkspace() {
   });
 
   list.addEventListener("drop", event => {
+    const card = event.target.closest(".dashboard-developer-task-card[data-task-id]");
+    if (card && draggingTaskId && String(card.dataset.taskId || "") !== String(draggingTaskId || "")) {
+      event.preventDefault();
+      const rect = card.getBoundingClientRect();
+      const isBefore = event.clientY < rect.top + rect.height / 2;
+      const lane = card.closest("[data-developer-lane-dropzone]");
+      clearTaskDropTargets();
+      if (!lane) return;
+      const targetStatus = lane.getAttribute("data-developer-lane-dropzone") || "To Do";
+      moveTaskToStatus(draggingTaskId, targetStatus, {
+        targetTaskId: String(card.dataset.taskId || ""),
+        placement: isBefore ? "before" : "after"
+      });
+      return;
+    }
     const lane = event.target.closest("[data-developer-lane-dropzone]");
     if (!lane) return;
     event.preventDefault();
-    lane.classList.remove("is-drop-target");
+    clearTaskDropTargets();
     const taskId = draggingTaskId || event.dataTransfer.getData("text/plain") || "";
     if (!taskId) return;
-    moveTaskToStatus(taskId, lane.getAttribute("data-developer-lane-dropzone") || "To Do");
+    moveTaskToStatus(taskId, lane.getAttribute("data-developer-lane-dropzone") || "To Do", { placement: "append" });
   });
 
   archivePanel?.addEventListener("dragover", event => {

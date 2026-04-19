@@ -258,94 +258,103 @@ $developerBoardStore = aavgo_read_developer_board();
         <button type="button" class="dashboard-modal-close" data-developer-task-modal-close aria-label="Close task form">Close</button>
       </div>
 
-      <form id="developer-task-form" class="dashboard-developer-form-grid" novalidate onsubmit="return false;">
-        <label class="dashboard-control-field dashboard-control-field-wide">
-          <span>Task</span>
-          <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
-        </label>
-        <label class="dashboard-control-field">
-          <span>Owner</span>
-          <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
-        </label>
-        <label class="dashboard-control-field">
-          <span>Start date</span>
-          <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Start" data-empty-label="Choose a start date">
-            <input id="developer-task-start" type="date" data-date-input readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
-            <button type="button" class="dashboard-deadline-trigger" id="developer-task-start-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
-              Choose a start date
-            </button>
-            <div class="dashboard-deadline-popover" id="developer-task-start-popover" data-date-popover hidden>
-              <div class="dashboard-deadline-header">
-                <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">&lsaquo;</button>
-                <strong id="developer-task-start-month" data-date-month>Month</strong>
-                <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">&rsaquo;</button>
-              </div>
-              <div class="dashboard-deadline-weekdays" aria-hidden="true">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-              </div>
-              <div class="dashboard-deadline-grid" id="developer-task-start-grid" data-date-grid></div>
-              <div class="dashboard-deadline-footer">
-                <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
-              </div>
-            </div>
+      <form id="developer-task-form" class="dashboard-developer-form-grid dashboard-developer-task-form" novalidate onsubmit="return false;">
+        <div class="dashboard-developer-task-modal-layout">
+          <div class="dashboard-developer-task-modal-column dashboard-developer-task-modal-column-main">
+            <label class="dashboard-control-field dashboard-control-field-wide">
+              <span>Task</span>
+              <input id="developer-task-title" type="text" maxlength="140" placeholder="What needs to be built or fixed?">
+            </label>
+            <label class="dashboard-control-field">
+              <span>Owner</span>
+              <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
+            </label>
+            <label class="dashboard-control-field dashboard-control-field-wide">
+              <span>Note / context</span>
+              <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="8" placeholder="Add context, blockers, risks, progress, or rollout notes."></textarea>
+            </label>
           </div>
-        </label>
-        <label class="dashboard-control-field dashboard-control-field-wide">
-          <span>Due date</span>
-          <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Due" data-empty-label="Choose a due date">
-            <input id="developer-task-deadline" type="date" data-date-input required readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
-            <button type="button" class="dashboard-deadline-trigger" id="developer-task-deadline-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
-              Choose a due date
-            </button>
-            <div class="dashboard-deadline-popover" id="developer-task-deadline-popover" data-date-popover hidden>
-              <div class="dashboard-deadline-header">
-                <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">&lsaquo;</button>
-                <strong id="developer-task-deadline-month" data-date-month>Month</strong>
-                <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">&rsaquo;</button>
-              </div>
-              <div class="dashboard-deadline-weekdays" aria-hidden="true">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-              </div>
-              <div class="dashboard-deadline-grid" id="developer-task-deadline-grid" data-date-grid></div>
-              <div class="dashboard-deadline-footer">
-                <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
-                <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
-              </div>
+          <div class="dashboard-developer-task-modal-column dashboard-developer-task-modal-column-side">
+            <div class="dashboard-developer-task-modal-side-grid">
+              <label class="dashboard-control-field">
+                <span>Start date</span>
+                <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Start" data-empty-label="Choose a start date">
+                  <input id="developer-task-start" type="date" data-date-input readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+                  <button type="button" class="dashboard-deadline-trigger" id="developer-task-start-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
+                    Choose a start date
+                  </button>
+                  <div class="dashboard-deadline-popover" id="developer-task-start-popover" data-date-popover hidden>
+                    <div class="dashboard-deadline-header">
+                      <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">&lsaquo;</button>
+                      <strong id="developer-task-start-month" data-date-month>Month</strong>
+                      <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">&rsaquo;</button>
+                    </div>
+                    <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dashboard-deadline-grid" id="developer-task-start-grid" data-date-grid></div>
+                    <div class="dashboard-deadline-footer">
+                      <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
+                    </div>
+                  </div>
+                </div>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Due date</span>
+                <div class="dashboard-deadline-picker" data-aavgo-date-picker data-value-prefix="Due" data-empty-label="Choose a due date">
+                  <input id="developer-task-deadline" type="date" data-date-input required readonly class="dashboard-deadline-native" tabindex="-1" aria-hidden="true">
+                  <button type="button" class="dashboard-deadline-trigger" id="developer-task-deadline-trigger" data-date-trigger aria-haspopup="dialog" aria-expanded="false">
+                    Choose a due date
+                  </button>
+                  <div class="dashboard-deadline-popover" id="developer-task-deadline-popover" data-date-popover hidden>
+                    <div class="dashboard-deadline-header">
+                      <button type="button" class="dashboard-deadline-nav" data-date-prev aria-label="Previous month">&lsaquo;</button>
+                      <strong id="developer-task-deadline-month" data-date-month>Month</strong>
+                      <button type="button" class="dashboard-deadline-nav" data-date-next aria-label="Next month">&rsaquo;</button>
+                    </div>
+                    <div class="dashboard-deadline-weekdays" aria-hidden="true">
+                      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="dashboard-deadline-grid" id="developer-task-deadline-grid" data-date-grid></div>
+                    <div class="dashboard-deadline-footer">
+                      <button type="button" class="dashboard-deadline-chip" data-date-today>Today</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-nextweek>Next week</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-clear>Clear</button>
+                      <button type="button" class="dashboard-deadline-chip" data-date-close>Hide calendar</button>
+                    </div>
+                  </div>
+                </div>
+                <small class="dashboard-control-hint">Pick a date from the calendar below, or jump to today / next week.</small>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Urgency</span>
+                <select id="developer-task-priority">
+                  <option value="Normal">Normal</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="Future">Future</option>
+                  <option value="Done today">Done today</option>
+                </select>
+              </label>
+              <label class="dashboard-control-field">
+                <span>Status</span>
+                <select id="developer-task-status">
+                  <option value="To Do">To Do</option>
+                  <option value="Doing">Doing</option>
+                  <option value="Done">Done</option>
+                </select>
+              </label>
             </div>
+            <label class="dashboard-control-field dashboard-control-field-wide dashboard-developer-attachment-dropzone">
+              <span>Attachments</span>
+              <input id="developer-task-attachments" type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.json,image/*,application/pdf,text/plain">
+              <small class="dashboard-control-hint">Upload screenshots or files that support the note. PNGs will preview here before you save.</small>
+              <div class="dashboard-developer-attachments-preview" id="developer-task-attachments-preview" aria-live="polite"></div>
+            </label>
           </div>
-          <small class="dashboard-control-hint">Pick a date from the calendar below, or jump to today / next week.</small>
-        </label>
-        <label class="dashboard-control-field">
-          <span>Urgency</span>
-          <select id="developer-task-priority">
-            <option value="Normal">Normal</option>
-            <option value="Urgent">Urgent</option>
-            <option value="Future">Future</option>
-            <option value="Done today">Done today</option>
-          </select>
-        </label>
-        <label class="dashboard-control-field">
-          <span>Status</span>
-          <select id="developer-task-status">
-            <option value="To Do">To Do</option>
-            <option value="Doing">Doing</option>
-            <option value="Done">Done</option>
-          </select>
-        </label>
-        <label class="dashboard-control-field dashboard-control-field-wide">
-          <span>Post note</span>
-          <textarea id="developer-task-notes" class="dashboard-control-textarea" rows="4" placeholder="Add context, blockers, risks, progress, or rollout notes."></textarea>
-        </label>
-        <label class="dashboard-control-field dashboard-control-field-wide">
-          <span>Attachments</span>
-          <input id="developer-task-attachments" type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.json,image/*,application/pdf,text/plain">
-          <small class="dashboard-control-hint">Upload files or screenshots that support the note.</small>
-        </label>
+        </div>
       </form>
 
         <p class="dashboard-panel-copy dashboard-developer-feedback" id="developer-task-feedback">Add the task to the board, then drag it between To Do, Doing, and Done as it changes.</p>
