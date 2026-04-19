@@ -1918,34 +1918,34 @@ h2 {
   position: sticky;
   left: 5.5rem;
   z-index: 3;
-  width: 20rem;
+  width: 22rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(3),
 .dashboard-hours-table tbody td:nth-child(3) {
   position: sticky;
-  left: calc(5.5rem + 20rem);
+  left: calc(5.5rem + 22rem);
   z-index: 3;
-  width: 7rem;
+  width: 6rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(4),
 .dashboard-hours-table tbody td:nth-child(4) {
   position: sticky;
-  left: calc(5.5rem + 20rem + 7rem);
+  left: calc(5.5rem + 22rem + 6rem);
   z-index: 3;
-  width: 8rem;
+  width: 7rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hours-table thead th:nth-child(5),
 .dashboard-hours-table tbody td:nth-child(5) {
   position: sticky;
-  left: calc(5.5rem + 20rem + 7rem + 8rem);
+  left: calc(5.5rem + 22rem + 6rem + 7rem);
   z-index: 3;
-  width: 9rem;
+  width: 8rem;
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -1956,8 +1956,8 @@ h2 {
 
 .dashboard-staff-cell {
   display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
   flex-wrap: nowrap;
 }
@@ -1970,23 +1970,24 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 1 1 65%;
 }
 
 .dashboard-staff-cell span {
   color: rgba(255, 255, 255, 0.54);
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  flex: 0 1 auto;
+  flex: 0 1 35%;
 }
 
 .dashboard-inline-stack {
-  display: grid;
-  gap: 0.08rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   min-width: 0;
 }
 
@@ -1998,6 +1999,7 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .dashboard-inline-stack span {

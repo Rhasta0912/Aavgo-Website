@@ -345,12 +345,12 @@ function getRoleSummary(person) {
 
 function getCompactRoleSummary(person) {
   const role = String(person?.role || person?.roleSummary || "Agent").trim();
-  if (/operations manager/i.test(role)) return "/ Manager";
-  if (/team leader/i.test(role)) return "/ TL";
-  if (/developer/i.test(role)) return "/ Dev";
-  if (/sme/i.test(role)) return "/ SME";
-  if (/trainee/i.test(role)) return "/ Trainee";
-  return role ? `/${role}` : "/ Agent";
+  if (/operations manager/i.test(role)) return "Manager";
+  if (/team leader/i.test(role)) return "TL";
+  if (/developer/i.test(role)) return "Dev";
+  if (/sme/i.test(role)) return "SME";
+  if (/trainee/i.test(role)) return "Trainee";
+  return role || "Agent";
 }
 
 function getStatusSummary(person) {
@@ -1603,8 +1603,8 @@ function renderHoursRows(people, selectedDiscordId) {
       <tr class="${activeNow ? "is-live" : ""} ${isSelected ? "is-selected" : ""}" data-discord-id="${escapeHtml(person?.discordId || "")}">
         <td>
           <div class="dashboard-staff-cell">
-            <strong>${escapeHtml(person?.displayName || "Unknown")}</strong>
-            <span>@${escapeHtml(person?.username || "")}</span>
+            <strong title="${escapeHtml(person?.displayName || "Unknown")}">${escapeHtml(person?.displayName || "Unknown")}</strong>
+            <span title="${escapeHtml(person?.username || "")}">@${escapeHtml(person?.username || "")}</span>
           </div>
         </td>
         <td>
