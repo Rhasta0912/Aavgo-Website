@@ -10,6 +10,7 @@ const AAVGO_WEBSITE_API_TIMEOUT = 20;
 const AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH = '/home/aavgodes/admin-hours-snapshot.json';
 const AAVGO_DEFAULT_COMMAND_QUEUE_PATH = '/home/aavgodes/admin-command-queue.json';
 const AAVGO_DEFAULT_AUDIT_LOG_PATH = '/home/aavgodes/admin-audit-log.json';
+const AAVGO_DEFAULT_DEVELOPER_BOARD_PATH = '/home/aavgodes/developer-board.json';
 const AAVGO_DEFAULT_LIVE_SIGNAL_PATH = '/home/aavgodes/live-signals.json';
 const AAVGO_DEFAULT_AUTH_ERROR_LOG_PATH = '/home/aavgodes/discord-auth-errors.log';
 const AAVGO_DEFAULT_AUTH_HANDOFF_PATH = '/home/aavgodes/discord-auth-handoffs.json';
@@ -159,6 +160,7 @@ function aavgo_load_config(): array
         'hours_snapshot_path' => trim((string) (getenv('AAVGO_HOURS_SNAPSHOT_PATH') ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH)),
         'command_queue_path' => trim((string) (getenv('AAVGO_COMMAND_QUEUE_PATH') ?: AAVGO_DEFAULT_COMMAND_QUEUE_PATH)),
         'audit_log_path' => trim((string) (getenv('AAVGO_AUDIT_LOG_PATH') ?: AAVGO_DEFAULT_AUDIT_LOG_PATH)),
+        'developer_board_path' => trim((string) (getenv('AAVGO_DEVELOPER_BOARD_PATH') ?: AAVGO_DEFAULT_DEVELOPER_BOARD_PATH)),
         'live_signal_path' => trim((string) (getenv('AAVGO_LIVE_SIGNAL_PATH') ?: AAVGO_DEFAULT_LIVE_SIGNAL_PATH)),
         'role_ids' => $roleIds,
         'admin_user_ids' => $adminUserIds,
@@ -167,7 +169,7 @@ function aavgo_load_config(): array
     if (is_file(AAVGO_EXTERNAL_CONFIG)) {
         $fileConfig = require AAVGO_EXTERNAL_CONFIG;
         if (is_array($fileConfig)) {
-            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token', 'hours_snapshot_path', 'command_queue_path', 'audit_log_path', 'live_signal_path'] as $key) {
+            foreach (['client_id', 'client_secret', 'guild_id', 'base_url', 'website_api_url', 'website_api_token', 'hours_snapshot_path', 'command_queue_path', 'audit_log_path', 'developer_board_path', 'live_signal_path'] as $key) {
                 if (array_key_exists($key, $fileConfig)) {
                     $config[$key] = (string) $fileConfig[$key];
                 }
@@ -191,6 +193,7 @@ function aavgo_load_config(): array
             $config['hours_snapshot_path'] = trim((string) ($config['hours_snapshot_path'] ?: AAVGO_DEFAULT_HOURS_SNAPSHOT_PATH));
             $config['command_queue_path'] = trim((string) ($config['command_queue_path'] ?: AAVGO_DEFAULT_COMMAND_QUEUE_PATH));
             $config['audit_log_path'] = trim((string) ($config['audit_log_path'] ?: AAVGO_DEFAULT_AUDIT_LOG_PATH));
+            $config['developer_board_path'] = trim((string) ($config['developer_board_path'] ?: AAVGO_DEFAULT_DEVELOPER_BOARD_PATH));
             $config['live_signal_path'] = trim((string) ($config['live_signal_path'] ?: AAVGO_DEFAULT_LIVE_SIGNAL_PATH));
         }
     }
@@ -251,6 +254,12 @@ function aavgo_get_audit_log_path(): string
 {
     $path = trim((string) aavgo_get_config('audit_log_path'));
     return $path !== '' ? $path : AAVGO_DEFAULT_AUDIT_LOG_PATH;
+}
+
+function aavgo_get_developer_board_path(): string
+{
+    $path = trim((string) aavgo_get_config('developer_board_path'));
+    return $path !== '' ? $path : AAVGO_DEFAULT_DEVELOPER_BOARD_PATH;
 }
 
 function aavgo_get_live_signal_path(): string
@@ -514,6 +523,38 @@ function aavgo_audit_log_template(): array
         'updatedAt' => gmdate('c'),
         'entries' => [],
     ];
+}
+
+function aavgo_developer_board_template(): array
+{
+    return [
+        'updatedAt' => gmdate('c'),
+        'tasks' => [],
+        'history' => [],
+        'audit' => [],
+    ];
+}
+
+function aavgo_read_developer_board(): array
+{
+    $board = aavgo_read_json_file(aavgo_get_developer_board_path(), aavgo_developer_board_template());
+    $board['updatedAt'] = trim((string) ($board['updatedAt'] ?? '')) ?: gmdate('c');
+    $board['tasks'] = is_array($board['tasks'] ?? null) ? array_values(array_filter($board['tasks'], 'is_array')) : [];
+    $board['history'] = is_array($board['history'] ?? null) ? array_values(array_filter($board['history'], 'is_array')) : [];
+    $board['audit'] = is_array($board['audit'] ?? null) ? array_values(array_filter($board['audit'], 'is_array')) : [];
+    return $board;
+}
+
+function aavgo_write_developer_board(array $board): bool
+{
+    $payload = [
+        'updatedAt' => gmdate('c'),
+        'tasks' => is_array($board['tasks'] ?? null) ? array_values(array_filter($board['tasks'], 'is_array')) : [],
+        'history' => is_array($board['history'] ?? null) ? array_values(array_filter($board['history'], 'is_array')) : [],
+        'audit' => is_array($board['audit'] ?? null) ? array_values(array_filter($board['audit'], 'is_array')) : [],
+    ];
+
+    return aavgo_write_json_file(aavgo_get_developer_board_path(), $payload);
 }
 
 function aavgo_live_signal_template(): array

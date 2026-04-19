@@ -11,6 +11,7 @@ deployment:
     - /bin/mkdir -p $DEPLOYPATH/api/admin-hours-sync
     - /bin/mkdir -p $DEPLOYPATH/api/admin-command
     - /bin/mkdir -p $DEPLOYPATH/api/admin-command-sync
+    - /bin/mkdir -p $DEPLOYPATH/api/developer-board
     - /bin/mkdir -p $DEPLOYPATH/auth
     - /bin/mkdir -p $DEPLOYPATH/auth/discord
     - /bin/mkdir -p $DEPLOYPATH/auth/discord/login
@@ -28,6 +29,7 @@ deployment:
     - /bin/cp -f api/admin-hours-sync/index.php $DEPLOYPATH/api/admin-hours-sync/index.php
     - /bin/cp -f api/admin-command/index.php $DEPLOYPATH/api/admin-command/index.php
     - /bin/cp -f api/admin-command-sync/index.php $DEPLOYPATH/api/admin-command-sync/index.php
+    - /bin/cp -f api/developer-board/index.php $DEPLOYPATH/api/developer-board/index.php
     - /bin/cp -f auth/bootstrap.php $DEPLOYPATH/auth/bootstrap.php
     - /bin/cp -f admin/developer/index.php $DEPLOYPATH/admin/developer/index.php
     - /bin/cp -f auth/discord/login/index.php $DEPLOYPATH/auth/discord/login/index.php

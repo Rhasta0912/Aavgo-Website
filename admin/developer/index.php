@@ -61,6 +61,7 @@ if ($sidebarRoleLabel === '') {
 }
 $safeSidebarRoleLabel = htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8');
 $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabel));
+$developerBoardStore = aavgo_read_developer_board();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -106,7 +107,7 @@ $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabe
         <div>
           <p class="dashboard-breadcrumb">Dashboard / Developer / Panel</p>
           <h1 class="dashboard-title dashboard-title-wide">Roadmap board.</h1>
-          <p class="dashboard-subtitle">A very open Trello-style board for tasks, fixes, and platform work.</p>
+          <p class="dashboard-subtitle">A shared Trello-style board for tasks, fixes, and platform work.</p>
         </div>
         <div class="dashboard-toolbar">
           <button class="dashboard-sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
@@ -375,6 +376,8 @@ $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabe
       'displayName' => $displayName,
       'roleSummary' => $roleSummary,
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    window.__AAVGO_DEVELOPER_BOARD__ = <?php echo json_encode($developerBoardStore, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    window.AAVGO_DEVELOPER_BOARD_ENDPOINT = '/api/developer-board/';
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
   </script>

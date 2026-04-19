@@ -3128,6 +3128,7 @@ function initializeDeveloperWorkspace() {
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
   const viewPanels = Array.from(document.querySelectorAll("[data-developer-view-panel]"));
+  const boardEndpoint = String(window.AAVGO_DEVELOPER_BOARD_ENDPOINT || "/api/developer-board/");
   const STORAGE_KEY = "aavgo_developer_tasks";
   const HISTORY_KEY = "aavgo_developer_task_history";
   const AUDIT_KEY = "aavgo_developer_task_audit";
@@ -3153,11 +3154,29 @@ function initializeDeveloperWorkspace() {
   let draggingTaskId = "";
   let editingTaskId = "";
   let viewingTaskId = "";
+  let boardSyncTimer = null;
+  let boardSyncInFlight = false;
+  let boardRefreshTimer = null;
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
   const currentUser = {
     displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
     roleSummary: String(window.AAVGO_CURRENT_USER?.roleSummary || window.AAVGO_CURRENT_USER?.role || "Leadership").trim() || "Leadership"
   };
+  const boardBootstrap = (() => {
+    const globalBoard = window.__AAVGO_DEVELOPER_BOARD__;
+    if (globalBoard && typeof globalBoard === "object") {
+      return globalBoard;
+    }
+    const bootstrapNode = document.getElementById("developer-board-bootstrap");
+    if (!bootstrapNode) {
+      return null;
+    }
+    try {
+      return JSON.parse(bootstrapNode.textContent || "{}");
+    } catch (_) {
+      return null;
+    }
+  })();
 
   const createTaskId = () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -3270,93 +3289,190 @@ function initializeDeveloperWorkspace() {
     archivedFrom: String(item.archivedFrom || "").trim()
   });
 
-  const load = () => {
+  const normalizeAuditEntry = (entry = {}) => ({
+    id: String(entry?.id || createHistoryId()),
+    type: String(entry?.type || "note").trim() || "note",
+    title: String(entry?.title || "").trim(),
+    message: String(entry?.message || "").trim(),
+    taskId: String(entry?.taskId || "").trim(),
+    fromStatus: String(entry?.fromStatus || "").trim(),
+    toStatus: String(entry?.toStatus || "").trim(),
+    actorName: String(entry?.actorName || getActorName()).trim() || "Leadership",
+    actorRole: String(entry?.actorRole || getActorRole()).trim() || "Leadership",
+    createdAt: String(entry?.createdAt || nowIso()).trim()
+  });
+
+  const readLegacyArray = (key) => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed)) return [];
-      const normalized = parsed.map(entry => normalizeTask(entry));
-      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-      }
-      return normalized;
+      return Array.isArray(parsed) ? parsed : [];
     } catch (_) {
       return [];
     }
   };
 
-  const loadHistory = () => {
+  const developerBoardState = {
+    tasks: [],
+    history: [],
+    audit: [],
+    updatedAt: "",
+    hydrationSource: "server"
+  };
+
+  const hydrateDeveloperBoardState = (payload = {}) => {
+    developerBoardState.tasks = Array.isArray(payload.tasks) ? payload.tasks.map(entry => normalizeTask(entry)) : [];
+    developerBoardState.history = Array.isArray(payload.history)
+      ? payload.history.map(entry => normalizeTask({
+          ...entry,
+          archivedAt: entry?.archivedAt || nowIso()
+        }))
+      : [];
+    developerBoardState.audit = Array.isArray(payload.audit) ? payload.audit.map(entry => normalizeAuditEntry(entry)) : [];
+    developerBoardState.updatedAt = String(payload.updatedAt || nowIso()).trim();
+  };
+
+  const boardStateToPayload = () => ({
+    tasks: developerBoardState.tasks,
+    history: developerBoardState.history,
+    audit: developerBoardState.audit
+  });
+
+  const cacheDeveloperBoardState = () => {
     try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed)) return [];
-      const normalized = parsed.map(entry => normalizeTask({
-        ...entry,
-        archivedAt: entry?.archivedAt || nowIso()
-      }));
-      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(normalized));
-      }
-      return normalized;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(developerBoardState.tasks));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(developerBoardState.history));
+      localStorage.setItem(AUDIT_KEY, JSON.stringify(developerBoardState.audit));
     } catch (_) {
-      return [];
+      // Ignore cache failures in restricted browsers.
     }
   };
 
-  const setHistoryState = (items) => {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+  const scheduleDeveloperBoardSync = () => {
+    if (!boardEndpoint) return;
+    if (boardSyncTimer) {
+      window.clearTimeout(boardSyncTimer);
+    }
+    boardSyncTimer = window.setTimeout(() => {
+      void syncDeveloperBoardNow();
+    }, 250);
+  };
+
+  async function syncDeveloperBoardNow() {
+    if (!boardEndpoint || boardSyncInFlight) return;
+    boardSyncInFlight = true;
+    try {
+      const response = await fetch(boardEndpoint, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ state: boardStateToPayload() })
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok || !payload?.data) {
+        throw new Error(payload?.error || "Unable to save shared developer board.");
+      }
+
+      hydrateDeveloperBoardState(payload.data);
+      cacheDeveloperBoardState();
+    } catch (error) {
+      setFeedback(String(error?.message || "The shared developer board could not sync right now."), true);
+    } finally {
+      boardSyncInFlight = false;
+    }
+  }
+
+  async function refreshDeveloperBoardFromServer(silent = true) {
+    if (!boardEndpoint) return;
+
+    try {
+      const response = await fetch(boardEndpoint, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok || !payload?.data) return;
+
+      const nextUpdatedAt = String(payload.data.updatedAt || "");
+      if (nextUpdatedAt && nextUpdatedAt === developerBoardState.updatedAt) {
+        return;
+      }
+
+      hydrateDeveloperBoardState(payload.data);
+      cacheDeveloperBoardState();
+      render(load());
+      if (!silent) {
+        setFeedback("Developer board refreshed.", false);
+      }
+    } catch (_) {
+      if (!silent) {
+        setFeedback("The shared developer board could not refresh right now.", true);
+      }
+    }
+  }
+
+  const seedDeveloperBoardFromLegacyStorage = () => {
+    const legacyTasks = readLegacyArray(STORAGE_KEY).map(entry => normalizeTask(entry));
+    const legacyHistory = readLegacyArray(HISTORY_KEY).map(entry => normalizeTask({
+      ...entry,
+      archivedAt: entry?.archivedAt || nowIso()
+    }));
+    const legacyAudit = readLegacyArray(AUDIT_KEY).map(entry => normalizeAuditEntry(entry));
+
+    if (developerBoardState.tasks.length === 0 && legacyTasks.length) {
+      developerBoardState.tasks = legacyTasks;
+      developerBoardState.history = legacyHistory;
+      developerBoardState.audit = legacyAudit;
+      developerBoardState.hydrationSource = "legacy";
+      cacheDeveloperBoardState();
+      scheduleDeveloperBoardSync();
+      return;
+    }
+
+    if (developerBoardState.tasks.length === 0 && developerBoardState.history.length === 0 && developerBoardState.audit.length === 0 && legacyHistory.length) {
+      developerBoardState.history = legacyHistory;
+      developerBoardState.audit = legacyAudit;
+      developerBoardState.hydrationSource = "legacy";
+      cacheDeveloperBoardState();
+      scheduleDeveloperBoardSync();
+    }
+  };
+
+  const load = () => developerBoardState.tasks;
+
+  const loadHistory = () => developerBoardState.history;
+
+  const setHistoryState = (items, options = {}) => {
+    developerBoardState.history = Array.isArray(items) ? items.map(item => normalizeTask(item)) : [];
     if (historyCount) {
-      historyCount.textContent = `${items.length} archived`;
+      historyCount.textContent = `${developerBoardState.history.length} archived`;
+    }
+    cacheDeveloperBoardState();
+    if (options.sync !== false) {
+      scheduleDeveloperBoardSync();
     }
   };
 
-  const loadAudit = () => {
-    try {
-      const raw = localStorage.getItem(AUDIT_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed)) return [];
-      const normalized = parsed.map(entry => ({
-        id: String(entry?.id || createHistoryId()),
-        type: String(entry?.type || "note").trim() || "note",
-        title: String(entry?.title || "").trim(),
-        message: String(entry?.message || "").trim(),
-        taskId: String(entry?.taskId || "").trim(),
-        fromStatus: String(entry?.fromStatus || "").trim(),
-        toStatus: String(entry?.toStatus || "").trim(),
-        actorName: String(entry?.actorName || getActorName()).trim() || "Leadership",
-        actorRole: String(entry?.actorRole || getActorRole()).trim() || "Leadership",
-        createdAt: String(entry?.createdAt || nowIso()).trim()
-      }));
-      if (normalized.some((item, index) => String(parsed[index]?.id || "") !== item.id)) {
-        localStorage.setItem(AUDIT_KEY, JSON.stringify(normalized));
-      }
-      return normalized;
-    } catch (_) {
-      return [];
-    }
-  };
+  const loadAudit = () => developerBoardState.audit;
 
-  const setAuditState = (items) => {
-    localStorage.setItem(AUDIT_KEY, JSON.stringify(items));
+  const setAuditState = (items, options = {}) => {
+    developerBoardState.audit = Array.isArray(items) ? items.map(entry => normalizeAuditEntry(entry)) : [];
     if (auditCount) {
-      auditCount.textContent = `${items.length} events`;
+      auditCount.textContent = `${developerBoardState.audit.length} events`;
+    }
+    cacheDeveloperBoardState();
+    if (options.sync !== false) {
+      scheduleDeveloperBoardSync();
     }
   };
 
   const recordAuditEvent = (entry = {}) => {
     const next = [
-      {
-        id: String(entry.id || createHistoryId()),
-        type: String(entry.type || "note").trim() || "note",
-        title: String(entry.title || "").trim(),
-        message: String(entry.message || "").trim(),
-        taskId: String(entry.taskId || "").trim(),
-        fromStatus: String(entry.fromStatus || "").trim(),
-        toStatus: String(entry.toStatus || "").trim(),
-        actorName: String(entry.actorName || getActorName()).trim() || "Leadership",
-        actorRole: String(entry.actorRole || getActorRole()).trim() || "Leadership",
-        createdAt: String(entry.createdAt || nowIso()).trim()
-      },
+      normalizeAuditEntry(entry),
       ...loadAudit()
     ].slice(0, 30);
     setAuditState(next);
@@ -3547,12 +3663,14 @@ function initializeDeveloperWorkspace() {
   };
 
   const save = (items) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    render(items);
+    developerBoardState.tasks = Array.isArray(items) ? items.map(item => normalizeTask(item)) : [];
+    cacheDeveloperBoardState();
+    render(load());
+    scheduleDeveloperBoardSync();
   };
 
   const saveHistory = (items) => {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+    setHistoryState(items);
     render(load());
   };
 
@@ -3635,8 +3753,9 @@ function initializeDeveloperWorkspace() {
       actorRole
     });
     setFeedback("Task moved to Archive instead of being deleted.", false);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    developerBoardState.tasks = items.map(item => normalizeTask(item));
     setHistoryState(history);
+    cacheDeveloperBoardState();
     render(items);
   };
 
@@ -3678,8 +3797,9 @@ function initializeDeveloperWorkspace() {
       actorRole
     });
     setFeedback("Task restored from Archive.", false);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    developerBoardState.tasks = items.map(item => normalizeTask(item));
     setHistoryState(history);
+    cacheDeveloperBoardState();
     render(items);
   };
 
@@ -3881,7 +4001,7 @@ function initializeDeveloperWorkspace() {
         </div>
       `;
     }
-    setHistoryState(archived);
+    setHistoryState(archived, { sync: false });
     if (auditList) {
       auditList.innerHTML = audit.length ? audit.map(entry => `
         <article class="dashboard-developer-audit-card">
@@ -3899,7 +4019,7 @@ function initializeDeveloperWorkspace() {
           <p>Created, moved, archived, restored, and deleted actions will appear here.</p>
         </div>
       `;
-      setAuditState(audit);
+      setAuditState(audit, { sync: false });
     }
   };
 
@@ -3913,8 +4033,40 @@ function initializeDeveloperWorkspace() {
     });
   });
 
+  const bootstrapTaskState = Array.isArray(boardBootstrap?.tasks) ? boardBootstrap : null;
+  const legacyTasks = readLegacyArray(STORAGE_KEY);
+  const legacyHistory = readLegacyArray(HISTORY_KEY);
+  const legacyAudit = readLegacyArray(AUDIT_KEY);
+  if (bootstrapTaskState) {
+    hydrateDeveloperBoardState(boardBootstrap);
+    cacheDeveloperBoardState();
+  }
+  if ((!bootstrapTaskState || developerBoardState.tasks.length === 0) && (legacyTasks.length || legacyHistory.length || legacyAudit.length)) {
+    hydrateDeveloperBoardState({
+      tasks: legacyTasks,
+      history: legacyHistory,
+      audit: legacyAudit,
+      updatedAt: nowIso()
+    });
+    developerBoardState.hydrationSource = "legacy";
+    cacheDeveloperBoardState();
+    scheduleDeveloperBoardSync();
+  }
+
   render(load());
   setDeveloperView(localStorage.getItem(VIEW_KEY) || "board");
+  void refreshDeveloperBoardFromServer(true);
+  boardRefreshTimer = window.setInterval(() => {
+    void refreshDeveloperBoardFromServer(true);
+  }, 15000);
+  window.addEventListener("focus", () => {
+    void refreshDeveloperBoardFromServer(true);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      void refreshDeveloperBoardFromServer(true);
+    }
+  });
 
   const readAttachments = async () => {
     const files = Array.from(fields.attachments?.files || []);
