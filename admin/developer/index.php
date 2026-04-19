@@ -377,7 +377,7 @@ $developerBoardStore = aavgo_read_developer_board();
       'roleSummary' => $roleSummary,
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
     window.__AAVGO_DEVELOPER_BOARD__ = <?php echo json_encode($developerBoardStore, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
-    window.AAVGO_DEVELOPER_BOARD_ENDPOINT = '/api/developer-board/';
+    window.AAVGO_DEVELOPER_BOARD_ENDPOINT = '/api/developer-board/index.php';
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
   </script>

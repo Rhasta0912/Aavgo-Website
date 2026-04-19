@@ -3128,7 +3128,7 @@ function initializeDeveloperWorkspace() {
   const openButtons = document.querySelectorAll("[data-developer-task-open]");
   const viewTabs = Array.from(document.querySelectorAll("[data-developer-view]"));
   const viewPanels = Array.from(document.querySelectorAll("[data-developer-view-panel]"));
-  const boardEndpoint = String(window.AAVGO_DEVELOPER_BOARD_ENDPOINT || "/api/developer-board/");
+  const boardEndpoint = String(window.AAVGO_DEVELOPER_BOARD_ENDPOINT || "/api/developer-board/index.php");
   const STORAGE_KEY = "aavgo_developer_tasks";
   const HISTORY_KEY = "aavgo_developer_task_history";
   const AUDIT_KEY = "aavgo_developer_task_audit";
