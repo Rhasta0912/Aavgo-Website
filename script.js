@@ -2073,6 +2073,60 @@ function normalizeAdminPayload(payload) {
   };
 }
 
+function patchAdminPeopleHotelAssignments(payload, assignments) {
+  const nextPayload = normalizeAdminPayload(payload);
+  const lookup = new Map(
+    (Array.isArray(assignments) ? assignments : [])
+      .map(item => [
+        String(item?.discordId || "").trim(),
+        {
+          hotelId: String(item?.hotelId || "").trim(),
+          hotelLabel: String(item?.hotelLabel || "").trim()
+        }
+      ])
+      .filter(([discordId, item]) => discordId && item.hotelId)
+  );
+
+  if (lookup.size === 0) {
+    return nextPayload;
+  }
+
+  const hotelLookup = buildHotelLaneLookup(getAdminMeta().hotels);
+  const people = Array.isArray(nextPayload.data.people) ? nextPayload.data.people : [];
+
+  return {
+    ...nextPayload,
+    data: {
+      ...nextPayload.data,
+      people: people.map(person => {
+        const personId = String(person?.discordId || "").trim();
+        const assignment = lookup.get(personId);
+        if (!assignment) {
+          return person;
+        }
+
+        const hotelIdentity = resolveHotelLaneIdentity(
+          {
+            linkedHotelId: assignment.hotelId,
+            linkedHotel: assignment.hotelLabel
+          },
+          hotelLookup
+        );
+        const hotelId = String(hotelIdentity.id || assignment.hotelId || "UNASSIGNED").trim();
+        const hotelLabel = String(hotelIdentity.label || assignment.hotelLabel || assignment.hotelId || "Unassigned").trim();
+
+        return {
+          ...person,
+          linkedHotelId: hotelId,
+          linkedHotel: hotelLabel,
+          assignedHotelId: hotelId,
+          assignedHotel: hotelLabel
+        };
+      })
+    }
+  };
+}
+
 function applyAdminBoardPayload(payload) {
   adminBoardState.payload = normalizeAdminPayload(payload);
   window.__AAVGO_ADMIN_BOARD__ = adminBoardState.payload;
@@ -2209,6 +2263,24 @@ async function sendAdminCommand(action, payload = {}, options = {}) {
         ...adminBoardState.payload,
         management: data.management
       });
+    }
+
+    const hotelAssignments = action === "update_hotel"
+      ? [{
+        discordId: String(payload.discordId || "").trim(),
+        hotelId: String(payload.hotelId || "").trim(),
+        hotelLabel: String(data?.command?.hotelLabel || data?.hotelLabel || "").trim()
+      }]
+      : action === "bulk_update_hotel"
+        ? (Array.isArray(payload.discordIds) ? payload.discordIds : []).map(discordId => ({
+          discordId: String(discordId || "").trim(),
+          hotelId: String(payload.hotelId || "").trim(),
+          hotelLabel: String(data?.command?.hotelLabel || data?.hotelLabel || "").trim()
+        }))
+        : [];
+
+    if (hotelAssignments.length > 0) {
+      adminBoardState.payload = patchAdminPeopleHotelAssignments(adminBoardState.payload, hotelAssignments);
     }
 
     const shouldClearSelection = action.startsWith("bulk_");
