@@ -6134,8 +6134,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hotel-team-section {
   display: grid;
-  gap: 0.72rem;
-  padding: 0.9rem;
+  gap: 0.82rem;
+  padding: 1rem;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.018);
@@ -6164,8 +6164,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hotel-team-copy p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.52);
-  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.78rem;
   line-height: 1.45;
 }
 
@@ -6195,7 +6195,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hotel-lane-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 0.85rem;
   align-items: start;
   grid-auto-rows: 1fr;
@@ -6212,7 +6212,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
   position: relative;
   overflow: hidden;
-  min-height: 244px;
+  min-height: 294px;
   grid-template-rows: auto auto 1fr;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
@@ -6281,43 +6281,45 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 }
 
 .dashboard-hotel-lane-metrics {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.55rem;
-  flex-wrap: wrap;
 }
 
 .dashboard-hotel-lane-metrics span {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
-  flex: 1 1 92px;
-  padding: 0.55rem 0.65rem;
-  border-radius: 12px;
+  padding: 0.62rem 0.7rem;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-hotel-lane-metrics strong {
   color: #fff8ef;
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1;
 }
 
 .dashboard-hotel-lane-metrics small {
   color: rgba(255, 255, 255, 0.54);
-  font-size: 0.7rem;
+  font-size: 0.69rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
 
-.dashboard-hotel-lane-staff-wrap {
+.dashboard-hotel-lane-roster {
   display: grid;
-  gap: 0.42rem;
-  min-height: 7.25rem;
+  gap: 0.52rem;
+  min-height: 9.2rem;
 }
 
 .dashboard-hotel-lane-staff-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.72rem;
   font-weight: 700;
@@ -6325,29 +6327,39 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   text-transform: uppercase;
 }
 
+.dashboard-hotel-lane-staff-label small {
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  text-transform: none;
+}
+
 .dashboard-hotel-lane-staff {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.48rem;
   min-width: 0;
   align-content: start;
 }
 
 .dashboard-hotel-staff-chip {
   display: grid;
-  gap: 0.12rem;
+  gap: 0.14rem;
   min-width: 0;
-  padding: 0.44rem 0.58rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  padding: 0.58rem 0.66rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.028);
   cursor: grab;
   user-select: none;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+  min-height: 3.2rem;
+  align-content: center;
 }
 
 .dashboard-hotel-staff-chip-main {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.45rem;
@@ -6367,9 +6379,14 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   background: rgba(216, 176, 95, 0.05);
 }
 
+.dashboard-hotel-staff-chip.is-overtime {
+  border-color: rgba(244, 114, 182, 0.22);
+  background: rgba(244, 114, 182, 0.08);
+}
+
 .dashboard-hotel-staff-chip span {
   color: #fff8ef;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -6400,8 +6417,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hotel-staff-chip-meta {
   color: rgba(255, 255, 255, 0.48);
-  font-size: 0.66rem;
-  line-height: 1.2;
+  font-size: 0.67rem;
+  line-height: 1.25;
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
@@ -6416,8 +6433,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-hotel-lane-empty {
   display: grid;
   gap: 0.12rem;
-  padding: 0.7rem 0.75rem;
-  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
   border: 1px dashed rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
 }

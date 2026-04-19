@@ -350,6 +350,40 @@ function getStatusSummary(person) {
   return String(person?.agentStatus || "Offline");
 }
 
+const HOTEL_OVERTIME_HOURS = 8;
+
+function getHotelLaneStats(lane) {
+  const staff = Array.isArray(lane?.staff) ? lane.staff : [];
+  const liveStaff = staff.filter(person => Boolean(person?.activeNow));
+  const liveHoursTotal = liveStaff.reduce((sum, person) => sum + Number(person?.activeSession?.elapsedHours || 0), 0);
+  const longestLiveHours = liveStaff.reduce((max, person) => Math.max(max, Number(person?.activeSession?.elapsedHours || 0)), 0);
+  const overtimeStaffCount = liveStaff.filter(person => {
+    const liveHours = Number(person?.activeSession?.elapsedHours || 0);
+    const weeklyHours = Number(person?.weeklyHours || 0);
+    return liveHours >= HOTEL_OVERTIME_HOURS || weeklyHours >= 40;
+  }).length;
+  return {
+    staffCount: staff.length,
+    liveStaffCount: liveStaff.length,
+    liveHoursTotal,
+    longestLiveHours,
+    overtimeStaffCount,
+    idleStaffCount: Math.max(0, staff.length - liveStaff.length)
+  };
+}
+
+function getHotelStaffStatusLabel(person) {
+  if (person?.activeNow) {
+    const liveHours = Number(person?.activeSession?.elapsedHours || 0);
+    const weeklyHours = Number(person?.weeklyHours || 0);
+    const overtime = liveHours >= HOTEL_OVERTIME_HOURS || weeklyHours >= 40;
+    return `${formatHours(liveHours)}${overtime ? " · OT" : ""}`;
+  }
+  const todayHours = Number(person?.todayHours || 0);
+  const weeklyHours = Number(person?.weeklyHours || 0);
+  return `${formatHours(todayHours)} today · ${formatHours(weeklyHours)} week`;
+}
+
 function getSearchHaystack(person) {
   return [
     person?.displayName,
@@ -1694,6 +1728,7 @@ function renderHotelLaneCards(lanes) {
         <div class="dashboard-hotel-team-copy">
           <span class="dashboard-kicker">${escapeHtml(group?.label || "Other hotels")}</span>
           <h3>${escapeHtml(group?.label || "Other hotels")}</h3>
+          <p>See who is in each hotel, how long they have been live, and which rooms need overtime attention.</p>
           <div class="dashboard-hotel-team-hotels">
             ${(Array.isArray(group?.hotels) && group.hotels.length > 0
               ? group.hotels
@@ -1704,88 +1739,87 @@ function renderHotelLaneCards(lanes) {
         </div>
         <span class="dashboard-chip dashboard-chip-accent">${escapeHtml(String((Array.isArray(group?.lanes) ? group.lanes.length : 0)))} hotels</span>
       </div>
-        <div class="dashboard-hotel-lane-grid">
-          ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => `
+      <div class="dashboard-hotel-lane-grid">
+        ${(Array.isArray(group?.lanes) ? group.lanes : []).map(lane => {
+          const stats = getHotelLaneStats(lane);
+          const laneStaff = Array.isArray(lane?.staff) ? lane.staff : [];
+          return `
             <article class="dashboard-hotel-lane-card" data-hotel-lane-dropzone="${escapeHtml(lane?.id || "")}" data-hotel-lane-label="${escapeHtml(lane?.label || "")}">
-            <div class="dashboard-hotel-lane-head">
-              <div class="dashboard-hotel-lane-head-copy">
-                <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
-                <span>${escapeHtml(String(lane?.people ?? 0))} tracked</span>
-              </div>
-              <button
-                class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
-                type="button"
-                data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
-                ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
-              >
-                Force logout
-              </button>
-            </div>
-            <div class="dashboard-hotel-lane-metrics">
-              <span>
-                <strong>${escapeHtml(String(lane?.activeNow ?? 0))}</strong>
-                <small>Active now</small>
-              </span>
-              <span>
-                <strong>${formatHours(lane?.todayHours)}</strong>
-                <small>Today</small>
-              </span>
-              <span>
-                <strong>${formatHours(lane?.weeklyHours)}</strong>
-                <small>Week</small>
-              </span>
-            </div>
-            <div class="dashboard-hotel-lane-staff-wrap">
-              <div class="dashboard-hotel-lane-staff-label">Staff</div>
-              ${(Array.isArray(lane?.staff) && lane.staff.length > 0) ? `
-                ${(() => {
-                  const visibleStaff = lane.staff.slice(0, 3);
-                  const remainingStaff = Math.max(0, lane.staff.length - visibleStaff.length);
-                  return `
-                <ul class="dashboard-hotel-lane-staff">
-                  ${visibleStaff.map(person => `
-                  <li
-                    class="dashboard-hotel-staff-chip${String(person?.assignedHotelId || "") && String(person?.linkedHotelId || "") && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId) ? " is-mismatched" : ""}"
-                    draggable="true"
-                    data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
-                    data-hotel-agent-name="${escapeHtml(person?.displayName || "Unknown")}"
-                    data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
-                    title="Drag to another hotel"
-                  >
-                    <div class="dashboard-hotel-staff-chip-main">
-                      <span>${escapeHtml(person?.displayName || "Unknown")}</span>
-                      <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
-                    </div>
-                    <small class="dashboard-hotel-staff-chip-meta">
-                      ${escapeHtml(
-                        person?.assignedHotelId && person?.linkedHotelId && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId)
-                          ? `Assigned ${person.assignedHotel || "Unassigned"} | Live ${person.linkedHotel || "Unassigned"}`
-                          : `Live ${person?.linkedHotel || person?.assignedHotel || "Unassigned"}`
-                      )}
-                    </small>
-                  </li>
-                  `).join("")}
-                  ${remainingStaff > 0 ? `
-                    <li class="dashboard-hotel-staff-chip dashboard-hotel-staff-chip-more" title="${escapeHtml(`${remainingStaff} more staff member(s)`) }">
-                      <div class="dashboard-hotel-staff-chip-main">
-                        <span>+${remainingStaff} more</span>
-                        <strong>More</strong>
-                      </div>
-                      <small class="dashboard-hotel-staff-chip-meta">Hidden to keep the lane compact</small>
-                    </li>
-                  ` : ""}
-                </ul>
-                  `;
-                })()}
-              ` : `
-                <div class="dashboard-hotel-lane-empty">
-                  <strong>No assigned staff yet</strong>
-                  <span>This hotel is still waiting for its first visible row. Drag a staff chip here once one becomes visible.</span>
+              <div class="dashboard-hotel-lane-head">
+                <div class="dashboard-hotel-lane-head-copy">
+                  <strong>${escapeHtml(lane?.label || "Unassigned")}</strong>
+                  <span>${escapeHtml(String(lane?.people ?? 0))} tracked · ${escapeHtml(String(stats.liveStaffCount))} live now · ${escapeHtml(String(stats.overtimeStaffCount))} OT watch</span>
                 </div>
-              `}
-            </div>
-          </article>
-        `).join("")}
+                <button
+                  class="button button-secondary dashboard-inline-button dashboard-inline-button-small dashboard-hotel-lane-logout"
+                  type="button"
+                  data-hotel-lane-logout="${escapeHtml(lane?.id || "")}"
+                  ${lane?.id === "UNASSIGNED" ? "disabled" : ""}
+                >
+                  Force logout
+                </button>
+              </div>
+              <div class="dashboard-hotel-lane-metrics">
+                <span>
+                  <strong>${escapeHtml(String(stats.liveStaffCount))}</strong>
+                  <small>Live now</small>
+                </span>
+                <span>
+                  <strong>${formatHours(stats.liveHoursTotal)}</strong>
+                  <small>Live hours</small>
+                </span>
+                <span>
+                  <strong>${escapeHtml(String(stats.overtimeStaffCount))}</strong>
+                  <small>Overtime</small>
+                </span>
+                <span>
+                  <strong>${formatHours(lane?.weeklyHours)}</strong>
+                  <small>Week</small>
+                </span>
+              </div>
+              <div class="dashboard-hotel-lane-roster">
+                <div class="dashboard-hotel-lane-staff-label">
+                  <span>Live roster</span>
+                  <small>${escapeHtml(String(stats.idleStaffCount))} idle · longest shift ${formatHours(stats.longestLiveHours)}</small>
+                </div>
+                ${laneStaff.length > 0 ? `
+                  <ul class="dashboard-hotel-lane-staff">
+                    ${laneStaff.map(person => {
+                      const liveLabel = getHotelStaffStatusLabel(person);
+                      const isOvertime = Boolean(person?.activeNow) && (
+                        Number(person?.activeSession?.elapsedHours || 0) >= HOTEL_OVERTIME_HOURS ||
+                        Number(person?.weeklyHours || 0) >= 40
+                      );
+                      return `
+                        <li
+                          class="dashboard-hotel-staff-chip${String(person?.assignedHotelId || "") && String(person?.linkedHotelId || "") && normalizeForSearch(person.assignedHotelId) !== normalizeForSearch(person.linkedHotelId) ? " is-mismatched" : ""}${isOvertime ? " is-overtime" : ""}"
+                          draggable="true"
+                          data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
+                          data-hotel-agent-name="${escapeHtml(person?.displayName || "Unknown")}"
+                          data-hotel-agent-current-hotel="${escapeHtml(getPrimaryHotelId(person) || "UNASSIGNED")}"
+                          title="Drag to another hotel"
+                        >
+                          <div class="dashboard-hotel-staff-chip-main">
+                            <span>${escapeHtml(person?.displayName || "Unknown")}</span>
+                            <strong data-state="${person?.activeNow ? "live" : "idle"}">${escapeHtml(person?.activeNow ? "Live" : "Idle")}</strong>
+                          </div>
+                          <small class="dashboard-hotel-staff-chip-meta">
+                            ${escapeHtml(liveLabel)}
+                          </small>
+                        </li>
+                      `;
+                    }).join("")}
+                  </ul>
+                ` : `
+                  <div class="dashboard-hotel-lane-empty">
+                    <strong>No assigned staff yet</strong>
+                    <span>This hotel is still waiting for its first visible row. Drag a staff chip here once one becomes visible.</span>
+                  </div>
+                `}
+              </div>
+            </article>
+          `;
+        }).join("")}
       </div>
     </section>
   `).join("");
