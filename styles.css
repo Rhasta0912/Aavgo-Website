@@ -1955,25 +1955,31 @@ h2 {
 }
 
 .dashboard-staff-cell {
-  display: grid;
-  gap: 0.24rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem 0.55rem;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .dashboard-staff-cell strong {
   color: #fff8ef;
   font-size: 0.98rem;
   line-height: 1.15;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .dashboard-staff-cell span {
   color: rgba(255, 255, 255, 0.54);
   font-size: 0.84rem;
   line-height: 1.2;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .dashboard-status-pill {

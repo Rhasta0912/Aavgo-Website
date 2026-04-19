@@ -343,6 +343,16 @@ function getRoleSummary(person) {
   return String(person?.roleSummary || person?.role || "Agent");
 }
 
+function getCompactRoleSummary(person) {
+  const role = String(person?.role || person?.roleSummary || "Agent").trim();
+  if (/operations manager/i.test(role)) return "/ Manager";
+  if (/team leader/i.test(role)) return "/ TL";
+  if (/developer/i.test(role)) return "/ Dev";
+  if (/sme/i.test(role)) return "/ SME";
+  if (/trainee/i.test(role)) return "/ Trainee";
+  return role ? `/${role}` : "/ Agent";
+}
+
 function getStatusSummary(person) {
   if (person?.activeNow) {
     return `${String(person?.activeSession?.kind || "Live shift")} - ${formatHours(person?.activeSession?.elapsedHours)}`;
@@ -1596,7 +1606,7 @@ function renderHoursRows(people, selectedDiscordId) {
         <td>
           <div class="dashboard-staff-cell">
             <strong>${escapeHtml(person?.displayName || "Unknown")}</strong>
-            <span>${escapeHtml(person?.username || "")}</span>
+            <span>@${escapeHtml(person?.username || "")}</span>
           </div>
         </td>
         <td>
@@ -1687,7 +1697,7 @@ function renderFullHoursRows(people) {
             <span>${escapeHtml(person?.username || "")}</span>
           </div>
         </td>
-        <td><div class="dashboard-hours-cell-copy">${escapeHtml(getRoleSummary(person))}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${escapeHtml(getCompactRoleSummary(person))}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(person?.team || "Unassigned")}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getPrimaryHotelLabel(person))}</div></td>
         ${dayNumbers.map(day => {
