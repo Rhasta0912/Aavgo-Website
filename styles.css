@@ -6377,37 +6377,57 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hours-sheet thead th:nth-child(1),
 .dashboard-hours-sheet tbody td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 6;
   width: 108px;
   min-width: 108px;
   max-width: 108px;
+  background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(2),
 .dashboard-hours-sheet tbody td:nth-child(2) {
+  position: sticky;
+  left: 108px;
+  z-index: 6;
   width: 250px;
   min-width: 250px;
   max-width: 250px;
+  background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(3),
 .dashboard-hours-sheet tbody td:nth-child(3) {
+  position: sticky;
+  left: 358px;
+  z-index: 6;
   width: 176px;
   min-width: 176px;
   max-width: 176px;
+  background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(4),
 .dashboard-hours-sheet tbody td:nth-child(4) {
+  position: sticky;
+  left: 534px;
+  z-index: 6;
   width: 210px;
   min-width: 210px;
   max-width: 210px;
+  background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(5),
 .dashboard-hours-sheet tbody td:nth-child(5) {
+  position: sticky;
+  left: 744px;
+  z-index: 6;
   width: 238px;
   min-width: 238px;
   max-width: 238px;
+  background: #10131a;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
