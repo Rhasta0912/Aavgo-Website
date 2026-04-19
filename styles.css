@@ -4372,24 +4372,20 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-view-panel {
   display: none;
   opacity: 0;
-  transform: translateY(8px);
 }
 
 .dashboard-view-panel.is-active {
   display: block;
   opacity: 1;
-  transform: translateY(0);
-  animation: dashboardPanelEnter 240ms ease;
+  animation: dashboardPanelFade 220ms ease;
 }
 
-@keyframes dashboardPanelEnter {
+@keyframes dashboardPanelFade {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
