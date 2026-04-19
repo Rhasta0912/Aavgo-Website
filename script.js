@@ -1584,40 +1584,31 @@ function renderHoursRows(people, selectedDiscordId) {
 }
 
 function renderFullHoursRows(people) {
-  const leftCols = document.getElementById("hours-full-board-left-cols");
-  const leftHead = document.getElementById("hours-full-board-left-head");
-  const leftBody = document.getElementById("hours-full-board-left-rows");
-  const rightCols = document.getElementById("hours-full-board-right-cols");
-  const rightHead = document.getElementById("hours-full-board-right-head");
-  const rightBody = document.getElementById("hours-full-board-right-rows");
-  if (!leftCols || !leftHead || !leftBody || !rightCols || !rightHead || !rightBody) return;
+  const cols = document.getElementById("hours-full-board-cols");
+  const head = document.getElementById("hours-full-board-head");
+  const body = document.getElementById("hours-full-board-rows");
+  if (!cols || !head || !body) return;
 
   const dayNumbers = getDayNumbersForFullHours(people);
-  leftCols.innerHTML = `
-      <col style="width:72px">
+  cols.innerHTML = `
+      <col style="width:80px">
+      <col style="width:230px">
+      <col style="width:140px">
+      <col style="width:150px">
       <col style="width:220px">
-      <col style="width:130px">
-      <col style="width:140px">
-      <col style="width:198px">
-  `;
-  rightCols.innerHTML = `
-      ${dayNumbers.map(() => `<col style="width:132px">`).join("")}
+      ${dayNumbers.map(() => `<col style="width:118px">`).join("")}
       <col style="width:140px">
       <col style="width:140px">
       <col style="width:140px">
       <col style="width:140px">
   `;
-  leftHead.innerHTML = `
+  head.innerHTML = `
     <tr>
       <th>Select</th>
       <th>Staff</th>
       <th>Role</th>
       <th>Team</th>
       <th>Hotel</th>
-    </tr>
-  `;
-  rightHead.innerHTML = `
-    <tr>
       ${dayNumbers.map(day => `<th>D${day}</th>`).join("")}
       <th>1st - 15th</th>
       <th>16th - end</th>
@@ -1627,19 +1618,9 @@ function renderFullHoursRows(people) {
   `;
 
   if (!Array.isArray(people) || people.length === 0) {
-    leftBody.innerHTML = `
+    body.innerHTML = `
       <tr>
-        <td colspan="5">
-          <div class="dashboard-empty-state">
-            <strong>No staff rows match this lane.</strong>
-            <p>Widen the filters or wait for the next snapshot to fill the full-hours sheet.</p>
-          </div>
-        </td>
-      </tr>
-    `;
-    rightBody.innerHTML = `
-      <tr>
-        <td colspan="${dayNumbers.length + 4}">
+        <td colspan="${dayNumbers.length + 9}">
           <div class="dashboard-empty-state">
             <strong>No staff rows match this lane.</strong>
             <p>Widen the filters or wait for the next snapshot to fill the full-hours sheet.</p>
@@ -1651,15 +1632,14 @@ function renderFullHoursRows(people) {
   }
 
   const selectedIds = new Set(getSelectedBulkDiscordIds());
-  const leftRows = [];
-  const rightRows = [];
+  const rows = [];
   people.forEach(person => {
     const dayMap = new Map(
       (Array.isArray(person?.currentMonth?.days) ? person.currentMonth.days : [])
         .map(day => [Number(day?.day || 0), Number(day?.totalHours || 0)])
     );
     const isSelected = selectedIds.has(String(person?.discordId || ""));
-    leftRows.push(`
+    rows.push(`
       <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
         <td>
           <label class="dashboard-checkbox">
@@ -1676,10 +1656,6 @@ function renderFullHoursRows(people) {
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getRoleSummary(person))}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(person?.team || "Unassigned")}</div></td>
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getPrimaryHotelLabel(person))}</div></td>
-      </tr>
-    `);
-    rightRows.push(`
-      <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
@@ -1694,8 +1670,7 @@ function renderFullHoursRows(people) {
       </tr>
     `);
   });
-  leftBody.innerHTML = leftRows.join("");
-  rightBody.innerHTML = rightRows.join("");
+  body.innerHTML = rows.join("");
 }
 
 function renderHotelLaneCards(lanes) {
@@ -2370,19 +2345,7 @@ function initializeAdminBoard() {
     applyAdminBoardPayload(adminBoardState.payload);
   });
 
-  const hoursFullLeftPane = document.querySelector(".dashboard-hours-sheet-pane-left");
-  const hoursFullRightPane = document.querySelector(".dashboard-hours-sheet-pane-right");
-  let syncingFullHoursScroll = false;
-  const syncFullHoursScroll = (source, target) => {
-    if (!source || !target || syncingFullHoursScroll) return;
-    syncingFullHoursScroll = true;
-    target.scrollTop = source.scrollTop;
-    syncingFullHoursScroll = false;
-  };
-  hoursFullRightPane?.addEventListener("scroll", () => syncFullHoursScroll(hoursFullRightPane, hoursFullLeftPane));
-  hoursFullLeftPane?.addEventListener("scroll", () => syncFullHoursScroll(hoursFullLeftPane, hoursFullRightPane));
-
-  ["hours-full-board-left-rows", "hours-full-board-right-rows"].forEach(tableId => {
+  ["hours-full-board-rows"].forEach(tableId => {
     document.getElementById(tableId)?.addEventListener("click", event => {
       const cell = event.target.closest("td[data-day]");
       if (cell) {
@@ -2442,7 +2405,7 @@ function initializeAdminBoard() {
     });
   });
 
-  ["hours-full-board-left-rows", "hours-full-board-right-rows"].forEach(tableId => {
+  ["hours-full-board-rows"].forEach(tableId => {
     document.getElementById(tableId)?.addEventListener("dblclick", event => {
       const cell = event.target.closest("td[data-day]");
       const row = event.target.closest("tr[data-full-hours-row]");
