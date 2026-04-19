@@ -1631,16 +1631,16 @@ function renderFullHoursRows(people) {
 
   const dayNumbers = getDayNumbersForFullHours(people);
   cols.innerHTML = `
-      <col style="width:80px">
-      <col style="width:230px">
-      <col style="width:140px">
-      <col style="width:150px">
-      <col style="width:220px">
-      ${dayNumbers.map(() => `<col style="width:118px">`).join("")}
-      <col style="width:140px">
-      <col style="width:140px">
-      <col style="width:140px">
-      <col style="width:140px">
+      <col style="width:68px">
+      <col style="width:210px">
+      <col style="width:96px">
+      <col style="width:112px">
+      <col style="width:144px">
+      ${dayNumbers.map(() => `<col style="width:104px">`).join("")}
+      <col style="width:122px">
+      <col style="width:122px">
+      <col style="width:122px">
+      <col style="width:122px">
   `;
   head.innerHTML = `
     <tr>
