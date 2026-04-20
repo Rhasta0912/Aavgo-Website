@@ -1738,6 +1738,7 @@ h2 {
 
 .dashboard-full-hours-month-picker {
   position: relative;
+  z-index: 80;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1746,6 +1747,10 @@ h2 {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-full-hours-month-picker.is-open {
+  z-index: 120;
 }
 
 .dashboard-full-hours-month-picker::after {
@@ -1785,7 +1790,7 @@ h2 {
   position: absolute;
   top: calc(100% + 0.45rem);
   right: 0;
-  z-index: 35;
+  z-index: 240;
   width: 11.2rem;
   padding: 0.45rem;
   border-radius: 12px;
@@ -4509,6 +4514,11 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .dashboard-panel-full-hours.reveal,
 .dashboard-panel-full-hours.reveal.reveal-in {
   transform: none;
+}
+
+.dashboard-panel-full-hours {
+  position: relative;
+  isolation: isolate;
 }
 
 @keyframes dashboardPanelFade {
