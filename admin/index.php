@@ -497,7 +497,7 @@ $bootstrapJson = json_encode(
               <label class="dashboard-full-hours-month-picker" for="hours-full-month-select">
                 <span>Month</span>
                 <select id="hours-full-month-select" aria-label="Select full-hours month">
-                  <option value="offset:0">Current month</option>
+                  <option value="">Current month</option>
                 </select>
               </label>
             </div>

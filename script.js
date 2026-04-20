@@ -709,13 +709,6 @@ function groupHotelLanesByTeam(lanes) {
   }));
 }
 
-function parseFullHoursMonthOffset(monthValue) {
-  const match = String(monthValue || "").trim().match(/^offset:(\d+)$/);
-  if (!match) return 0;
-  const parsed = Number(match[1] || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
-}
-
 function getFullHoursMonthReferenceDate() {
   const generatedAt = String(adminBoardState?.payload?.data?.generatedAt || "").trim();
   const parsed = generatedAt ? new Date(generatedAt) : new Date();
@@ -725,61 +718,56 @@ function getFullHoursMonthReferenceDate() {
   return parsed;
 }
 
-function getFullHoursMonthAnchor(monthValue = "offset:0") {
-  const reference = getFullHoursMonthReferenceDate();
-  const anchor = new Date(reference.getFullYear(), reference.getMonth(), 1);
-  anchor.setMonth(anchor.getMonth() - parseFullHoursMonthOffset(monthValue));
-  return anchor;
+function getDefaultFullHoursMonthValue() {
+  const month = getFullHoursMonthReferenceDate().getMonth() + 1;
+  return String(month).padStart(2, "0");
 }
 
-function formatFullHoursMonthLabel(anchor, fallbackLabel = "") {
-  const fallback = String(fallbackLabel || "").trim();
-  if (fallback) return fallback;
-  return anchor.toLocaleDateString(undefined, { month: "short", year: "numeric" });
-}
-
-function deriveFullHoursMonthOptions(people) {
-  const list = Array.isArray(people) ? people : [];
-  const maxRecentMonths = Math.max(
-    0,
-    ...list.map(person => Array.isArray(person?.recentMonths) ? person.recentMonths.length : 0)
-  );
-
-  const options = [];
-  for (let offset = 0; offset <= maxRecentMonths; offset += 1) {
-    const fallbackLabel = list
-      .map(person => {
-        if (offset === 0) return String(person?.currentMonth?.label || "").trim();
-        const recent = Array.isArray(person?.recentMonths) ? person.recentMonths : [];
-        return String(recent[offset - 1]?.label || "").trim();
-      })
-      .find(Boolean);
-
-    options.push({
-      id: `offset:${offset}`,
-      label: formatFullHoursMonthLabel(getFullHoursMonthAnchor(`offset:${offset}`), fallbackLabel)
-    });
+function parseFullHoursMonthValue(monthValue) {
+  const parsed = Number(String(monthValue || "").trim());
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 12) {
+    return Number(getDefaultFullHoursMonthValue());
   }
-
-  return options.length > 0 ? options : [{ id: "offset:0", label: "Current month" }];
+  return Math.floor(parsed);
 }
 
-function syncFullHoursMonthOptions(options, currentValue = "offset:0") {
+function deriveFullHoursMonthOptions() {
+  const anchorYear = getFullHoursMonthReferenceDate().getFullYear();
+  return Array.from({ length: 12 }, (_, index) => {
+    const monthNumber = index + 1;
+    const label = new Date(anchorYear, index, 1).toLocaleDateString(undefined, { month: "long" });
+    return {
+      id: String(monthNumber).padStart(2, "0"),
+      label
+    };
+  });
+}
+
+function getFullHoursMonthOffset(monthValue = "") {
+  const referenceMonth = getFullHoursMonthReferenceDate().getMonth() + 1;
+  const selectedMonth = parseFullHoursMonthValue(monthValue);
+  return referenceMonth - selectedMonth;
+}
+
+function syncFullHoursMonthOptions(options, currentValue = "") {
   const select = document.getElementById("hours-full-month-select");
   const normalizedOptions = Array.isArray(options) && options.length > 0
-    ? options
-    : [{ id: "offset:0", label: "Current month" }];
+    ? options.map(option => ({
+      id: String(option?.id || "").padStart(2, "0"),
+      label: String(option?.label || option?.id || "Month")
+    }))
+    : deriveFullHoursMonthOptions();
 
   const validValues = new Set(normalizedOptions.map(option => String(option?.id || "")));
-  let nextValue = String(currentValue || "offset:0");
+  let nextValue = String(currentValue || getDefaultFullHoursMonthValue()).padStart(2, "0");
   if (!validValues.has(nextValue)) {
-    nextValue = String(normalizedOptions[0]?.id || "offset:0");
+    nextValue = String(getDefaultFullHoursMonthValue());
   }
 
   if (select) {
     select.innerHTML = normalizedOptions.map(option => {
       const value = String(option?.id || "");
-      const label = String(option?.label || option?.id || "Month");
+      const label = String(option?.label || "Month");
       const selected = value === nextValue ? " selected" : "";
       return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(label)}</option>`;
     }).join("");
@@ -789,8 +777,12 @@ function syncFullHoursMonthOptions(options, currentValue = "offset:0") {
   return nextValue;
 }
 
-function getSelectedFullHoursMonthEntry(person, monthValue = "offset:0") {
-  const offset = parseFullHoursMonthOffset(monthValue);
+function getSelectedFullHoursMonthEntry(person, monthValue = "") {
+  const offset = getFullHoursMonthOffset(monthValue);
+  if (offset < 0) {
+    return null;
+  }
+
   if (offset === 0) {
     return person?.currentMonth || null;
   }
@@ -798,14 +790,22 @@ function getSelectedFullHoursMonthEntry(person, monthValue = "offset:0") {
   return recentMonths[offset - 1] || null;
 }
 
-function getSelectedFullHoursMonthDays(person, monthValue = "offset:0") {
+function getSelectedFullHoursMonthDays(person, monthValue = "") {
   const monthEntry = getSelectedFullHoursMonthEntry(person, monthValue);
   return Array.isArray(monthEntry?.days) ? monthEntry.days : [];
 }
 
-function getSelectedFullHoursMonthTotals(person, monthValue = "offset:0") {
-  const offset = parseFullHoursMonthOffset(monthValue);
+function getSelectedFullHoursMonthTotals(person, monthValue = "") {
+  const offset = getFullHoursMonthOffset(monthValue);
   const monthEntry = getSelectedFullHoursMonthEntry(person, monthValue);
+  if (offset < 0) {
+    return {
+      firstHalf: 0,
+      secondHalf: 0,
+      month: 0
+    };
+  }
+
   if (offset === 0) {
     return {
       firstHalf: Number(person?.payPeriods?.firstHalf?.totalHours || 0),
@@ -821,25 +821,25 @@ function getSelectedFullHoursMonthTotals(person, monthValue = "offset:0") {
   };
 }
 
-function getDayNumbersForFullHours(people, monthValue = "offset:0") {
+function getDayNumbersForFullHours(people, monthValue = "") {
   const maxDay = Math.max(
     0,
     ...(Array.isArray(people) ? people : []).map(person => getSelectedFullHoursMonthDays(person, monthValue).length)
   );
 
-  const anchor = getFullHoursMonthAnchor(monthValue);
-  const daysInMonth = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0).getDate();
+  const selectedMonth = parseFullHoursMonthValue(monthValue);
+  const year = getFullHoursMonthReferenceDate().getFullYear();
+  const daysInMonth = new Date(year, selectedMonth, 0).getDate();
   const count = Math.max(daysInMonth, maxDay, 28);
   return Array.from({ length: count }, (_, index) => index + 1);
 }
 
-function resolveFullHoursShiftDate(day, monthValue = "offset:0") {
-  const anchor = getFullHoursMonthAnchor(monthValue);
-  const year = anchor.getFullYear();
-  const month = anchor.getMonth();
-  const maxDay = new Date(year, month + 1, 0).getDate();
+function resolveFullHoursShiftDate(day, monthValue = "") {
+  const year = getFullHoursMonthReferenceDate().getFullYear();
+  const month = parseFullHoursMonthValue(monthValue);
+  const maxDay = new Date(year, month, 0).getDate();
   const safeDay = Math.min(Math.max(Number(day || 1), 1), maxDay);
-  return `${year}-${String(month + 1).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
+  return `${year}-${String(month).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
 }
 
 function aggregateHoursSummary(people) {
@@ -867,7 +867,7 @@ const adminBoardState = {
   payload: getAdminBoardBootstrap(),
   selectedDiscordId: "",
   selectedDiscordIds: [],
-  fullHoursMonth: "offset:0",
+  fullHoursMonth: "",
   view: "board",
   refreshTimer: null,
   actionInFlight: false,
@@ -2289,7 +2289,7 @@ function applyAdminBoardPayload(payload) {
   syncSelectOptions("hours-editor-hotel", meta.hotels || [], "Use linked hotel", document.getElementById("hours-editor-hotel")?.value || "");
 
   const visiblePeople = filterAdminPeople(allPeople);
-  const monthOptions = deriveFullHoursMonthOptions(allPeople);
+  const monthOptions = deriveFullHoursMonthOptions();
   adminBoardState.fullHoursMonth = syncFullHoursMonthOptions(monthOptions, adminBoardState.fullHoursMonth);
   const selectedStaff = getSelectedStaff(allPeople, visiblePeople);
   syncBroadcastTargets(allPeople);
@@ -2624,7 +2624,7 @@ function initializeAdminBoard() {
   const fullHoursMonthSelect = document.getElementById("hours-full-month-select");
   if (fullHoursMonthSelect) {
     fullHoursMonthSelect.addEventListener("change", () => {
-      adminBoardState.fullHoursMonth = String(fullHoursMonthSelect.value || "offset:0");
+      adminBoardState.fullHoursMonth = String(fullHoursMonthSelect.value || getDefaultFullHoursMonthValue());
       applyAdminBoardPayload(adminBoardState.payload);
     });
   }
