@@ -515,7 +515,6 @@ $bootstrapJson = json_encode(
           </div>
           <div class="dashboard-hours-editor-inline" id="hours-editor-summary-card">
             <div>
-              <p class="dashboard-kicker">Manual edit lane</p>
               <h3 id="hours-editor-summary-selected">Pick a staff row to edit hours.</h3>
             </div>
             <div class="dashboard-hours-editor-inline-actions">

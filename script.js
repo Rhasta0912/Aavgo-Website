@@ -2143,7 +2143,7 @@ function syncHoursEditorState(person) {
     : "Pick a staff row to edit hours.");
 
   setText("hours-editor-summary-selected", person?.displayName
-    ? `${person.displayName} &middot; ${getRoleSummary(person)}`
+    ? `${person.displayName}`
     : "Pick a staff row to edit hours.");
 
   renderAdjustmentLog(person);

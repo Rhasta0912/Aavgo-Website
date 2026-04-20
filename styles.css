@@ -4849,7 +4849,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 1rem;
+  width: min(100%, 58rem);
+  margin: 0 auto 1rem;
   padding: 1rem 1.1rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -4868,6 +4869,11 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   gap: 0.65rem;
   align-items: center;
   justify-content: flex-end;
+}
+
+.dashboard-hours-editor-inline .dashboard-inline-button {
+  width: auto;
+  min-width: 11rem;
 }
 
 .dashboard-panel-developer-lane .dashboard-developer-lane-grid {
