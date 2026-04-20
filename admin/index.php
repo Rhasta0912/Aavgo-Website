@@ -494,7 +494,12 @@ $bootstrapJson = json_encode(
             </div>
             <div class="dashboard-panel-meta">
               <span class="dashboard-chip dashboard-chip-accent" id="hours-bulk-selected-count">0 selected</span>
-              <span class="dashboard-chip">Current month</span>
+              <label class="dashboard-full-hours-month-picker" for="hours-full-month-select">
+                <span>Month</span>
+                <select id="hours-full-month-select" aria-label="Select full-hours month">
+                  <option value="offset:0">Current month</option>
+                </select>
+              </label>
             </div>
           </div>
           <p class="dashboard-panel-copy">Click any staff row to load the editor. Use the checkboxes to select multiple people before bulk team/hotel moves or force logout.</p>

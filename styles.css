@@ -1736,6 +1736,37 @@ h2 {
   gap: 0.6rem;
 }
 
+.dashboard-full-hours-month-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.2rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-full-hours-month-picker > span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-full-hours-month-picker select {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fff8ef;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 8.2rem;
+  cursor: pointer;
+}
+
 .dashboard-filter-bar {
   display: grid;
   grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(0, 1fr)) auto;
@@ -4515,6 +4546,28 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-hours-sheet-wrap {
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 176, 95, 0.65) rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-hours-sheet-wrap::-webkit-scrollbar {
+  height: 11px;
+  width: 11px;
+}
+
+.dashboard-hours-sheet-wrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+}
+
+.dashboard-hours-sheet-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(216, 176, 95, 0.92) 0%, rgba(191, 90, 50, 0.85) 100%);
+  border-radius: 999px;
+  border: 2px solid rgba(12, 14, 19, 0.75);
+}
+
+.dashboard-hours-sheet-wrap::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(229, 194, 123, 0.95) 0%, rgba(201, 103, 66, 0.9) 100%);
 }
 
 .dashboard-hours-sheet {
@@ -5901,6 +5954,32 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .theme-light .dashboard-hours-table-wrap {
   border-color: rgba(24, 32, 44, 0.1);
   background: rgba(249, 243, 234, 0.82);
+}
+
+.theme-light .dashboard-full-hours-month-picker {
+  border-color: rgba(24, 32, 44, 0.14);
+  background: rgba(247, 239, 228, 0.9);
+}
+
+.theme-light .dashboard-full-hours-month-picker > span {
+  color: rgba(24, 32, 44, 0.58);
+}
+
+.theme-light .dashboard-full-hours-month-picker select {
+  color: #18202c;
+}
+
+.theme-light .dashboard-hours-sheet-wrap {
+  scrollbar-color: rgba(191, 90, 50, 0.58) rgba(24, 32, 44, 0.1);
+}
+
+.theme-light .dashboard-hours-sheet-wrap::-webkit-scrollbar-track {
+  background: rgba(24, 32, 44, 0.09);
+}
+
+.theme-light .dashboard-hours-sheet-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(191, 90, 50, 0.8) 0%, rgba(139, 65, 41, 0.78) 100%);
+  border-color: rgba(246, 239, 228, 0.85);
 }
 
 .theme-light .dashboard-hours-sheet thead th,
