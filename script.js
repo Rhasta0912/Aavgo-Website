@@ -750,7 +750,9 @@ function getFullHoursMonthOffset(monthValue = "") {
 }
 
 function syncFullHoursMonthOptions(options, currentValue = "") {
-  const select = document.getElementById("hours-full-month-select");
+  const valueInput = document.getElementById("hours-full-month-select");
+  const trigger = document.getElementById("hours-full-month-trigger");
+  const optionList = document.getElementById("hours-full-month-options");
   const normalizedOptions = Array.isArray(options) && options.length > 0
     ? options.map(option => ({
       id: String(option?.id || "").padStart(2, "0"),
@@ -764,14 +766,35 @@ function syncFullHoursMonthOptions(options, currentValue = "") {
     nextValue = String(getDefaultFullHoursMonthValue());
   }
 
-  if (select) {
-    select.innerHTML = normalizedOptions.map(option => {
+  const activeOption = normalizedOptions.find(option => String(option.id) === String(nextValue))
+    || normalizedOptions[0]
+    || { id: nextValue, label: "Month" };
+
+  if (valueInput) {
+    valueInput.value = nextValue;
+  }
+
+  if (trigger) {
+    trigger.textContent = String(activeOption?.label || "Month");
+  }
+
+  if (optionList) {
+    optionList.innerHTML = normalizedOptions.map(option => {
       const value = String(option?.id || "");
       const label = String(option?.label || "Month");
-      const selected = value === nextValue ? " selected" : "";
-      return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(label)}</option>`;
+      const isSelected = value === nextValue;
+      return `
+        <button
+          type="button"
+          class="dashboard-full-hours-month-option ${isSelected ? "is-active" : ""}"
+          data-month-value="${escapeHtml(value)}"
+          role="option"
+          aria-selected="${isSelected ? "true" : "false"}"
+        >
+          ${escapeHtml(label)}
+        </button>
+      `;
     }).join("");
-    select.value = nextValue;
   }
 
   return nextValue;
@@ -2621,13 +2644,45 @@ function initializeAdminBoard() {
     });
   });
 
-  const fullHoursMonthSelect = document.getElementById("hours-full-month-select");
-  if (fullHoursMonthSelect) {
-    fullHoursMonthSelect.addEventListener("change", () => {
-      adminBoardState.fullHoursMonth = String(fullHoursMonthSelect.value || getDefaultFullHoursMonthValue());
+  const fullHoursMonthPicker = document.getElementById("hours-full-month-picker");
+  const fullHoursMonthTrigger = document.getElementById("hours-full-month-trigger");
+  const fullHoursMonthPopover = document.getElementById("hours-full-month-popover");
+  const fullHoursMonthOptions = document.getElementById("hours-full-month-options");
+
+  const setFullHoursMonthPopoverOpen = (open) => {
+    if (!fullHoursMonthTrigger || !fullHoursMonthPopover || !fullHoursMonthPicker) return;
+    fullHoursMonthPopover.hidden = !open;
+    fullHoursMonthTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+    fullHoursMonthPicker.classList.toggle("is-open", open);
+  };
+
+  if (fullHoursMonthTrigger && fullHoursMonthPopover) {
+    fullHoursMonthTrigger.addEventListener("click", () => {
+      const isOpen = fullHoursMonthPopover.hidden === false;
+      setFullHoursMonthPopoverOpen(!isOpen);
+    });
+  }
+
+  if (fullHoursMonthOptions) {
+    fullHoursMonthOptions.addEventListener("click", event => {
+      const option = event.target.closest("button[data-month-value]");
+      if (!option) return;
+      adminBoardState.fullHoursMonth = String(option.getAttribute("data-month-value") || getDefaultFullHoursMonthValue());
+      setFullHoursMonthPopoverOpen(false);
       applyAdminBoardPayload(adminBoardState.payload);
     });
   }
+
+  document.addEventListener("click", event => {
+    if (!fullHoursMonthPicker) return;
+    if (event.target instanceof Node && fullHoursMonthPicker.contains(event.target)) return;
+    setFullHoursMonthPopoverOpen(false);
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key !== "Escape") return;
+    setFullHoursMonthPopoverOpen(false);
+  });
 
   ["hours-filter-search", "hours-filter-role", "hours-filter-team", "hours-filter-hotel", "hours-filter-status"]
     .forEach(filterId => {

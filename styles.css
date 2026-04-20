@@ -1767,10 +1767,7 @@ h2 {
   text-transform: uppercase;
 }
 
-.dashboard-full-hours-month-picker select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+.dashboard-full-hours-month-trigger {
   border: none;
   outline: none;
   background: transparent;
@@ -1780,7 +1777,57 @@ h2 {
   font-weight: 700;
   min-width: 9.1rem;
   padding-right: 0.95rem;
+  text-align: left;
   cursor: pointer;
+}
+
+.dashboard-full-hours-month-popover {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 35;
+  width: 11.2rem;
+  padding: 0.45rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(14, 17, 24, 0.98) 0%, rgba(10, 12, 18, 0.98) 100%);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.34);
+}
+
+.dashboard-full-hours-month-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 15.4rem;
+  overflow: auto;
+}
+
+.dashboard-full-hours-month-option {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.38rem 0.56rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255, 248, 239, 0.74);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.dashboard-full-hours-month-option:hover,
+.dashboard-full-hours-month-option:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff8ef;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.dashboard-full-hours-month-option.is-active {
+  background: rgba(216, 176, 95, 0.18);
+  color: #fff8ef;
+  border-color: rgba(216, 176, 95, 0.48);
 }
 
 .dashboard-filter-bar {
@@ -5985,8 +6032,31 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   color: rgba(24, 32, 44, 0.62);
 }
 
-.theme-light .dashboard-full-hours-month-picker select {
+.theme-light .dashboard-full-hours-month-trigger {
   color: #18202c;
+}
+
+.theme-light .dashboard-full-hours-month-popover {
+  border-color: rgba(24, 32, 44, 0.14);
+  background: linear-gradient(180deg, rgba(246, 238, 227, 0.99) 0%, rgba(240, 231, 218, 0.98) 100%);
+  box-shadow: 0 14px 28px rgba(55, 44, 32, 0.18);
+}
+
+.theme-light .dashboard-full-hours-month-option {
+  color: rgba(24, 32, 44, 0.75);
+}
+
+.theme-light .dashboard-full-hours-month-option:hover,
+.theme-light .dashboard-full-hours-month-option:focus-visible {
+  background: rgba(24, 32, 44, 0.08);
+  color: #18202c;
+  border-color: rgba(24, 32, 44, 0.16);
+}
+
+.theme-light .dashboard-full-hours-month-option.is-active {
+  background: rgba(191, 90, 50, 0.16);
+  color: #18202c;
+  border-color: rgba(191, 90, 50, 0.38);
 }
 
 .theme-light .dashboard-hours-sheet-wrap {

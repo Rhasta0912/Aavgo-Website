@@ -494,41 +494,35 @@ $bootstrapJson = json_encode(
             </div>
             <div class="dashboard-panel-meta">
               <span class="dashboard-chip dashboard-chip-accent" id="hours-bulk-selected-count">0 selected</span>
-              <label class="dashboard-full-hours-month-picker" for="hours-full-month-select">
+              <div class="dashboard-full-hours-month-picker" id="hours-full-month-picker">
                 <span>Month</span>
-                <select id="hours-full-month-select" aria-label="Select full-hours month">
-                  <option value="">Current month</option>
-                </select>
-              </label>
+                <button
+                  class="dashboard-full-hours-month-trigger"
+                  id="hours-full-month-trigger"
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-label="Select full-hours month"
+                >
+                  Current month
+                </button>
+                <div class="dashboard-full-hours-month-popover" id="hours-full-month-popover" hidden>
+                  <div class="dashboard-full-hours-month-list" id="hours-full-month-options" role="listbox" aria-label="Select month"></div>
+                </div>
+                <input id="hours-full-month-select" type="hidden" value="">
+              </div>
             </div>
           </div>
-          <p class="dashboard-panel-copy">Click any staff row to load the editor. Use the checkboxes to select multiple people before bulk team/hotel moves or force logout.</p>
+          <p class="dashboard-panel-copy">Click any staff row to load the editor. Use the checkboxes to select multiple people before opening the editor or forcing logout.</p>
 
           <div class="dashboard-bulk-shell">
             <div class="dashboard-bulk-actions">
               <button class="button button-secondary dashboard-inline-button" id="hours-bulk-select-visible" type="button">Select filtered</button>
               <button class="button button-secondary dashboard-inline-button" id="hours-bulk-clear" type="button">Clear selection</button>
               <button class="button button-secondary dashboard-inline-button" id="hours-open-editor" type="button">Open editor</button>
-            </div>
-            <div class="dashboard-bulk-controls">
-              <label class="dashboard-control-field">
-                <span>Bulk team</span>
-                <select id="hours-bulk-team-select">
-                  <option value="">Choose a team</option>
-                </select>
-              </label>
-              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-team-submit" type="button">Update selected teams</button>
-
-              <label class="dashboard-control-field">
-                <span>Bulk hotel</span>
-                <select id="hours-bulk-hotel-select">
-                  <option value="">Choose a hotel</option>
-                </select>
-              </label>
-              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-hotel-submit" type="button">Update selected hotels</button>
               <button class="button button-primary dashboard-inline-button" id="hours-bulk-logout-submit" type="button">Force logout selected</button>
             </div>
-            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then apply team, hotel, or logout actions in one pass. Double-click a day cell to edit that date directly.</p>
+            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then force logout selected rows in one pass. Double-click a day cell to edit that date directly.</p>
           </div>
 
           <div class="dashboard-hours-editor-inline" id="hours-editor-summary-card">
