@@ -1753,6 +1753,16 @@ h2 {
   z-index: 120;
 }
 
+.dashboard-panel-full-hours .dashboard-full-hours-month-picker.is-open {
+  margin-bottom: 15.8rem;
+}
+
+@media (max-width: 900px) {
+  .dashboard-panel-full-hours .dashboard-full-hours-month-picker.is-open {
+    margin-bottom: 12.4rem;
+  }
+}
+
 .dashboard-full-hours-month-picker::after {
   content: "▾";
   position: absolute;
@@ -4849,8 +4859,8 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
-  width: min(100%, 58rem);
-  margin: 0 auto 1rem;
+  width: min(100%, 50rem);
+  margin: 0 0 1rem;
   padding: 1rem 1.1rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
