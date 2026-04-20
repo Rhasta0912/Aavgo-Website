@@ -513,18 +513,6 @@ $bootstrapJson = json_encode(
               </div>
             </div>
           </div>
-          <p class="dashboard-panel-copy">Click any staff row to load the editor. Use the checkboxes to select multiple people before opening the editor or forcing logout.</p>
-
-          <div class="dashboard-bulk-shell">
-            <div class="dashboard-bulk-actions">
-              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-select-visible" type="button">Select filtered</button>
-              <button class="button button-secondary dashboard-inline-button" id="hours-bulk-clear" type="button">Clear selection</button>
-              <button class="button button-secondary dashboard-inline-button" id="hours-open-editor" type="button">Open editor</button>
-              <button class="button button-primary dashboard-inline-button" id="hours-bulk-logout-submit" type="button">Force logout selected</button>
-            </div>
-            <p class="dashboard-panel-copy" id="hours-bulk-feedback">Select one or more staff rows, then force logout selected rows in one pass. Double-click a day cell to edit that date directly.</p>
-          </div>
-
           <div class="dashboard-hours-editor-inline" id="hours-editor-summary-card">
             <div>
               <p class="dashboard-kicker">Manual edit lane</p>
