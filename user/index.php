@@ -52,6 +52,26 @@ if ($guestMode) {
     $hoursPayload = aavgo_fetch_hours_bridge_payload();
     $personalHours = aavgo_find_hours_person_for_user($user);
     $hoursConnected = (bool) ($hoursPayload['ok'] ?? false) && is_array($personalHours);
+    if (!is_array($personalHours)) {
+        $personalHours = [
+            'linkedHotel' => 'Hotel not assigned yet',
+            'team' => 'Team pending',
+            'role' => $roleSummary,
+            'agentStatus' => 'Sync pending',
+            'todayHours' => 0,
+            'weeklyHours' => 0,
+            'monthlyHours' => 0,
+            'allHours' => 0,
+            'payPeriods' => [
+                'firstHalf' => ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []],
+                'secondHalf' => ['label' => '16th - end', 'totalHours' => 0, 'days' => []],
+            ],
+            'currentMonth' => ['label' => 'Current month', 'days' => []],
+            'recentMonths' => [],
+            'recentAdjustments' => [],
+            'activeSession' => null,
+        ];
+    }
     $payPeriods = is_array($personalHours['payPeriods'] ?? null) ? $personalHours['payPeriods'] : [];
     $firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []];
     $secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16th - end', 'totalHours' => 0, 'days' => []];
@@ -346,113 +366,38 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
         </section>
       <?php endif; ?>
 
-      <section class="dashboard-user-workspace reveal reveal-delay-1" aria-label="Agent workspace overview">
-        <article class="dashboard-panel dashboard-user-today-panel">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Today</p>
-              <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
-            </div>
+      <section class="dashboard-user-command reveal reveal-delay-1" aria-label="Agent command center">
+        <article class="dashboard-user-hero-card">
+          <div class="dashboard-user-hero-topline">
+            <span class="dashboard-user-eyebrow">Today at Aavgo</span>
             <span class="dashboard-status-pill <?php echo htmlspecialchars($todayStatusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo aavgo_user_text($todayStatusLabel); ?></span>
           </div>
-          <div class="dashboard-user-today-body">
-            <div class="dashboard-user-today-focus">
-              <span>Next action</span>
-              <strong><?php echo aavgo_user_text($todayNextAction); ?></strong>
-            </div>
-            <div class="dashboard-user-context-grid">
-              <div>
-                <span>Team</span>
-                <strong><?php echo aavgo_user_text($todayTeamLabel); ?></strong>
-              </div>
-              <div>
-                <span>Session</span>
-                <strong><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></strong>
-              </div>
-              <div>
-                <span>Today</span>
-                <strong><?php echo aavgo_user_hours_label($personalHours['todayHours'] ?? 0); ?>h</strong>
-              </div>
-            </div>
-          </div>
-          <div class="dashboard-user-quick-actions" aria-label="Quick actions">
-            <a class="dashboard-user-action" href="<?php echo htmlspecialchars($attendanceDiscordUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Attendance</a>
-            <a class="dashboard-user-action" href="#user-handover">Handover</a>
-            <a class="dashboard-user-action" href="#user-pay-periods">Pay periods</a>
+          <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
+          <p><?php echo aavgo_user_text($todayNextAction); ?></p>
+          <div class="dashboard-user-hero-actions" aria-label="Quick actions">
+            <a class="dashboard-user-primary-action" href="<?php echo htmlspecialchars($attendanceDiscordUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Open Attendance</a>
+            <a class="dashboard-user-secondary-action" href="#user-handover">Read handover</a>
+            <a class="dashboard-user-secondary-action" href="#user-pay-periods">Check pay</a>
           </div>
         </article>
 
-        <article class="dashboard-panel dashboard-user-timeline-panel">
-          <div class="dashboard-panel-heading">
+        <aside class="dashboard-user-day-card" aria-label="Shift basics">
+          <p class="dashboard-user-eyebrow">Your shift card</p>
+          <dl>
             <div>
-              <p class="dashboard-kicker">Shift timeline</p>
-              <h2>Where your day stands</h2>
+              <dt>Team</dt>
+              <dd><?php echo aavgo_user_text($todayTeamLabel); ?></dd>
             </div>
-          </div>
-          <ol class="dashboard-user-timeline">
-            <?php foreach ($workspaceTimeline as $step): ?>
-              <?php $state = in_array($step['state'] ?? 'idle', ['done', 'current', 'idle'], true) ? (string) $step['state'] : 'idle'; ?>
-              <li class="is-<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>">
-                <span></span>
-                <div>
-                  <strong><?php echo aavgo_user_text($step['label'] ?? 'Step'); ?></strong>
-                  <p><?php echo aavgo_user_text($step['detail'] ?? 'Waiting for the next sync.'); ?></p>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ol>
-        </article>
-      </section>
-
-      <section class="dashboard-user-grid dashboard-user-grid-handover reveal reveal-delay-2" id="user-handover">
-        <article class="dashboard-panel dashboard-user-handover-panel">
-          <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Handover inbox</p>
-              <h2>Notes for your lane</h2>
+              <dt>Session</dt>
+              <dd><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></dd>
             </div>
-            <span class="dashboard-chip"><?php echo htmlspecialchars((string) count($handoverItems), ENT_QUOTES, 'UTF-8'); ?> open</span>
-          </div>
-          <div class="dashboard-user-handover-list">
-            <?php if ($handoverItems === []): ?>
-              <div class="dashboard-empty-state dashboard-user-empty-state">
-                <strong>No unread handover notes.</strong>
-                <p>Your lane is clear in the current website snapshot.</p>
-              </div>
-            <?php else: ?>
-              <?php foreach ($handoverItems as $item): ?>
-                <article class="dashboard-user-handover-item">
-                  <span><?php echo aavgo_user_text($item['meta'] ?? 'Current lane'); ?></span>
-                  <strong><?php echo aavgo_user_text($item['title'] ?? 'Handover note'); ?></strong>
-                  <p><?php echo aavgo_user_text($item['body'] ?? ''); ?></p>
-                </article>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </article>
-
-        <article class="dashboard-panel dashboard-user-shift-card">
-          <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Current assignment</p>
-              <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
+              <dt>Role</dt>
+              <dd><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></dd>
             </div>
-          </div>
-          <div class="dashboard-control-list">
-            <div class="dashboard-control-item">
-              <strong>Role</strong>
-              <span><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Status</strong>
-              <span><?php echo aavgo_user_text($todayStatusLabel); ?></span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Team</strong>
-              <span><?php echo aavgo_user_text($todayTeamLabel); ?></span>
-            </div>
-          </div>
-        </article>
+          </dl>
+        </aside>
       </section>
 
       <section class="dashboard-user-stat-grid reveal reveal-delay-1" aria-label="Personal hour totals">
@@ -478,40 +423,89 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
         </article>
       </section>
 
-      <section class="dashboard-user-grid dashboard-user-grid-payroll reveal reveal-delay-2">
-        <article class="dashboard-panel" id="user-pay-periods">
+      <section class="dashboard-user-workbench reveal reveal-delay-2">
+        <article class="dashboard-panel dashboard-user-timeline-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Start here</p>
+              <h2>What to do next</h2>
+            </div>
+          </div>
+          <ol class="dashboard-user-timeline">
+            <?php foreach ($workspaceTimeline as $step): ?>
+              <?php $state = in_array($step['state'] ?? 'idle', ['done', 'current', 'idle'], true) ? (string) $step['state'] : 'idle'; ?>
+              <li class="is-<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>">
+                <span></span>
+                <div>
+                  <strong><?php echo aavgo_user_text($step['label'] ?? 'Step'); ?></strong>
+                  <p><?php echo aavgo_user_text($step['detail'] ?? 'Waiting for the next sync.'); ?></p>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </article>
+
+        <article class="dashboard-panel dashboard-user-handover-panel" id="user-handover">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Handover</p>
+              <h2><?php echo $handoverItems === [] ? 'Your lane is clear' : 'Notes for your lane'; ?></h2>
+            </div>
+            <span class="dashboard-chip"><?php echo htmlspecialchars((string) count($handoverItems), ENT_QUOTES, 'UTF-8'); ?> open</span>
+          </div>
+          <div class="dashboard-user-handover-list">
+            <?php if ($handoverItems === []): ?>
+              <div class="dashboard-user-clear-state">
+                <strong>No unread handover notes.</strong>
+                <p>If leadership or the last agent leaves a note, it will appear here first.</p>
+              </div>
+            <?php else: ?>
+              <?php foreach ($handoverItems as $item): ?>
+                <article class="dashboard-user-handover-item">
+                  <span><?php echo aavgo_user_text($item['meta'] ?? 'Current lane'); ?></span>
+                  <strong><?php echo aavgo_user_text($item['title'] ?? 'Handover note'); ?></strong>
+                  <p><?php echo aavgo_user_text($item['body'] ?? ''); ?></p>
+                </article>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-user-payroll reveal reveal-delay-2" id="user-pay-periods">
+        <article class="dashboard-panel dashboard-user-payroll-panel">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Pay periods</p>
-              <h2>1st - 15th and 16th - month end</h2>
+              <h2>Clean payroll readout</h2>
             </div>
           </div>
-          <div class="dashboard-pay-period-grid">
-            <section class="dashboard-pay-period-card">
-              <span class="dashboard-chip"><?php echo aavgo_user_text($firstHalf['label'] ?? '1-15'); ?></span>
+          <div class="dashboard-user-payroll-grid">
+            <section class="dashboard-user-pay-card">
+              <span><?php echo aavgo_user_text($firstHalf['label'] ?? '1-15'); ?></span>
               <strong><?php echo aavgo_user_hours_label($firstHalf['totalHours'] ?? 0); ?>h</strong>
-              <p>Hours tracked in the first payroll half.</p>
+              <p>First payroll half</p>
               <?php echo aavgo_render_hours_day_list(is_array($firstHalf['days'] ?? null) ? $firstHalf['days'] : []); ?>
             </section>
-            <section class="dashboard-pay-period-card">
-              <span class="dashboard-chip"><?php echo aavgo_user_text($secondHalf['label'] ?? '16-end'); ?></span>
+            <section class="dashboard-user-pay-card is-current">
+              <span><?php echo aavgo_user_text($secondHalf['label'] ?? '16-end'); ?></span>
               <strong><?php echo aavgo_user_hours_label($secondHalf['totalHours'] ?? 0); ?>h</strong>
-              <p>Hours tracked from the 16th through month end.</p>
+              <p>Second payroll half</p>
               <?php echo aavgo_render_hours_day_list(is_array($secondHalf['days'] ?? null) ? $secondHalf['days'] : []); ?>
             </section>
           </div>
         </article>
       </section>
 
-      <section class="dashboard-user-grid dashboard-user-grid-history reveal reveal-delay-2" id="user-history">
-        <article class="dashboard-panel">
+      <section class="dashboard-user-history reveal reveal-delay-2" id="user-history">
+        <article class="dashboard-panel dashboard-user-history-panel">
           <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Current month history</p>
+              <p class="dashboard-kicker">Hour history</p>
               <h2><?php echo aavgo_user_text($currentMonth['label'] ?? 'Current month'); ?></h2>
             </div>
           </div>
-          <div class="dashboard-hours-table-wrap">
+          <div class="dashboard-hours-table-wrap dashboard-user-history-table-wrap">
             <table class="dashboard-hours-table dashboard-hours-table-compact">
               <thead>
                 <tr>
@@ -552,7 +546,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           </div>
         </article>
 
-        <article class="dashboard-panel" id="user-month-summary">
+        <article class="dashboard-panel dashboard-user-month-card" id="user-month-summary">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Recent month totals</p>
@@ -592,11 +586,11 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
                   </div>
                   <p>
                     <?php echo aavgo_user_text($entry['hotelLabel'] ?? 'N/A'); ?>
-                    ·
+                    &middot;
                     <?php echo aavgo_user_text($entry['loginTime'] ?? '--:--'); ?>
                     -
                     <?php echo aavgo_user_text($entry['logoutTime'] ?? '--:--'); ?>
-                    ·
+                    &middot;
                     <?php echo aavgo_user_hours_label($entry['hours'] ?? 0); ?>h
                   </p>
                   <span><?php echo aavgo_user_text($entry['reason'] ?? 'Manual adjustment'); ?></span>
