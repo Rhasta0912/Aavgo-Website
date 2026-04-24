@@ -1963,6 +1963,32 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
   body.innerHTML = rows.join("");
 }
 
+function renderFullHoursBrief(people, selectedPeople, monthValue = "") {
+  const visiblePeople = Array.isArray(people) ? people : [];
+  const selectedRows = Array.isArray(selectedPeople) ? selectedPeople : [];
+  const activeCount = visiblePeople.filter(person => Boolean(person?.activeNow)).length;
+  const monthTotal = visiblePeople.reduce((total, person) => {
+    const totals = getSelectedFullHoursMonthTotals(person, monthValue);
+    return total + Number(totals.month || 0);
+  }, 0);
+  const selectedTotal = selectedRows.reduce((total, person) => {
+    const totals = getSelectedFullHoursMonthTotals(person, monthValue);
+    return total + Number(totals.month || 0);
+  }, 0);
+  const selectedMonth = parseFullHoursMonthValue(monthValue);
+  const year = getFullHoursMonthReferenceDate().getFullYear();
+  const monthLabel = new Date(year, selectedMonth - 1, 1).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric"
+  });
+
+  setText("hours-full-visible-count", String(visiblePeople.length));
+  setText("hours-full-active-count", String(activeCount));
+  setText("hours-full-month-total", formatHours(monthTotal));
+  setText("hours-full-selected-total", formatHours(selectedTotal));
+  setText("hours-full-context", `${monthLabel} - filtered lane`);
+}
+
 function renderHotelLaneCards(lanes) {
   const container = document.getElementById("hours-hotel-lanes");
   if (!container) return;
@@ -2454,6 +2480,7 @@ function applyAdminBoardPayload(payload) {
 
   renderHoursNotice(adminBoardState.payload);
   renderHoursRows(visiblePeople, selectedStaff?.discordId || "");
+  renderFullHoursBrief(visiblePeople, selectedBulkPeople, adminBoardState.fullHoursMonth);
   renderFullHoursRows(visiblePeople, adminBoardState.fullHoursMonth);
   renderTeamCards(deriveTeamCards(visiblePeople));
   renderHotelLaneCards(deriveHotelLaneCards(visiblePeople, meta.hotels || []));
@@ -4551,6 +4578,7 @@ function initializeDeveloperWorkspace() {
   const renderDeveloperTaskCard = (item) => {
     const timing = getTaskTimingState(item);
     const activity = Array.isArray(item.activity) ? item.activity.map(normalizeActivityEntry).filter(entry => entry.message) : [];
+    const attachmentCount = Array.isArray(item.attachments) ? item.attachments.length : 0;
     return `
     <article class="dashboard-developer-task-card ${priorityClass(item.priority)} ${timing.isOverdue ? "is-overdue" : ""} ${timing.isStartingSoon ? "is-starting-soon" : ""} ${timing.isDueToday ? "is-due-today" : ""}" data-task-id="${escapeHtml(item.id)}" draggable="true">
       <div class="dashboard-developer-task-labels">
@@ -4573,6 +4601,11 @@ function initializeDeveloperWorkspace() {
         </div>
       </div>
       <p class="dashboard-developer-task-notes">${escapeHtml(item.notes || "No post note yet.")}</p>
+      <div class="dashboard-developer-task-metrics" aria-label="Task metadata">
+        <span>${escapeHtml(String(activity.length))} updates</span>
+        <span>${escapeHtml(String(attachmentCount))} attachments</span>
+        <span>${escapeHtml(item.updatedAt ? `Touched ${toDateLabel(item.updatedAt)}` : "No sync stamp")}</span>
+      </div>
       ${Array.isArray(item.attachments) && item.attachments.length ? `
         <div class="dashboard-developer-attachments">
           ${item.attachments.map(attachment => `
@@ -4671,6 +4704,24 @@ function initializeDeveloperWorkspace() {
     `;
   };
 
+  const renderDeveloperBoardStats = (items, archived, audit) => {
+    const activeItems = Array.isArray(items) ? items : [];
+    const archivedItems = Array.isArray(archived) ? archived : [];
+    const auditItems = Array.isArray(audit) ? audit : [];
+    const doingCount = activeItems.filter(item => normalizeStatus(item.status) === "Doing").length;
+    const latestAudit = auditItems
+      .map(entry => String(entry?.createdAt || ""))
+      .filter(Boolean)
+      .sort()
+      .pop();
+    const updatedAt = developerBoardState.updatedAt || latestAudit || "";
+
+    setText("developer-board-active-count", String(activeItems.length));
+    setText("developer-board-doing-count", String(doingCount));
+    setText("developer-board-archive-count", String(archivedItems.length));
+    setText("developer-board-updated", updatedAt ? toDateLabel(updatedAt) : "Waiting");
+  };
+
   const render = (items) => {
     const sorted = sortTasks(items.map(normalizeTask));
     const archived = [...loadHistory()].sort((left, right) => String(right.archivedAt || "").localeCompare(String(left.archivedAt || "")));
@@ -4708,6 +4759,7 @@ function initializeDeveloperWorkspace() {
       `;
       setAuditState(audit, { sync: false });
     }
+    renderDeveloperBoardStats(sorted, archived, audit);
   };
 
   openButtons.forEach(button => {

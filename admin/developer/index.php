@@ -62,6 +62,7 @@ if ($sidebarRoleLabel === '') {
 $safeSidebarRoleLabel = htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8');
 $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabel));
 $developerBoardStore = aavgo_read_developer_board();
+$csrfToken = aavgo_csrf_token();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -149,6 +150,29 @@ $developerBoardStore = aavgo_read_developer_board();
             <button class="dashboard-view-tab is-active" type="button" data-developer-view="board">Roadmap board</button>
             <button class="dashboard-view-tab" type="button" data-developer-view="archive">Archive</button>
             <button class="dashboard-view-tab" type="button" data-developer-view="audit">Audit</button>
+          </section>
+
+          <section class="dashboard-developer-health" aria-label="Developer board summary">
+            <article>
+              <span>Active cards</span>
+              <strong id="developer-board-active-count">0</strong>
+              <p>Open roadmap items across all lanes.</p>
+            </article>
+            <article>
+              <span>In motion</span>
+              <strong id="developer-board-doing-count">0</strong>
+              <p>Cards currently sitting in Doing.</p>
+            </article>
+            <article>
+              <span>Archived</span>
+              <strong id="developer-board-archive-count">0</strong>
+              <p>Finished work kept out of the board.</p>
+            </article>
+            <article class="dashboard-developer-health-wide">
+              <span>Shared sync</span>
+              <strong id="developer-board-updated">Waiting</strong>
+              <p>Universal board state, not browser-only storage.</p>
+            </article>
           </section>
 
           <div class="dashboard-view-panel is-active" data-developer-view-panel="board">
@@ -406,6 +430,7 @@ $developerBoardStore = aavgo_read_developer_board();
     window.AAVGO_DEVELOPER_BOARD_ENDPOINT = '/api/developer-board/index.php';
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
+    window.AAVGO_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
   </script>
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>

@@ -578,6 +578,28 @@ $csrfToken = aavgo_csrf_token();
               </div>
             </div>
           </div>
+          <section class="dashboard-full-hours-brief" aria-label="Full hours spreadsheet summary">
+            <div class="dashboard-full-hours-brief-card">
+              <span>Visible staff</span>
+              <strong id="hours-full-visible-count">0</strong>
+              <p id="hours-full-context">Waiting for the current month snapshot.</p>
+            </div>
+            <div class="dashboard-full-hours-brief-card">
+              <span>Live now</span>
+              <strong id="hours-full-active-count">0</strong>
+              <p>Active sessions in this filtered lane.</p>
+            </div>
+            <div class="dashboard-full-hours-brief-card">
+              <span>Month total</span>
+              <strong id="hours-full-month-total">0h</strong>
+              <p>Only the selected month view.</p>
+            </div>
+            <div class="dashboard-full-hours-brief-card dashboard-full-hours-brief-card-accent">
+              <span>Selected rows</span>
+              <strong id="hours-full-selected-total">0h</strong>
+              <p>Checked staff total for this month.</p>
+            </div>
+          </section>
           <div class="dashboard-hours-editor-inline" id="hours-editor-summary-card">
             <div>
               <h3 id="hours-editor-summary-selected">Pick a staff row to edit hours.</h3>
