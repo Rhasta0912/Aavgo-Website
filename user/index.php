@@ -477,9 +477,8 @@ $csrfToken = aavgo_csrf_token();
 
   <?php if (!$guestMode): ?>
     <aside class="aavgo-support-widget" data-support-widget aria-label="Aavgo support">
-      <button class="aavgo-support-bubble" type="button" data-support-toggle aria-expanded="false">
-        <span>Support</span>
-        <strong>Ask Dev</strong>
+      <button class="aavgo-support-bubble" type="button" data-support-toggle aria-expanded="false" aria-label="Open support" title="Support">
+        <span aria-hidden="true">💬</span>
       </button>
       <form class="aavgo-support-panel" data-support-panel hidden>
         <div class="aavgo-support-head">

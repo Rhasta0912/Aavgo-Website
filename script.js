@@ -5325,15 +5325,28 @@ function initializeSupportWidget() {
   const message = widget.querySelector("textarea[name='supportMessage']");
   const endpoint = String(window.AAVGO_SUPPORT_REQUEST_ENDPOINT || "/api/support-request/").trim();
   const csrfToken = String(window.AAVGO_CSRF_TOKEN || "").trim();
+  let supportPanelTimer = 0;
 
   const setOpen = (open) => {
     if (!panel || !toggle) return;
-    panel.hidden = !open;
+    window.clearTimeout(supportPanelTimer);
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    widget.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-label", open ? "Close support" : "Open support");
     if (open) {
+      panel.hidden = false;
+      window.requestAnimationFrame(() => {
+        widget.classList.add("is-open");
+      });
       window.setTimeout(() => title?.focus(), 40);
+      return;
     }
+
+    widget.classList.remove("is-open");
+    supportPanelTimer = window.setTimeout(() => {
+      if (!widget.classList.contains("is-open")) {
+        panel.hidden = true;
+      }
+    }, 220);
   };
 
   const setFeedback = (text, isError = false) => {
@@ -5343,7 +5356,7 @@ function initializeSupportWidget() {
   };
 
   toggle?.addEventListener("click", () => {
-    setOpen(panel?.hidden !== false);
+    setOpen(!widget.classList.contains("is-open"));
   });
   close?.addEventListener("click", () => setOpen(false));
 
