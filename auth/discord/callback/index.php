@@ -70,7 +70,7 @@ try {
     $cachedHandoff = aavgo_claim_auth_handoff((string) $state);
     if (is_array($cachedHandoff) && is_array($cachedHandoff['user'] ?? null)) {
         session_regenerate_id(true);
-        $_SESSION['aavgo_user'] = $cachedHandoff['user'];
+        aavgo_mark_authenticated_session($cachedHandoff['user']);
         unset($_SESSION['aavgo_after_login']);
 
         $handoffAfterLogin = (string) ($cachedHandoff['afterLogin'] ?? $afterLogin);
@@ -226,7 +226,7 @@ HTML;
     }
 
     session_regenerate_id(true);
-    $_SESSION['aavgo_user'] = $fallbackSessionUser;
+    aavgo_mark_authenticated_session($fallbackSessionUser);
     unset($_SESSION['aavgo_after_login']);
 
     aavgo_redirect(aavgo_resolve_after_login_path($_SESSION['aavgo_user'], $afterLogin));

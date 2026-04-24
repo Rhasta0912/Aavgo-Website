@@ -31,7 +31,7 @@ if (!is_array($handoff) || trim((string) ($handoff['kind'] ?? 'success')) !== 's
 }
 
 session_regenerate_id(true);
-$_SESSION['aavgo_user'] = $handoff['user'];
+aavgo_mark_authenticated_session($handoff['user']);
 unset($_SESSION['aavgo_after_login']);
 
 $afterLogin = (string) ($handoff['afterLogin'] ?? ($validatedState['after_login'] ?? ''));

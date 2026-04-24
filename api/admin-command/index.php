@@ -127,6 +127,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 }
 
 $decoded = aavgo_decode_json_body();
+aavgo_require_csrf($decoded);
 $action = trim((string) ($decoded['action'] ?? ''));
 $payload = is_array($decoded['payload'] ?? null) ? $decoded['payload'] : [];
 $managementPayload = aavgo_build_management_payload($user, $hoursPayload);
@@ -267,9 +268,16 @@ switch ($action) {
             exit;
         }
 
+        $displayName = (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown');
+        $confirmation = trim((string) ($payload['confirmation'] ?? ''));
+        if ($displayName !== '' && !hash_equals($displayName, $confirmation)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Type the staff name exactly before reassigning the hotel.'], 400);
+            exit;
+        }
+
         $normalizedPayload = [
             'discordId' => $discordId,
-            'displayName' => (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown'),
+            'displayName' => $displayName,
             'hotelId' => $hotelId,
             'hotelLabel' => (string) ($hotel['name'] ?? $hotelId),
         ];
@@ -296,6 +304,13 @@ switch ($action) {
             exit;
         }
 
+        $confirmationLabel = count($rows) . ' staff';
+        $confirmation = trim((string) ($payload['confirmation'] ?? ''));
+        if (!hash_equals($confirmationLabel, $confirmation)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Type the bulk reassignment confirmation exactly before continuing.'], 400);
+            exit;
+        }
+
         $normalizedPayload = [
             'discordIds' => $discordIds,
             'displayNames' => array_values(array_map(static fn(array $row): string => (string) ($row['displayName'] ?? $row['username'] ?? 'Unknown'), $rows)),
@@ -312,9 +327,16 @@ switch ($action) {
             exit;
         }
 
+        $displayName = (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown');
+        $confirmation = trim((string) ($payload['confirmation'] ?? ''));
+        if ($displayName !== '' && !hash_equals($displayName, $confirmation)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Type the staff name exactly before forcing logout.'], 400);
+            exit;
+        }
+
         $normalizedPayload = [
             'discordId' => $discordId,
-            'displayName' => (string) ($person['displayName'] ?? $person['username'] ?? 'Unknown'),
+            'displayName' => $displayName,
             'hotelLabel' => (string) ($person['linkedHotel'] ?? ''),
         ];
         break;
@@ -333,6 +355,13 @@ switch ($action) {
             exit;
         }
 
+        $confirmationLabel = count($rows) . ' staff';
+        $confirmation = trim((string) ($payload['confirmation'] ?? ''));
+        if (!hash_equals($confirmationLabel, $confirmation)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Type the bulk logout confirmation exactly before continuing.'], 400);
+            exit;
+        }
+
         $normalizedPayload = [
             'discordIds' => $discordIds,
             'displayNames' => array_values(array_map(static fn(array $row): string => (string) ($row['displayName'] ?? $row['username'] ?? 'Unknown'), $rows)),
@@ -347,9 +376,16 @@ switch ($action) {
             exit;
         }
 
+        $hotelLabel = (string) ($hotel['name'] ?? $hotelId);
+        $confirmation = trim((string) ($payload['confirmation'] ?? ''));
+        if ($hotelLabel !== '' && !hash_equals($hotelLabel, $confirmation)) {
+            aavgo_json_response(['ok' => false, 'error' => 'Type the hotel name exactly before forcing hotel logout.'], 400);
+            exit;
+        }
+
         $normalizedPayload = [
             'hotelId' => $hotelId,
-            'hotelLabel' => (string) ($hotel['name'] ?? $hotelId),
+            'hotelLabel' => $hotelLabel,
         ];
         break;
 

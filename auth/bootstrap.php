@@ -22,6 +22,9 @@ const AAVGO_AGENT_ROLE_ID = '1482227287159078964';
 const AAVGO_TRAINEE_ROLE_ID = '1484705126026449029';
 const AAVGO_OAUTH_STATE_TTL = 900;
 const AAVGO_OAUTH_STATE_COOKIE = 'aavgo_discord_state';
+const AAVGO_ADMIN_SESSION_IDLE_TTL = 3600;
+const AAVGO_USER_SESSION_IDLE_TTL = 21600;
+const AAVGO_CSRF_SESSION_KEY = 'aavgo_csrf_token';
 const AAVGO_DEFAULT_ROLE_IDS = [
     'admin' => [
         AAVGO_DEVELOPER_ROLE_ID, // Developer
@@ -85,6 +88,72 @@ function aavgo_bootstrap_session(): void
     ]);
 
     session_start();
+}
+
+function aavgo_csrf_token(): string
+{
+    $token = $_SESSION[AAVGO_CSRF_SESSION_KEY] ?? '';
+    if (!is_string($token) || $token === '') {
+        $token = bin2hex(random_bytes(32));
+        $_SESSION[AAVGO_CSRF_SESSION_KEY] = $token;
+    }
+
+    return $token;
+}
+
+function aavgo_mark_authenticated_session(array $user): void
+{
+    $_SESSION['aavgo_user'] = $user;
+    $_SESSION['aavgo_last_activity'] = time();
+    unset($_SESSION[AAVGO_CSRF_SESSION_KEY]);
+    aavgo_csrf_token();
+}
+
+function aavgo_request_is_api(): bool
+{
+    $path = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?? '');
+    return str_starts_with($path, '/api/');
+}
+
+function aavgo_require_csrf(array $decodedPayload = []): void
+{
+    $expected = (string) ($_SESSION[AAVGO_CSRF_SESSION_KEY] ?? '');
+    $provided = trim((string) (
+        $_SERVER['HTTP_X_AAVGO_CSRF'] ??
+        $_SERVER['HTTP_X_CSRF_TOKEN'] ??
+        ($decodedPayload['csrfToken'] ?? '')
+    ));
+
+    if ($expected !== '' && $provided !== '' && hash_equals($expected, $provided)) {
+        return;
+    }
+
+    aavgo_json_response([
+        'ok' => false,
+        'error' => 'Security check failed. Refresh the page and try again.',
+    ], 419);
+    exit;
+}
+
+function aavgo_enforce_session_idle(string $route): void
+{
+    $ttl = $route === 'admin' ? AAVGO_ADMIN_SESSION_IDLE_TTL : AAVGO_USER_SESSION_IDLE_TTL;
+    $lastActivity = (int) ($_SESSION['aavgo_last_activity'] ?? time());
+
+    if ($lastActivity > 0 && (time() - $lastActivity) > $ttl) {
+        aavgo_logout();
+        if (aavgo_request_is_api()) {
+            aavgo_json_response([
+                'ok' => false,
+                'error' => 'Your Aavgo session expired from inactivity. Sign in again.',
+            ], 401);
+            exit;
+        }
+
+        aavgo_redirect('/auth/discord/login/?expired=1');
+    }
+
+    $_SESSION['aavgo_last_activity'] = time();
 }
 
 function aavgo_parse_id_list(mixed $value): array
@@ -1852,12 +1921,15 @@ function aavgo_require_auth(): array
         aavgo_redirect('/auth/discord/login/');
     }
 
+    aavgo_enforce_session_idle(aavgo_user_access_level($user));
+
     return $user;
 }
 
 function aavgo_require_access(string $route): array
 {
     $user = aavgo_require_auth();
+    aavgo_enforce_session_idle($route);
 
     if (aavgo_user_can_access($user, $route)) {
         return $user;

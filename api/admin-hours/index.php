@@ -28,6 +28,7 @@ if (!function_exists('curl_init')) {
 }
 
 $decoded = aavgo_decode_json_body();
+aavgo_require_csrf($decoded);
 $action = trim((string) ($decoded['action'] ?? ''));
 $payload = is_array($decoded['payload'] ?? null) ? $decoded['payload'] : [];
 

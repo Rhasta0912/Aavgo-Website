@@ -3356,6 +3356,117 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   align-items: start;
 }
 
+.dashboard-health-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.dashboard-health-panel,
+.dashboard-safety-panel {
+  min-height: 100%;
+}
+
+.dashboard-health-rows {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.dashboard-health-rows div,
+.dashboard-safety-list span {
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-health-rows span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-health-rows strong {
+  display: block;
+  color: #fff8ef;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-safety-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 1rem 0;
+}
+
+.dashboard-safety-list span {
+  color: rgba(255, 248, 239, 0.78);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.dashboard-hotel-agent-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
+}
+
+.dashboard-hotel-agent-chip,
+.dashboard-hotel-agent-empty {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(255, 248, 239, 0.74);
+  font: inherit;
+  text-align: left;
+}
+
+.dashboard-hotel-agent-chip {
+  cursor: grab;
+}
+
+.dashboard-hotel-agent-chip:active {
+  cursor: grabbing;
+}
+
+.dashboard-hotel-agent-chip.is-live {
+  border-color: rgba(120, 179, 161, 0.22);
+  background: rgba(120, 179, 161, 0.07);
+}
+
+.dashboard-hotel-agent-chip.is-dragging {
+  opacity: 0.58;
+}
+
+.dashboard-hotel-agent-chip span,
+.dashboard-hotel-agent-empty span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-hotel-agent-chip strong {
+  color: #fff8ef;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .dashboard-stack-admin {
   display: grid;
   gap: 1.1rem;
@@ -4219,6 +4330,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 @media (max-width: 1240px) {
   .dashboard-admin-grid,
+  .dashboard-health-grid,
   .dashboard-user-grid,
   .workspace-message-card {
     grid-template-columns: 1fr;
@@ -4267,6 +4379,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
   .dashboard-selected-meta,
   .dashboard-period-grid,
+  .dashboard-health-rows,
   .dashboard-filter-grid {
     grid-template-columns: 1fr;
   }
@@ -4324,6 +4437,10 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
   .workspace-dashboard .dashboard-toolbar {
     justify-content: flex-start;
+  }
+
+  .dashboard-safety-list {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5937,6 +6054,7 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .theme-light .dashboard-route-card strong,
 .theme-light .dashboard-hero-aside strong,
 .theme-light .dashboard-selected-meta strong,
+.theme-light .dashboard-health-rows strong,
 .theme-light .dashboard-command-box strong,
 .theme-light .dashboard-toolbar-profile-copy strong {
   color: #172234;
@@ -5958,10 +6076,29 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 .theme-light .dashboard-hero-copy,
 .theme-light .dashboard-hero-aside p,
 .theme-light .dashboard-selected-meta span,
+.theme-light .dashboard-health-rows span,
 .theme-light .dashboard-period-card p,
 .theme-light .dashboard-history-month-card p,
 .theme-light .dashboard-toolbar-profile-copy small {
   color: rgba(24, 32, 44, 0.7);
+}
+
+.theme-light .dashboard-health-rows div,
+.theme-light .dashboard-safety-list span,
+.theme-light .dashboard-hotel-agent-chip,
+.theme-light .dashboard-hotel-agent-empty {
+  border-color: rgba(24, 32, 44, 0.1);
+  background: rgba(24, 32, 44, 0.045);
+  color: rgba(24, 32, 44, 0.82);
+}
+
+.theme-light .dashboard-hotel-agent-chip.is-live {
+  border-color: rgba(31, 122, 105, 0.24);
+  background: rgba(31, 122, 105, 0.08);
+}
+
+.theme-light .dashboard-hotel-agent-chip strong {
+  color: #172234;
 }
 
 .theme-light .dashboard-filter-field {

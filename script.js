@@ -60,6 +60,22 @@ function formatSyncLabel(value) {
   })}`;
 }
 
+function getMinutesSince(value) {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+}
+
+function formatFreshnessAge(value) {
+  const minutes = getMinutesSince(value);
+  if (minutes === null) return "Unavailable";
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder > 0 ? `${hours}h ${remainder}m ago` : `${hours}h ago`;
+}
+
 function formatAuditLabel(value) {
   if (!value) return "Just now";
   const date = new Date(value);
@@ -909,6 +925,35 @@ function getAdminManagement() {
   return adminBoardState?.payload?.management || {};
 }
 
+function getAdminCsrfToken() {
+  return String(window.AAVGO_CSRF_TOKEN || "").trim();
+}
+
+function adminJsonHeaders() {
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json"
+  };
+  const csrfToken = getAdminCsrfToken();
+  if (csrfToken) {
+    headers["X-Aavgo-CSRF"] = csrfToken;
+  }
+  return headers;
+}
+
+function requireExactConfirmation(label, actionLabel) {
+  const expected = String(label || "").trim();
+  if (!expected) return true;
+  const response = window.prompt(`${actionLabel}\n\nType this exactly to continue:\n${expected}`);
+  return String(response || "").trim() === expected;
+}
+
+function getSelectOptionLabel(selectId, fallback = "") {
+  const select = document.getElementById(selectId);
+  const option = select?.selectedOptions?.[0] || null;
+  return String(option?.textContent || fallback || "").trim();
+}
+
 function getAdminMeta() {
   const management = getAdminManagement();
   const managementMeta = management?.meta || {};
@@ -1720,6 +1765,62 @@ function renderHoursNotice(payload) {
   `;
 }
 
+function renderSyncHealth(payload) {
+  const normalized = normalizeAdminPayload(payload);
+  const generatedAt = normalized?.data?.generatedAt || "";
+  const syncedAt = normalized?.syncedAt || "";
+  const generatedAge = getMinutesSince(generatedAt);
+  const pendingCount = Number(normalized?.management?.queue?.pendingCount || 0);
+  const source = normalized.source === "bot_push"
+    ? "Bot pushed snapshot"
+    : normalized.source
+      ? normalized.source
+      : normalized.configured
+        ? "Configured"
+        : "Not configured";
+
+  let state = "Waiting";
+  let copy = normalized.error || "Waiting for the first bot snapshot.";
+  let stateClass = "is-warning";
+
+  if (normalized.ok && generatedAge !== null) {
+    if (generatedAge <= 3) {
+      state = "Fresh";
+      stateClass = "is-fresh";
+      copy = "Live data is fresh enough for leadership actions.";
+    } else if (generatedAge <= 15) {
+      state = "Aging";
+      stateClass = "is-warning";
+      copy = "Data is available, but confirm active sessions before high-risk actions.";
+    } else {
+      state = "Stale";
+      stateClass = "is-danger";
+      copy = "The board is stale. Refresh or wait for bot sync before acting on live status.";
+    }
+  } else if (normalized.ok) {
+    state = "Connected";
+    stateClass = "is-warning";
+    copy = "Data loaded, but the snapshot timestamp is missing.";
+  } else if (!normalized.configured) {
+    state = "Offline";
+    stateClass = "is-danger";
+  }
+
+  const stateNode = document.getElementById("hours-sync-health-state");
+  if (stateNode) {
+    stateNode.textContent = state;
+    stateNode.classList.toggle("dashboard-chip-accent", stateClass === "is-fresh");
+    stateNode.classList.toggle("dashboard-chip-warning", stateClass === "is-warning");
+    stateNode.classList.toggle("dashboard-chip-danger", stateClass === "is-danger");
+  }
+
+  setText("hours-sync-source", source);
+  setText("hours-sync-generated", generatedAt ? `${formatSyncLabel(generatedAt)} (${formatFreshnessAge(generatedAt)})` : "Waiting for live sync");
+  setText("hours-sync-received", syncedAt ? `${formatSyncLabel(syncedAt)} (${formatFreshnessAge(syncedAt)})` : "Unavailable");
+  setText("hours-sync-pending", String(pendingCount));
+  setText("hours-sync-health-copy", pendingCount > 0 ? `${copy} ${pendingCount} action(s) are waiting for bot sync.` : copy);
+}
+
 function renderHoursRows(people, selectedDiscordId) {
   const tableBody = document.getElementById("hours-board-rows");
   if (!tableBody) return;
@@ -1938,6 +2039,25 @@ function renderHotelLaneCards(lanes) {
                 <span>Live focus: ${escapeHtml(String(liveCount))} active sessions logged in</span>
                 <small>Longest live ${formatHours(stats.longestLiveHours)} - idle ${escapeHtml(String(stats.idleStaffCount || 0))}</small>
               </div>
+              <div class="dashboard-hotel-agent-list" aria-label="Staff in ${escapeHtml(lane?.label || "hotel lane")}">
+                ${(Array.isArray(lane?.staff) && lane.staff.length > 0 ? lane.staff.slice(0, 8) : []).map(person => `
+                  <button
+                    class="dashboard-hotel-agent-chip ${person?.activeNow ? "is-live" : ""}"
+                    type="button"
+                    draggable="true"
+                    data-hotel-agent-drag="${escapeHtml(person?.discordId || "")}"
+                    data-hotel-agent-name="${escapeHtml(person?.displayName || person?.username || "Staff")}"
+                    data-hotel-agent-current-hotel="${escapeHtml(lane?.id || "")}"
+                  >
+                    <span>${escapeHtml(person?.displayName || person?.username || "Staff")}</span>
+                    <strong>${escapeHtml(getHotelStaffStatusLabel(person))}</strong>
+                  </button>
+                `).join("") || `
+                  <div class="dashboard-hotel-agent-empty">
+                    <span>No staff currently assigned.</span>
+                  </div>
+                `}
+              </div>
             </article>
           `;
         }).join("")}
@@ -1978,6 +2098,7 @@ function renderTeamCards(teams) {
 
 function renderAuditLog(entries) {
   const container = document.getElementById("hours-audit-log");
+  setText("hours-audit-count", `${Array.isArray(entries) ? entries.length : 0} entries`);
   if (!container) return;
 
   if (!Array.isArray(entries) || entries.length === 0) {
@@ -2209,6 +2330,8 @@ function normalizeAdminPayload(payload) {
     ok: Boolean(nextPayload.ok || Array.isArray(nextData.people)),
     configured: Boolean(nextPayload.configured),
     error: String(nextPayload.error || ""),
+    source: String(nextPayload.source || ""),
+    syncedAt: String(nextPayload.syncedAt || ""),
     data: {
       summary: nextData.summary || {},
       people: Array.isArray(nextData.people) ? nextData.people : [],
@@ -2334,6 +2457,7 @@ function applyAdminBoardPayload(payload) {
   renderFullHoursRows(visiblePeople, adminBoardState.fullHoursMonth);
   renderTeamCards(deriveTeamCards(visiblePeople));
   renderHotelLaneCards(deriveHotelLaneCards(visiblePeople, meta.hotels || []));
+  renderSyncHealth(adminBoardState.payload);
   renderAuditLog(getAdminManagement()?.audit?.entries || []);
   renderBroadcastComposer(getAdminManagement()?.signals?.announcement || null);
   renderSelectedStaff(selectedStaff);
@@ -2394,10 +2518,7 @@ async function sendAdminCommand(action, payload = {}, options = {}) {
     const response = await fetch(window.AAVGO_ADMIN_COMMAND_ENDPOINT, {
       method: "POST",
       credentials: "same-origin",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
+      headers: adminJsonHeaders(),
       body: JSON.stringify({ action, payload })
     });
 
@@ -2493,10 +2614,7 @@ async function sendAdminHoursAction(action, payload = {}, options = {}) {
     const response = await fetch(window.AAVGO_ADMIN_HOURS_ENDPOINT, {
       method: "POST",
       credentials: "same-origin",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
+      headers: adminJsonHeaders(),
       body: JSON.stringify({ action, payload })
     });
 
@@ -2786,7 +2904,13 @@ function initializeAdminBoard() {
       return;
     }
 
-    sendAdminCommand("update_hotel", { discordId: person.discordId, hotelId });
+    const displayName = String(person?.displayName || person?.username || "Selected staff").trim();
+    if (!requireExactConfirmation(displayName, "Reassign staff hotel")) {
+      setActionFeedback("Hotel reassignment cancelled. The staff name did not match.", true);
+      return;
+    }
+
+    sendAdminCommand("update_hotel", { discordId: person.discordId, hotelId, confirmation: displayName });
   });
 
   document.getElementById("hours-action-logout-submit")?.addEventListener("click", () => {
@@ -2797,7 +2921,13 @@ function initializeAdminBoard() {
       return;
     }
 
-    sendAdminCommand("force_logout_agent", { discordId: person.discordId });
+    const displayName = String(person?.displayName || person?.username || "Selected staff").trim();
+    if (!requireExactConfirmation(displayName, "Force logout staff member")) {
+      setActionFeedback("Force logout cancelled. The staff name did not match.", true);
+      return;
+    }
+
+    sendAdminCommand("force_logout_agent", { discordId: person.discordId, confirmation: displayName });
   });
 
   document.getElementById("hours-hotel-force-submit")?.addEventListener("click", () => {
@@ -2807,7 +2937,13 @@ function initializeAdminBoard() {
       return;
     }
 
-    sendAdminCommand("force_logout_hotel", { hotelId });
+    const hotelLabel = getSelectOptionLabel("hours-hotel-force-select", hotelId);
+    if (!requireExactConfirmation(hotelLabel, "Force logout an entire hotel lane")) {
+      setActionFeedback("Hotel-wide force logout cancelled. The hotel name did not match.", true);
+      return;
+    }
+
+    sendAdminCommand("force_logout_hotel", { hotelId, confirmation: hotelLabel });
   });
 
   document.getElementById("hours-bulk-team-submit")?.addEventListener("click", () => {
@@ -2835,7 +2971,12 @@ function initializeAdminBoard() {
       setBulkFeedback("Choose a target hotel first.", true);
       return;
     }
-    sendAdminCommand("bulk_update_hotel", { discordIds: selected, hotelId }, { feedback: "bulk" });
+    const confirmation = `${selected.length} staff`;
+    if (!requireExactConfirmation(confirmation, "Reassign selected staff hotels")) {
+      setBulkFeedback("Bulk hotel reassignment cancelled. The confirmation text did not match.", true);
+      return;
+    }
+    sendAdminCommand("bulk_update_hotel", { discordIds: selected, hotelId, confirmation }, { feedback: "bulk" });
   });
 
   document.getElementById("hours-bulk-logout-submit")?.addEventListener("click", () => {
@@ -2844,7 +2985,12 @@ function initializeAdminBoard() {
       setBulkFeedback("Select at least one staff row before forcing a bulk logout.", true);
       return;
     }
-    sendAdminCommand("bulk_force_logout_agents", { discordIds: selected }, { feedback: "bulk" });
+    const confirmation = `${selected.length} staff`;
+    if (!requireExactConfirmation(confirmation, "Force logout selected staff")) {
+      setBulkFeedback("Bulk force logout cancelled. The confirmation text did not match.", true);
+      return;
+    }
+    sendAdminCommand("bulk_force_logout_agents", { discordIds: selected, confirmation }, { feedback: "bulk" });
   });
 
   document.getElementById("hours-editor-add-submit")?.addEventListener("click", () => {
@@ -2965,8 +3111,13 @@ function initializeAdminBoard() {
       return;
     }
 
+    if (!requireExactConfirmation(agent.agentName || "agent", "Reassign hotel by drag and drop")) {
+      setActionFeedback("Hotel reassignment cancelled. The staff name did not match.", true);
+      return;
+    }
+
     setActionFeedback(`Reassigning ${agent.agentName || "agent"} to ${hotelLabel || "the selected hotel"}...`, false);
-    sendAdminCommand("update_hotel", { discordId: agent.discordId, hotelId });
+    sendAdminCommand("update_hotel", { discordId: agent.discordId, hotelId, confirmation: agent.agentName || "agent" });
   });
 
   hotelLanesRoot?.addEventListener("click", event => {
@@ -2976,7 +3127,12 @@ function initializeAdminBoard() {
     if (!hotelId || hotelId === "UNASSIGNED") {
       return;
     }
-    sendAdminCommand("force_logout_hotel", { hotelId }, { feedback: "bulk" });
+    const hotelLabel = String(button.closest("[data-hotel-lane-dropzone]")?.getAttribute("data-hotel-lane-label") || hotelId).trim();
+    if (!requireExactConfirmation(hotelLabel, "Force logout an entire hotel lane")) {
+      setBulkFeedback("Hotel-wide force logout cancelled. The hotel name did not match.", true);
+      return;
+    }
+    sendAdminCommand("force_logout_hotel", { hotelId, confirmation: hotelLabel }, { feedback: "bulk" });
   });
 
   document.getElementById("developer-sync-all")?.addEventListener("click", () => {

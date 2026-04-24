@@ -86,6 +86,7 @@ $bootstrapJson = json_encode(
     $boardPayload,
     JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
 );
+$csrfToken = aavgo_csrf_token();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -226,6 +227,54 @@ $bootstrapJson = json_encode(
           <p>This month</p>
           <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?>h</strong>
           <span>Combined tracked hours for the live month</span>
+        </article>
+      </section>
+
+      <section class="dashboard-health-grid reveal reveal-delay-1" aria-label="Leadership safety and sync health">
+        <article class="dashboard-panel dashboard-health-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Sync health</p>
+              <h2>Know whether the board is fresh before taking action.</h2>
+            </div>
+            <span class="dashboard-chip dashboard-chip-accent" id="hours-sync-health-state">Checking</span>
+          </div>
+          <div class="dashboard-health-rows">
+            <div>
+              <span>Snapshot source</span>
+              <strong id="hours-sync-source">Unknown</strong>
+            </div>
+            <div>
+              <span>Generated</span>
+              <strong id="hours-sync-generated">Waiting for live sync</strong>
+            </div>
+            <div>
+              <span>Website received</span>
+              <strong id="hours-sync-received">Unavailable</strong>
+            </div>
+            <div>
+              <span>Pending bot actions</span>
+              <strong id="hours-sync-pending">0</strong>
+            </div>
+          </div>
+          <p class="dashboard-panel-copy" id="hours-sync-health-copy">The board will flag stale data before high-risk actions are sent.</p>
+        </article>
+
+        <article class="dashboard-panel dashboard-safety-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Action safety</p>
+              <h2>Risky controls now ask for exact confirmation.</h2>
+            </div>
+            <span class="dashboard-chip">Admin session</span>
+          </div>
+          <div class="dashboard-safety-list">
+            <span>Force logout staff member</span>
+            <span>Force logout hotel</span>
+            <span>Bulk logout selected staff</span>
+            <span>Drag-drop hotel reassignment</span>
+          </div>
+          <p class="dashboard-panel-copy">Inactive admin sessions expire automatically. Refresh and sign in again if a security check blocks an action.</p>
         </article>
       </section>
 
@@ -481,6 +530,22 @@ $bootstrapJson = json_encode(
               </div>
             </div>
           </article>
+
+          <article class="dashboard-panel">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Audit trail</p>
+                <h2>Recent leadership actions</h2>
+              </div>
+              <span class="dashboard-chip" id="hours-audit-count">0 entries</span>
+            </div>
+            <div class="dashboard-audit-list dashboard-audit-list-compact" id="hours-audit-log">
+              <div class="dashboard-empty-state">
+                <strong>No audit entries yet.</strong>
+                <p>Queued and completed leadership actions will appear here.</p>
+              </div>
+            </div>
+          </article>
         </aside>
       </section>
       </section>
@@ -720,6 +785,7 @@ $bootstrapJson = json_encode(
     window.AAVGO_ADMIN_HOURS_ENDPOINT = '/api/admin-hours/';
     window.AAVGO_ADMIN_COMMAND_ENDPOINT = '/api/admin-command/';
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
+    window.AAVGO_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
   </script>
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>
