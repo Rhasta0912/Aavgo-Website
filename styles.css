@@ -3156,6 +3156,87 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
+.workspace-page-user .dashboard-nav-vertical {
+  gap: 0.55rem;
+}
+
+.workspace-page-user .dashboard-user-nav-home {
+  min-height: 2.7rem;
+  border-radius: 14px;
+}
+
+.dashboard-user-nav-menu {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.018);
+}
+
+.dashboard-user-nav-menu summary {
+  display: flex;
+  min-height: 2.7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.9rem;
+  color: rgba(255, 248, 239, 0.86);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 800;
+  list-style: none;
+}
+
+.dashboard-user-nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-user-nav-menu summary::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  opacity: 0.62;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.dashboard-user-nav-menu[open] summary::after {
+  opacity: 0.9;
+  transform: rotate(225deg) translateY(-2px);
+}
+
+.dashboard-user-nav-menu-list {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0 0.5rem 0.55rem;
+}
+
+.dashboard-user-nav-menu-list a {
+  display: flex;
+  min-height: 2.35rem;
+  align-items: center;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.dashboard-user-nav-menu-list a:hover,
+.dashboard-user-nav-menu-list a:focus-visible {
+  border-color: rgba(120, 179, 161, 0.22);
+  background: rgba(120, 179, 161, 0.1);
+  color: rgba(255, 248, 239, 0.94);
+  outline: none;
+}
+
+body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
+  display: none;
+}
+
 .workspace-dashboard .dashboard-sidebar-shortcuts.is-open .dashboard-sidebar-shortcut-toggle {
   border-color: rgba(255, 255, 255, 0.12);
 }
@@ -4145,6 +4226,35 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   margin-bottom: 1rem;
 }
 
+.dashboard-user-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-user-stat-grid .dashboard-stat-card {
+  min-height: 7rem;
+  padding: 1rem;
+  border-radius: 14px;
+}
+
+.dashboard-user-stat-grid .dashboard-stat-card p {
+  margin-bottom: 0.45rem;
+  font-size: 0.82rem;
+}
+
+.dashboard-user-stat-grid .dashboard-stat-card strong {
+  font-size: clamp(1.55rem, 2.6vw, 2.05rem);
+  letter-spacing: -0.045em;
+}
+
+.dashboard-user-stat-grid .dashboard-stat-card span {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .dashboard-user-today-panel,
 .dashboard-user-timeline-panel,
 .dashboard-user-handover-panel,
@@ -4324,6 +4434,22 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
 
 .dashboard-user-grid-history {
   margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .dashboard-user-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-user-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-user-stat-grid .dashboard-stat-card {
+    min-height: 6.35rem;
+  }
 }
 
 .dashboard-hours-table-compact thead th,
@@ -6396,6 +6522,26 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   border-color: rgba(191, 90, 50, 0.14);
   color: #162131;
   box-shadow: inset 0 0 0 1px rgba(191, 90, 50, 0.04);
+}
+
+.theme-light .dashboard-user-nav-menu {
+  border-color: rgba(24, 32, 44, 0.1);
+  background: rgba(251, 247, 241, 0.84);
+}
+
+.theme-light .dashboard-user-nav-menu summary {
+  color: rgba(24, 32, 44, 0.82);
+}
+
+.theme-light .dashboard-user-nav-menu-list a {
+  color: rgba(24, 32, 44, 0.64);
+}
+
+.theme-light .dashboard-user-nav-menu-list a:hover,
+.theme-light .dashboard-user-nav-menu-list a:focus-visible {
+  border-color: rgba(191, 90, 50, 0.14);
+  background: rgba(191, 90, 50, 0.08);
+  color: #162131;
 }
 
 .theme-light .workspace-dashboard .dashboard-sidebar-admin,

@@ -168,8 +168,8 @@ function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hou
     if ($guestMode) {
         return [
             ['label' => 'Discord access', 'state' => 'current', 'detail' => 'Sign in to unlock your workspace.'],
-            ['label' => 'Hours sync', 'state' => 'idle', 'detail' => 'Your personal snapshot appears after login.'],
-            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and handover context stay private.'],
+            ['label' => 'Hours sync', 'state' => 'idle', 'detail' => 'Your hours appear after login.'],
+            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and handover notes stay private.'],
         ];
     }
 
@@ -177,22 +177,22 @@ function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hou
         [
             'label' => 'Attendance',
             'state' => $activeNow ? 'done' : 'current',
-            'detail' => $activeNow ? 'Attendance is connected to your live session.' : 'Post in Attendance before your shift window.',
+            'detail' => $activeNow ? 'Attendance is connected to your live session.' : 'Post your login message before your shift.',
         ],
         [
             'label' => 'Login',
             'state' => $activeNow ? 'done' : ($hoursConnected ? 'current' : 'idle'),
-            'detail' => $activeNow ? 'You are live right now.' : 'Waiting for the bot to confirm your next shift.',
+            'detail' => $activeNow ? 'You are live right now.' : 'Wait for the bot confirmation.',
         ],
         [
             'label' => 'Shift desk',
             'state' => $activeNow ? 'current' : 'idle',
-            'detail' => $activeNow ? aavgo_user_first_text($activeSession ?? [], ['kind'], 'Live shift') : 'Hotel lane appears when a session is active.',
+            'detail' => $activeNow ? aavgo_user_first_text($activeSession ?? [], ['kind'], 'Live shift') : 'Your hotel lane appears when you are live.',
         ],
         [
             'label' => 'Hours posted',
             'state' => $todayHours > 0 ? 'done' : 'idle',
-            'detail' => $todayHours > 0 ? aavgo_user_hours_label($todayHours) . 'h tracked today.' : 'Today is still clean.',
+            'detail' => $todayHours > 0 ? aavgo_user_hours_label($todayHours) . 'h tracked today.' : 'No hours logged today yet.',
         ],
     ];
 }
@@ -206,8 +206,8 @@ $todayTeamLabel = aavgo_user_first_text($personalHours, ['team'], $guestMode ? '
 $todayNextAction = $guestMode
     ? 'Log in with Discord to open your private lane.'
     : ($activeNow
-        ? 'Stay in voice, keep the hotel lane clean, and leave handover notes before logout.'
-        : ($hoursConnected ? 'Post in Attendance before your shift and wait for the bot confirmation.' : 'Wait for the next bot sync to refresh your personal snapshot.'));
+        ? 'You are live. Stay in the right voice channel and check handover before logout.'
+        : ($hoursConnected ? 'Post in Attendance before your shift, then wait for the bot confirmation.' : 'Your hours are syncing. Refresh in a moment if something looks old.'));
 $handoverItems = aavgo_user_handover_items($personalHours);
 $workspaceTimeline = aavgo_user_workspace_timeline($personalHours, $guestMode, $hoursConnected);
 $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
@@ -241,23 +241,26 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
-        <a class="dashboard-nav-link is-active" href="/user/">Workspace</a>
-        <a class="dashboard-nav-link" href="#user-handover">Handover</a>
-        <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
-        <a class="dashboard-nav-link" href="#user-history">Hour history</a>
-        <?php if ($showAdminLink): ?>
-          <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
-        <?php endif; ?>
-        <a class="dashboard-nav-link" href="/">Front door</a>
-        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
+        <a class="dashboard-nav-link dashboard-user-nav-home is-active" href="/user/">Workspace</a>
+        <details class="dashboard-user-nav-menu">
+          <summary>Sections</summary>
+          <div class="dashboard-user-nav-menu-list">
+            <a href="#user-handover">Handover</a>
+            <a href="#user-pay-periods">Pay periods</a>
+            <a href="#user-history">Hour history</a>
+            <?php if ($showAdminLink): ?>
+              <a href="/admin/">Leadership board</a>
+            <?php endif; ?>
+          </div>
+        </details>
       </nav>
 
       <section class="dashboard-sidebar-glance" aria-label="Quick glance">
         <div class="dashboard-sidebar-glance-head">
           <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
-          <p class="dashboard-kicker">Personal view</p>
+          <p class="dashboard-kicker">Start here</p>
         </div>
-        <strong>Hours first. Clean pay cuts. Quiet workspace.</strong>
+        <strong>Check today, read handover, confirm your hours.</strong>
         <dl class="dashboard-sidebar-glance-grid">
           <div>
             <dt>Role</dt>
@@ -265,7 +268,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           </div>
           <div>
             <dt>View</dt>
-            <dd>My hours</dd>
+            <dd>Workspace</dd>
           </div>
           <div>
             <dt>Sync</dt>
@@ -297,9 +300,9 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
           <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Agent desk'; ?></p>
-          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Log in to see your private workspace.' : 'Your shift desk, handover inbox, and personal hours.'; ?></h1>
+          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Open your workspace.' : 'Workspace'; ?></h1>
           <p class="dashboard-subtitle">
-            <?php echo $guestMode ? 'Aavgo keeps the user workspace behind Discord so each lane stays private.' : 'A quiet place to know your status, your current hotel context, and what needs attention before or after a shift.'; ?>
+            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Start with Today. Check handover before your shift, then use hours when you need payroll totals.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -452,26 +455,26 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
         </article>
       </section>
 
-      <section class="dashboard-stat-grid dashboard-stat-grid-admin reveal reveal-delay-1">
+      <section class="dashboard-user-stat-grid reveal reveal-delay-1" aria-label="Personal hour totals">
         <article class="dashboard-stat-card">
           <p>Today</p>
           <strong><?php echo aavgo_user_hours_label($personalHours['todayHours'] ?? 0); ?>h</strong>
-          <span>Tracked in the current PH day</span>
+          <span>Logged today</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>This week</p>
+          <p>Week</p>
           <strong><?php echo aavgo_user_hours_label($personalHours['weeklyHours'] ?? 0); ?>h</strong>
-          <span>Tracked in the current PH week</span>
+          <span>This week so far</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>This month</p>
+          <p>Month</p>
           <strong><?php echo aavgo_user_hours_label($personalHours['monthlyHours'] ?? 0); ?>h</strong>
-          <span>Tracked in the current PH month</span>
+          <span>This month so far</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>All time</p>
+          <p>Total</p>
           <strong><?php echo aavgo_user_hours_label($personalHours['allHours'] ?? 0); ?>h</strong>
-          <span>Total hours attached to your account</span>
+          <span>Saved to your account</span>
         </article>
       </section>
 
