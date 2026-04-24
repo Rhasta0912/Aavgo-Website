@@ -151,6 +151,7 @@ $todayNextAction = $guestMode
         ? 'You are live. Stay in the right voice channel and keep your hours clean.'
         : ($hoursConnected ? 'Post in Attendance before your shift, then wait for the bot confirmation.' : 'Your hours are syncing. Refresh in a moment if something looks old.'));
 $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
+$csrfToken = aavgo_csrf_token();
 
 ?>
 <!DOCTYPE html>
@@ -474,8 +475,48 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
     </main>
   </div>
 
+  <?php if (!$guestMode): ?>
+    <aside class="aavgo-support-widget" data-support-widget aria-label="Aavgo support">
+      <button class="aavgo-support-bubble" type="button" data-support-toggle aria-expanded="false">
+        <span>Support</span>
+        <strong>Ask Dev</strong>
+      </button>
+      <form class="aavgo-support-panel" data-support-panel hidden>
+        <div class="aavgo-support-head">
+          <div>
+            <p class="dashboard-kicker">Agent support</p>
+            <h2>Send a request</h2>
+          </div>
+          <button type="button" data-support-close aria-label="Close support">Close</button>
+        </div>
+        <div class="aavgo-support-type-grid" role="radiogroup" aria-label="Request type">
+          <label>
+            <input type="radio" name="supportType" value="feature" checked>
+            <span>Feature request</span>
+          </label>
+          <label>
+            <input type="radio" name="supportType" value="bug">
+            <span>Report a bug</span>
+          </label>
+        </div>
+        <label class="aavgo-support-field">
+          <span>Title</span>
+          <input name="supportTitle" type="text" maxlength="140" placeholder="Short summary">
+        </label>
+        <label class="aavgo-support-field">
+          <span>Details</span>
+          <textarea name="supportMessage" rows="5" maxlength="1200" placeholder="What happened, what should change, or what would help?"></textarea>
+        </label>
+        <p class="aavgo-support-feedback" data-support-feedback>Requests go to the Developer panel only.</p>
+        <button class="aavgo-support-submit" type="submit">Send to developers</button>
+      </form>
+    </aside>
+  <?php endif; ?>
+
   <script>
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
+    window.AAVGO_SUPPORT_REQUEST_ENDPOINT = '/api/support-request/';
+    window.AAVGO_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
   </script>
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>

@@ -34,11 +34,16 @@ $board = is_array($decoded['state'] ?? null) ? $decoded['state'] : $decoded;
 $tasks = is_array($board['tasks'] ?? null) ? $board['tasks'] : [];
 $history = is_array($board['history'] ?? null) ? $board['history'] : [];
 $audit = is_array($board['audit'] ?? null) ? $board['audit'] : [];
+$existingBoard = aavgo_read_developer_board();
+$supportRequests = is_array($board['supportRequests'] ?? null)
+    ? $board['supportRequests']
+    : (is_array($existingBoard['supportRequests'] ?? null) ? $existingBoard['supportRequests'] : []);
 
 $saved = aavgo_write_developer_board([
     'tasks' => $tasks,
     'history' => $history,
     'audit' => $audit,
+    'supportRequests' => $supportRequests,
 ]);
 
 if (!$saved) {

@@ -601,6 +601,7 @@ function aavgo_developer_board_template(): array
         'tasks' => [],
         'history' => [],
         'audit' => [],
+        'supportRequests' => [],
     ];
 }
 
@@ -611,6 +612,7 @@ function aavgo_read_developer_board(): array
     $board['tasks'] = is_array($board['tasks'] ?? null) ? array_values(array_filter($board['tasks'], 'is_array')) : [];
     $board['history'] = is_array($board['history'] ?? null) ? array_values(array_filter($board['history'], 'is_array')) : [];
     $board['audit'] = is_array($board['audit'] ?? null) ? array_values(array_filter($board['audit'], 'is_array')) : [];
+    $board['supportRequests'] = is_array($board['supportRequests'] ?? null) ? array_values(array_filter($board['supportRequests'], 'is_array')) : [];
     return $board;
 }
 
@@ -621,6 +623,7 @@ function aavgo_write_developer_board(array $board): bool
         'tasks' => is_array($board['tasks'] ?? null) ? array_values(array_filter($board['tasks'], 'is_array')) : [],
         'history' => is_array($board['history'] ?? null) ? array_values(array_filter($board['history'], 'is_array')) : [],
         'audit' => is_array($board['audit'] ?? null) ? array_values(array_filter($board['audit'], 'is_array')) : [],
+        'supportRequests' => is_array($board['supportRequests'] ?? null) ? array_values(array_filter($board['supportRequests'], 'is_array')) : [],
     ];
 
     return aavgo_write_json_file(aavgo_get_developer_board_path(), $payload);

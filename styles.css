@@ -4817,6 +4817,184 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   background: rgba(255, 247, 232, 0.04);
 }
 
+.aavgo-support-widget {
+  position: fixed;
+  left: calc(276px + 1.35rem);
+  bottom: 1.15rem;
+  z-index: 55;
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+body.sidebar-collapsed .aavgo-support-widget {
+  left: calc(92px + 1.1rem);
+}
+
+.aavgo-support-bubble {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 9rem;
+  min-height: 3.4rem;
+  padding: 0.78rem 1rem;
+  border: 1px solid rgba(255, 247, 232, 0.14);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 25% 15%, rgba(120, 179, 161, 0.24), transparent 55%),
+    rgba(11, 16, 18, 0.92);
+  color: #fff7e8;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  text-align: left;
+}
+
+.aavgo-support-bubble span {
+  color: rgba(255, 247, 232, 0.58);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.aavgo-support-bubble strong {
+  font-size: 0.98rem;
+}
+
+.aavgo-support-panel {
+  width: min(360px, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
+    rgba(9, 13, 15, 0.96);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+}
+
+.aavgo-support-head,
+.dashboard-developer-support-topline,
+.dashboard-developer-support-actions,
+.dashboard-developer-support-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.aavgo-support-head {
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.aavgo-support-head h2 {
+  margin: 0.1rem 0 0;
+  color: #fff7e8;
+  font-size: 1.3rem;
+}
+
+.aavgo-support-head button,
+.dashboard-developer-support-actions button {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 247, 232, 0.05);
+  color: rgba(255, 247, 232, 0.78);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.aavgo-support-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-bottom: 0.8rem;
+}
+
+.aavgo-support-type-grid label {
+  display: grid;
+}
+
+.aavgo-support-type-grid input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.aavgo-support-type-grid span {
+  min-height: 2.45rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 247, 232, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 247, 232, 0.04);
+  color: rgba(255, 247, 232, 0.72);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.aavgo-support-type-grid input:checked + span {
+  border-color: rgba(120, 179, 161, 0.42);
+  background: rgba(120, 179, 161, 0.15);
+  color: #fff7e8;
+}
+
+.aavgo-support-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.aavgo-support-field span {
+  color: rgba(255, 247, 232, 0.55);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.aavgo-support-field input,
+.aavgo-support-field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 247, 232, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 247, 232, 0.055);
+  color: #fff7e8;
+  font: inherit;
+  padding: 0.82rem;
+  resize: vertical;
+}
+
+.aavgo-support-feedback {
+  margin: 0.75rem 0;
+  color: rgba(255, 247, 232, 0.62);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.aavgo-support-feedback.is-error {
+  color: #ffb1a6;
+}
+
+.aavgo-support-submit {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fff7e8;
+  color: #101614;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.aavgo-support-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 @media (max-width: 1100px) {
   .dashboard-user-command,
   .dashboard-user-history {
@@ -4829,6 +5007,12 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 @media (max-width: 760px) {
+  .aavgo-support-widget {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
   .workspace-page-user .dashboard-title {
     font-size: clamp(2.6rem, 18vw, 4.4rem);
   }
@@ -6705,6 +6889,47 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   font-size: 0.84rem;
 }
 
+.dashboard-developer-support-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-developer-support-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dashboard-developer-support-card.is-bug {
+  border-color: rgba(255, 120, 92, 0.18);
+}
+
+.dashboard-developer-support-card > strong {
+  color: #fff8ef;
+  font-size: 1.08rem;
+}
+
+.dashboard-developer-support-card > p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.55;
+}
+
+.dashboard-developer-support-topline,
+.dashboard-developer-support-meta {
+  flex-wrap: wrap;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.82rem;
+}
+
+.dashboard-developer-support-actions {
+  flex-wrap: wrap;
+  margin-top: 0.2rem;
+}
+
 @keyframes developerCardEnter {
   from {
     opacity: 0;
@@ -7652,7 +7877,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-health {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -8143,15 +8368,23 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .theme-light .dashboard-developer-activity-trail,
 .theme-light .dashboard-developer-audit,
-.theme-light .dashboard-developer-audit-card {
+.theme-light .dashboard-developer-audit-card,
+.theme-light .dashboard-developer-support-card {
   border-color: rgba(24, 32, 44, 0.08);
   background: rgba(255, 252, 248, 0.9);
 }
 
 .theme-light .dashboard-developer-activity-trail li span,
 .theme-light .dashboard-developer-audit-card p,
-.theme-light .dashboard-developer-audit-card span {
+.theme-light .dashboard-developer-audit-card span,
+.theme-light .dashboard-developer-support-card p,
+.theme-light .dashboard-developer-support-meta,
+.theme-light .dashboard-developer-support-topline {
   color: rgba(24, 32, 44, 0.68);
+}
+
+.theme-light .dashboard-developer-support-card > strong {
+  color: #18202c;
 }
 
 .theme-light .dashboard-deadline-popover {

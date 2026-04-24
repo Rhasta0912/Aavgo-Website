@@ -3576,6 +3576,9 @@ function initializeDeveloperWorkspace() {
   const historyCount = document.getElementById("developer-history-count");
   const auditList = document.getElementById("developer-task-audit-list");
   const auditCount = document.getElementById("developer-audit-count");
+  const supportList = document.getElementById("developer-support-list");
+  const supportCount = document.getElementById("developer-support-count");
+  const supportOpenCount = document.getElementById("developer-support-open-count");
   const detailTitle = document.getElementById("developer-task-detail-title");
   const detailBody = document.getElementById("developer-task-detail-body");
   const attachmentViewerModal = document.getElementById("developer-attachment-viewer");
@@ -3952,6 +3955,29 @@ function initializeDeveloperWorkspace() {
     createdAt: String(entry?.createdAt || nowIso()).trim()
   });
 
+  const normalizeSupportRequest = (entry = {}) => {
+    const type = String(entry?.type || "feature").trim().toLowerCase() === "bug" ? "bug" : "feature";
+    const status = ["open", "reviewing", "resolved"].includes(String(entry?.status || "").trim().toLowerCase())
+      ? String(entry.status).trim().toLowerCase()
+      : "open";
+    const requester = entry?.requester && typeof entry.requester === "object" ? entry.requester : {};
+    return {
+      id: String(entry?.id || createHistoryId()).trim(),
+      type,
+      status,
+      title: String(entry?.title || "").trim(),
+      message: String(entry?.message || "").trim(),
+      page: String(entry?.page || "").trim(),
+      createdAt: String(entry?.createdAt || nowIso()).trim(),
+      updatedAt: String(entry?.updatedAt || entry?.createdAt || nowIso()).trim(),
+      requester: {
+        id: String(requester.id || "").trim(),
+        name: String(requester.name || "Agent").trim() || "Agent",
+        role: String(requester.role || "User").trim() || "User"
+      }
+    };
+  };
+
   const readLegacyArray = (key) => {
     try {
       const raw = localStorage.getItem(key);
@@ -3966,6 +3992,7 @@ function initializeDeveloperWorkspace() {
     tasks: [],
     history: [],
     audit: [],
+    supportRequests: [],
     updatedAt: "",
     hydrationSource: "server"
   };
@@ -3979,13 +4006,15 @@ function initializeDeveloperWorkspace() {
         }))
       : [];
     developerBoardState.audit = Array.isArray(payload.audit) ? payload.audit.map(entry => normalizeAuditEntry(entry)) : [];
+    developerBoardState.supportRequests = Array.isArray(payload.supportRequests) ? payload.supportRequests.map(entry => normalizeSupportRequest(entry)) : [];
     developerBoardState.updatedAt = String(payload.updatedAt || nowIso()).trim();
   };
 
   const boardStateToPayload = () => ({
     tasks: developerBoardState.tasks,
     history: developerBoardState.history,
-    audit: developerBoardState.audit
+    audit: developerBoardState.audit,
+    supportRequests: developerBoardState.supportRequests
   });
 
   const cacheDeveloperBoardState = () => {
@@ -4109,6 +4138,15 @@ function initializeDeveloperWorkspace() {
 
   const loadAudit = () => developerBoardState.audit;
 
+  const loadSupportRequests = () => developerBoardState.supportRequests;
+
+  const setSupportRequestsState = (items, options = {}) => {
+    developerBoardState.supportRequests = Array.isArray(items) ? items.map(entry => normalizeSupportRequest(entry)) : [];
+    if (options.sync !== false) {
+      scheduleDeveloperBoardSync();
+    }
+  };
+
   const setAuditState = (items, options = {}) => {
     developerBoardState.audit = Array.isArray(items) ? items.map(entry => normalizeAuditEntry(entry)) : [];
     if (auditCount) {
@@ -4130,7 +4168,7 @@ function initializeDeveloperWorkspace() {
   };
 
   const setDeveloperView = (view = "board") => {
-    const normalized = ["board", "archive", "audit"].includes(view) ? view : "board";
+    const normalized = ["board", "support", "archive", "audit"].includes(view) ? view : "board";
     localStorage.setItem(VIEW_KEY, normalized);
     viewTabs.forEach(tab => {
       const active = String(tab.getAttribute("data-developer-view") || "") === normalized;
@@ -4704,6 +4742,66 @@ function initializeDeveloperWorkspace() {
     `;
   };
 
+  const renderSupportRequestCard = (request) => {
+    const typeLabel = request.type === "bug" ? "Bug report" : "Feature request";
+    const statusLabel = request.status === "resolved" ? "Resolved" : request.status === "reviewing" ? "Reviewing" : "Open";
+    return `
+      <article class="dashboard-developer-support-card ${request.type === "bug" ? "is-bug" : "is-feature"}" data-support-request-id="${escapeHtml(request.id)}">
+        <div class="dashboard-developer-support-topline">
+          <span class="dashboard-chip ${request.type === "bug" ? "dashboard-chip-danger" : "dashboard-chip-accent"}">${escapeHtml(typeLabel)}</span>
+          <span class="dashboard-chip">${escapeHtml(statusLabel)}</span>
+          <span>${escapeHtml(toDateLabel(request.createdAt))}</span>
+        </div>
+        <strong>${escapeHtml(request.title || "Untitled request")}</strong>
+        <p>${escapeHtml(request.message || "No details provided.")}</p>
+        <div class="dashboard-developer-support-meta">
+          <span>${escapeHtml(request.requester?.name || "Agent")}</span>
+          <span>${escapeHtml(request.requester?.role || "User")}</span>
+          ${request.page ? `<span>${escapeHtml(request.page)}</span>` : ""}
+        </div>
+        <div class="dashboard-developer-support-actions">
+          <button type="button" data-support-status="reviewing" data-support-request="${escapeHtml(request.id)}">Reviewing</button>
+          <button type="button" data-support-status="resolved" data-support-request="${escapeHtml(request.id)}">Resolve</button>
+          <button type="button" data-support-status="open" data-support-request="${escapeHtml(request.id)}">Reopen</button>
+        </div>
+      </article>
+    `;
+  };
+
+  const renderSupportRequests = () => {
+    const requests = [...loadSupportRequests()].sort((left, right) => String(right.createdAt || "").localeCompare(String(left.createdAt || "")));
+    const openCount = requests.filter(item => item.status !== "resolved").length;
+    if (supportCount) {
+      supportCount.textContent = String(requests.length);
+    }
+    if (supportOpenCount) {
+      supportOpenCount.textContent = `${openCount} open`;
+    }
+    if (!supportList) return;
+    supportList.innerHTML = requests.length ? requests.map(renderSupportRequestCard).join("") : `
+      <div class="dashboard-empty-state">
+        <strong>No support requests yet.</strong>
+        <p>When agents ask for a feature or report a bug, it will appear here.</p>
+      </div>
+    `;
+  };
+
+  const updateSupportStatus = (requestId, status) => {
+    const normalizedStatus = ["open", "reviewing", "resolved"].includes(status) ? status : "open";
+    const now = nowIso();
+    const next = loadSupportRequests().map(request => {
+      if (String(request.id || "") !== String(requestId || "")) return request;
+      return {
+        ...request,
+        status: normalizedStatus,
+        updatedAt: now
+      };
+    });
+    setSupportRequestsState(next);
+    render(load());
+    setFeedback("Support inbox updated.", false);
+  };
+
   const renderDeveloperBoardStats = (items, archived, audit) => {
     const activeItems = Array.isArray(items) ? items : [];
     const archivedItems = Array.isArray(archived) ? archived : [];
@@ -4759,6 +4857,7 @@ function initializeDeveloperWorkspace() {
       `;
       setAuditState(audit, { sync: false });
     }
+    renderSupportRequests();
     renderDeveloperBoardStats(sorted, archived, audit);
   };
 
@@ -5000,6 +5099,15 @@ function initializeDeveloperWorkspace() {
     deleteArchivedTask(taskId);
   });
 
+  supportList?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-support-request][data-support-status]");
+    if (!button) return;
+    updateSupportStatus(
+      String(button.getAttribute("data-support-request") || ""),
+      String(button.getAttribute("data-support-status") || "open")
+    );
+  });
+
   const handleAttachmentOpen = event => {
     const trigger = event.target.closest("[data-attachment-view]");
     if (!trigger) return;
@@ -5205,6 +5313,90 @@ function initializeDeveloperWorkspace() {
   });
 }
 
+function initializeSupportWidget() {
+  const widget = document.querySelector("[data-support-widget]");
+  if (!widget) return;
+
+  const toggle = widget.querySelector("[data-support-toggle]");
+  const close = widget.querySelector("[data-support-close]");
+  const panel = widget.querySelector("[data-support-panel]");
+  const feedback = widget.querySelector("[data-support-feedback]");
+  const title = widget.querySelector("input[name='supportTitle']");
+  const message = widget.querySelector("textarea[name='supportMessage']");
+  const endpoint = String(window.AAVGO_SUPPORT_REQUEST_ENDPOINT || "/api/support-request/").trim();
+  const csrfToken = String(window.AAVGO_CSRF_TOKEN || "").trim();
+
+  const setOpen = (open) => {
+    if (!panel || !toggle) return;
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    widget.classList.toggle("is-open", open);
+    if (open) {
+      window.setTimeout(() => title?.focus(), 40);
+    }
+  };
+
+  const setFeedback = (text, isError = false) => {
+    if (!feedback) return;
+    feedback.textContent = text;
+    feedback.classList.toggle("is-error", Boolean(isError));
+  };
+
+  toggle?.addEventListener("click", () => {
+    setOpen(panel?.hidden !== false);
+  });
+  close?.addEventListener("click", () => setOpen(false));
+
+  panel?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const type = String(new FormData(panel).get("supportType") || "feature");
+    const titleValue = String(title?.value || "").trim();
+    const messageValue = String(message?.value || "").trim();
+    if (!titleValue) {
+      setFeedback("Add a short title first.", true);
+      title?.focus();
+      return;
+    }
+    if (!messageValue) {
+      setFeedback("Add a few details so developers know what to do.", true);
+      message?.focus();
+      return;
+    }
+
+    const submit = panel.querySelector(".aavgo-support-submit");
+    if (submit) submit.disabled = true;
+    setFeedback("Sending to developers...", false);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-Aavgo-CSRF": csrfToken
+        },
+        body: JSON.stringify({
+          type,
+          title: titleValue,
+          message: messageValue,
+          page: window.location.pathname || "/user/"
+        })
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error || "Support request could not be sent.");
+      }
+      panel.reset();
+      setFeedback("Sent. Developers can see it in their Support inbox.", false);
+    } catch (error) {
+      setFeedback(String(error?.message || "Support request could not be sent."), true);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+}
+
 initializeAdminBoard();
 initializeLiveSignals();
 initializeThemeToggle();
@@ -5212,6 +5404,7 @@ initializeSidebarToggle();
 initializeSidebarLeadershipGroup();
 initializeToolbarMenu();
 initializeCustomDatePickers();
+initializeSupportWidget();
 initializeDeveloperTodoList();
 initializeDeveloperWorkspace();
 

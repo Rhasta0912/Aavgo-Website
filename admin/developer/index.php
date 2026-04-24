@@ -62,6 +62,7 @@ if ($sidebarRoleLabel === '') {
 $safeSidebarRoleLabel = htmlspecialchars($sidebarRoleLabel, ENT_QUOTES, 'UTF-8');
 $sidebarRoleKey = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $sidebarRoleLabel));
 $developerBoardStore = aavgo_read_developer_board();
+$supportRequestCount = count(is_array($developerBoardStore['supportRequests'] ?? null) ? $developerBoardStore['supportRequests'] : []);
 $csrfToken = aavgo_csrf_token();
 ?>
 <!DOCTYPE html>
@@ -148,6 +149,7 @@ $csrfToken = aavgo_csrf_token();
 
           <section class="dashboard-view-switch dashboard-view-switch-developer" aria-label="Developer view switcher">
             <button class="dashboard-view-tab is-active" type="button" data-developer-view="board">Roadmap board</button>
+            <button class="dashboard-view-tab" type="button" data-developer-view="support">Support inbox</button>
             <button class="dashboard-view-tab" type="button" data-developer-view="archive">Archive</button>
             <button class="dashboard-view-tab" type="button" data-developer-view="audit">Audit</button>
           </section>
@@ -172,6 +174,11 @@ $csrfToken = aavgo_csrf_token();
               <span>Shared sync</span>
               <strong id="developer-board-updated">Waiting</strong>
               <p>Universal board state, not browser-only storage.</p>
+            </article>
+            <article>
+              <span>Support inbox</span>
+              <strong id="developer-support-count"><?php echo htmlspecialchars((string) $supportRequestCount, ENT_QUOTES, 'UTF-8'); ?></strong>
+              <p>Agent feature requests and bug reports.</p>
             </article>
           </section>
 
@@ -232,6 +239,23 @@ $csrfToken = aavgo_csrf_token();
             </div>
           </div>
           </div>
+
+          <section class="dashboard-view-panel dashboard-panel dashboard-panel-history dashboard-developer-support-panel" data-developer-view-panel="support">
+            <div class="dashboard-panel-heading">
+              <div>
+                <p class="dashboard-kicker">Support inbox</p>
+                <h2>Agent requests.</h2>
+                <p class="dashboard-panel-copy">Feature requests and bug reports submitted from the user workspace land here.</p>
+              </div>
+              <span class="dashboard-chip dashboard-chip-accent" id="developer-support-open-count">0 open</span>
+            </div>
+            <div class="dashboard-developer-support-list" id="developer-support-list">
+              <div class="dashboard-empty-state">
+                <strong>No support requests yet.</strong>
+                <p>When agents ask for a feature or report a bug, it will appear here.</p>
+              </div>
+            </div>
+          </section>
 
           <section class="dashboard-view-panel dashboard-panel dashboard-panel-history" data-developer-view-panel="archive" data-developer-archive-dropzone="true">
             <div class="dashboard-panel-heading">
