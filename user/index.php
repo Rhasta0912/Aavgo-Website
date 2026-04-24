@@ -139,44 +139,6 @@ function aavgo_user_first_text(array $source, array $keys, string $fallback = 'U
     return $fallback;
 }
 
-function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hoursConnected): array
-{
-    $activeSession = is_array($person['activeSession'] ?? null) ? $person['activeSession'] : null;
-    $activeNow = (bool) ($person['activeNow'] ?? false) || $activeSession !== null;
-    $todayHours = (float) ($person['todayHours'] ?? 0);
-
-    if ($guestMode) {
-        return [
-            ['label' => 'Discord access', 'state' => 'current', 'detail' => 'Sign in to unlock your workspace.'],
-            ['label' => 'Hours sync', 'state' => 'idle', 'detail' => 'Your hours appear after login.'],
-            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and payroll details stay private.'],
-        ];
-    }
-
-    return [
-        [
-            'label' => 'Attendance',
-            'state' => $activeNow ? 'done' : 'current',
-            'detail' => $activeNow ? 'Attendance is connected to your live session.' : 'Post your login message before your shift.',
-        ],
-        [
-            'label' => 'Login',
-            'state' => $activeNow ? 'done' : ($hoursConnected ? 'current' : 'idle'),
-            'detail' => $activeNow ? 'You are live right now.' : 'Wait for the bot confirmation.',
-        ],
-        [
-            'label' => 'Shift desk',
-            'state' => $activeNow ? 'current' : 'idle',
-            'detail' => $activeNow ? aavgo_user_first_text($activeSession ?? [], ['kind'], 'Live shift') : 'Your hotel lane appears when you are live.',
-        ],
-        [
-            'label' => 'Hours posted',
-            'state' => $todayHours > 0 ? 'done' : 'idle',
-            'detail' => $todayHours > 0 ? aavgo_user_hours_label($todayHours) . 'h tracked today.' : 'No hours logged today yet.',
-        ],
-    ];
-}
-
 $activeSession = is_array($personalHours['activeSession'] ?? null) ? $personalHours['activeSession'] : null;
 $activeNow = !$guestMode && ((bool) ($personalHours['activeNow'] ?? false) || $activeSession !== null);
 $todayStatusLabel = $guestMode ? 'Sign in required' : ($activeNow ? 'Live now' : aavgo_user_first_text($personalHours, ['agentStatus'], 'Standby'));
@@ -188,7 +150,6 @@ $todayNextAction = $guestMode
     : ($activeNow
         ? 'You are live. Stay in the right voice channel and keep your hours clean.'
         : ($hoursConnected ? 'Post in Attendance before your shift, then wait for the bot confirmation.' : 'Your hours are syncing. Refresh in a moment if something looks old.'));
-$workspaceTimeline = aavgo_user_workspace_timeline($personalHours, $guestMode, $hoursConnected);
 $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
 
 ?>
@@ -280,7 +241,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Agent desk'; ?></p>
           <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Open your workspace.' : 'Workspace'; ?></h1>
           <p class="dashboard-subtitle">
-            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Start with Today, then use pay periods and history when you need payroll totals.'; ?>
+            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Your shift, pay, and hour history in one clean desk.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -381,28 +342,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
         </article>
       </section>
 
-      <section class="dashboard-user-workbench reveal reveal-delay-2">
-        <article class="dashboard-panel dashboard-user-timeline-panel">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Start here</p>
-              <h2>What to do next</h2>
-            </div>
-          </div>
-          <ol class="dashboard-user-timeline">
-            <?php foreach ($workspaceTimeline as $step): ?>
-              <?php $state = in_array($step['state'] ?? 'idle', ['done', 'current', 'idle'], true) ? (string) $step['state'] : 'idle'; ?>
-              <li class="is-<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>">
-                <span></span>
-                <div>
-                  <strong><?php echo aavgo_user_text($step['label'] ?? 'Step'); ?></strong>
-                  <p><?php echo aavgo_user_text($step['detail'] ?? 'Waiting for the next sync.'); ?></p>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ol>
-        </article>
-
+      <section class="dashboard-user-payroll-row reveal reveal-delay-2">
         <article class="dashboard-panel dashboard-user-payroll-panel" id="user-pay-periods">
           <div class="dashboard-panel-heading">
             <div>
