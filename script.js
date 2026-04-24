@@ -4745,11 +4745,12 @@ function initializeDeveloperWorkspace() {
   const renderSupportRequestCard = (request) => {
     const typeLabel = request.type === "bug" ? "Bug report" : "Feature request";
     const statusLabel = request.status === "resolved" ? "Resolved" : request.status === "reviewing" ? "Reviewing" : "Open";
+    const statusClass = request.status === "resolved" ? "dashboard-chip-success" : request.status === "reviewing" ? "dashboard-chip-warning" : "dashboard-chip-info";
     return `
       <article class="dashboard-developer-support-card ${request.type === "bug" ? "is-bug" : "is-feature"}" data-support-request-id="${escapeHtml(request.id)}">
         <div class="dashboard-developer-support-topline">
           <span class="dashboard-chip ${request.type === "bug" ? "dashboard-chip-danger" : "dashboard-chip-accent"}">${escapeHtml(typeLabel)}</span>
-          <span class="dashboard-chip">${escapeHtml(statusLabel)}</span>
+          <span class="dashboard-chip ${statusClass}">${escapeHtml(statusLabel)}</span>
           <span>${escapeHtml(toDateLabel(request.createdAt))}</span>
         </div>
         <strong>${escapeHtml(request.title || "Untitled request")}</strong>
@@ -4760,9 +4761,9 @@ function initializeDeveloperWorkspace() {
           ${request.page ? `<span>${escapeHtml(request.page)}</span>` : ""}
         </div>
         <div class="dashboard-developer-support-actions">
-          <button type="button" data-support-status="reviewing" data-support-request="${escapeHtml(request.id)}">Reviewing</button>
-          <button type="button" data-support-status="resolved" data-support-request="${escapeHtml(request.id)}">Resolve</button>
-          <button type="button" data-support-status="open" data-support-request="${escapeHtml(request.id)}">Reopen</button>
+          <button class="is-reviewing" type="button" data-support-status="reviewing" data-support-request="${escapeHtml(request.id)}">Reviewing</button>
+          <button class="is-resolved" type="button" data-support-status="resolved" data-support-request="${escapeHtml(request.id)}">Resolve</button>
+          <button class="is-open" type="button" data-support-status="open" data-support-request="${escapeHtml(request.id)}">Reopen</button>
         </div>
       </article>
     `;
@@ -5325,6 +5326,7 @@ function initializeSupportWidget() {
   const message = widget.querySelector("textarea[name='supportMessage']");
   const endpoint = String(window.AAVGO_SUPPORT_REQUEST_ENDPOINT || "/api/support-request/").trim();
   const csrfToken = String(window.AAVGO_CSRF_TOKEN || "").trim();
+  const defaultFeedback = String(feedback?.textContent || "Requests go to the Developer panel only.").trim();
   let supportPanelTimer = 0;
 
   const setOpen = (open) => {
@@ -5333,6 +5335,8 @@ function initializeSupportWidget() {
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
     toggle.setAttribute("aria-label", open ? "Close support" : "Open support");
     if (open) {
+      panel.classList.remove("is-sent");
+      setFeedback(defaultFeedback, false);
       panel.hidden = false;
       window.requestAnimationFrame(() => {
         widget.classList.add("is-open");
@@ -5401,8 +5405,10 @@ function initializeSupportWidget() {
         throw new Error(payload?.error || "Support request could not be sent.");
       }
       panel.reset();
-      setFeedback("Sent. Developers can see it in their Support inbox.", false);
+      panel.classList.add("is-sent");
+      setFeedback("Sent! Thank you for your consideration.", false);
     } catch (error) {
+      panel.classList.remove("is-sent");
       setFeedback(String(error?.message || "Support request could not be sent."), true);
     } finally {
       if (submit) submit.disabled = false;
