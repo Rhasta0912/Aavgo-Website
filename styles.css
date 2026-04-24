@@ -4467,12 +4467,17 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .workspace-page-user .dashboard-main-user {
-  max-width: 1480px;
-  margin: 0 auto;
-  padding: 1.35rem clamp(1rem, 2vw, 2rem) 2.4rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.35rem clamp(1.1rem, 2.3vw, 3rem) 2.4rem;
 }
 
 .workspace-page-user .dashboard-header-admin {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) auto;
+  align-items: start;
+  gap: 2rem;
   margin-bottom: 1.35rem;
   padding: 0.4rem 0.1rem 0;
 }
@@ -4490,7 +4495,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .workspace-page-user .dashboard-subtitle {
-  max-width: 58ch;
+  max-width: 68ch;
   margin-top: 0.95rem;
   color: var(--user-muted);
   font-size: clamp(0.98rem, 1.4vw, 1.16rem);
@@ -4513,7 +4518,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-user-command {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.45fr);
+  grid-template-columns: minmax(0, 1.85fr) minmax(320px, 0.55fr);
   gap: 1rem;
   margin-bottom: 1rem;
 }
@@ -4659,7 +4664,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .workspace-page-user .dashboard-user-stat-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
   gap: 0.75rem;
 }
 
@@ -4684,13 +4689,13 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-user-workbench {
   display: grid;
-  grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1.28fr);
+  grid-template-columns: minmax(320px, 0.55fr) minmax(0, 1.45fr);
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
 .workspace-page-user .dashboard-user-timeline-panel,
-.workspace-page-user .dashboard-user-handover-panel {
+.workspace-page-user .dashboard-user-payroll-panel {
   border-radius: 24px;
 }
 
@@ -4717,10 +4722,6 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   margin: 0;
   color: var(--user-muted);
   line-height: 1.55;
-}
-
-.dashboard-user-payroll {
-  margin-bottom: 1rem;
 }
 
 .workspace-page-user .dashboard-user-payroll-panel,
@@ -4782,13 +4783,27 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-user-history {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.5fr);
   gap: 1rem;
 }
 
 .dashboard-user-history-table-wrap {
-  max-height: 28rem;
+  max-height: 24rem;
   overflow: auto;
+}
+
+@media (min-width: 1500px) {
+  .dashboard-user-command {
+    grid-template-columns: minmax(0, 2.1fr) minmax(360px, 0.55fr);
+  }
+
+  .dashboard-user-workbench {
+    grid-template-columns: minmax(340px, 0.46fr) minmax(0, 1.54fr);
+  }
+
+  .dashboard-user-hero-card {
+    min-height: 23rem;
+  }
 }
 
 .workspace-page-user .dashboard-hours-table-compact tbody td,

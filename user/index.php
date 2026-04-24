@@ -139,46 +139,6 @@ function aavgo_user_first_text(array $source, array $keys, string $fallback = 'U
     return $fallback;
 }
 
-function aavgo_user_handover_items(array $person): array
-{
-    $candidateKeys = ['handoverInbox', 'handoverNotes', 'unreadHandoverNotes', 'pendingHandoverNotes', 'notes'];
-    foreach ($candidateKeys as $key) {
-        if (!is_array($person[$key] ?? null)) {
-            continue;
-        }
-
-        $items = [];
-        foreach ($person[$key] as $entry) {
-            if (is_string($entry)) {
-                $text = trim($entry);
-                if ($text !== '') {
-                    $items[] = ['title' => 'Handover note', 'body' => $text, 'meta' => 'Current lane'];
-                }
-                continue;
-            }
-
-            if (!is_array($entry)) {
-                continue;
-            }
-
-            $body = aavgo_user_first_text($entry, ['body', 'message', 'note', 'content', 'text'], '');
-            if ($body === '') {
-                continue;
-            }
-
-            $items[] = [
-                'title' => aavgo_user_first_text($entry, ['title', 'hotelLabel', 'hotel', 'authorName'], 'Handover note'),
-                'body' => $body,
-                'meta' => aavgo_user_first_text($entry, ['createdAt', 'updatedAt', 'status'], 'Current lane'),
-            ];
-        }
-
-        return array_slice($items, 0, 4);
-    }
-
-    return [];
-}
-
 function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hoursConnected): array
 {
     $activeSession = is_array($person['activeSession'] ?? null) ? $person['activeSession'] : null;
@@ -189,7 +149,7 @@ function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hou
         return [
             ['label' => 'Discord access', 'state' => 'current', 'detail' => 'Sign in to unlock your workspace.'],
             ['label' => 'Hours sync', 'state' => 'idle', 'detail' => 'Your hours appear after login.'],
-            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and handover notes stay private.'],
+            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and payroll details stay private.'],
         ];
     }
 
@@ -226,9 +186,8 @@ $todayTeamLabel = aavgo_user_first_text($personalHours, ['team'], $guestMode ? '
 $todayNextAction = $guestMode
     ? 'Log in with Discord to open your private lane.'
     : ($activeNow
-        ? 'You are live. Stay in the right voice channel and check handover before logout.'
+        ? 'You are live. Stay in the right voice channel and keep your hours clean.'
         : ($hoursConnected ? 'Post in Attendance before your shift, then wait for the bot confirmation.' : 'Your hours are syncing. Refresh in a moment if something looks old.'));
-$handoverItems = aavgo_user_handover_items($personalHours);
 $workspaceTimeline = aavgo_user_workspace_timeline($personalHours, $guestMode, $hoursConnected);
 $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
 
@@ -265,7 +224,6 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
         <details class="dashboard-user-nav-menu">
           <summary>Sections</summary>
           <div class="dashboard-user-nav-menu-list">
-            <a href="#user-handover">Handover</a>
             <a href="#user-pay-periods">Pay periods</a>
             <a href="#user-history">Hour history</a>
             <?php if ($showAdminLink): ?>
@@ -280,7 +238,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
           <p class="dashboard-kicker">Start here</p>
         </div>
-        <strong>Check today, read handover, confirm your hours.</strong>
+        <strong>Check today, confirm your hours, keep payroll clean.</strong>
         <dl class="dashboard-sidebar-glance-grid">
           <div>
             <dt>Role</dt>
@@ -322,7 +280,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Agent desk'; ?></p>
           <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Open your workspace.' : 'Workspace'; ?></h1>
           <p class="dashboard-subtitle">
-            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Start with Today. Check handover before your shift, then use hours when you need payroll totals.'; ?>
+            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Start with Today, then use pay periods and history when you need payroll totals.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -376,8 +334,8 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           <p><?php echo aavgo_user_text($todayNextAction); ?></p>
           <div class="dashboard-user-hero-actions" aria-label="Quick actions">
             <a class="dashboard-user-primary-action" href="<?php echo htmlspecialchars($attendanceDiscordUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Open Attendance</a>
-            <a class="dashboard-user-secondary-action" href="#user-handover">Read handover</a>
             <a class="dashboard-user-secondary-action" href="#user-pay-periods">Check pay</a>
+            <a class="dashboard-user-secondary-action" href="#user-history">View history</a>
           </div>
         </article>
 
@@ -445,35 +403,7 @@ $attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/148984
           </ol>
         </article>
 
-        <article class="dashboard-panel dashboard-user-handover-panel" id="user-handover">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Handover</p>
-              <h2><?php echo $handoverItems === [] ? 'Your lane is clear' : 'Notes for your lane'; ?></h2>
-            </div>
-            <span class="dashboard-chip"><?php echo htmlspecialchars((string) count($handoverItems), ENT_QUOTES, 'UTF-8'); ?> open</span>
-          </div>
-          <div class="dashboard-user-handover-list">
-            <?php if ($handoverItems === []): ?>
-              <div class="dashboard-user-clear-state">
-                <strong>No unread handover notes.</strong>
-                <p>If leadership or the last agent leaves a note, it will appear here first.</p>
-              </div>
-            <?php else: ?>
-              <?php foreach ($handoverItems as $item): ?>
-                <article class="dashboard-user-handover-item">
-                  <span><?php echo aavgo_user_text($item['meta'] ?? 'Current lane'); ?></span>
-                  <strong><?php echo aavgo_user_text($item['title'] ?? 'Handover note'); ?></strong>
-                  <p><?php echo aavgo_user_text($item['body'] ?? ''); ?></p>
-                </article>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </article>
-      </section>
-
-      <section class="dashboard-user-payroll reveal reveal-delay-2" id="user-pay-periods">
-        <article class="dashboard-panel dashboard-user-payroll-panel">
+        <article class="dashboard-panel dashboard-user-payroll-panel" id="user-pay-periods">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Pay periods</p>
