@@ -107,6 +107,111 @@ function aavgo_render_hours_day_list(array $days): string
     return $html;
 }
 
+function aavgo_user_first_text(array $source, array $keys, string $fallback = 'Unavailable'): string
+{
+    foreach ($keys as $key) {
+        $value = trim((string) ($source[$key] ?? ''));
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    return $fallback;
+}
+
+function aavgo_user_handover_items(array $person): array
+{
+    $candidateKeys = ['handoverInbox', 'handoverNotes', 'unreadHandoverNotes', 'pendingHandoverNotes', 'notes'];
+    foreach ($candidateKeys as $key) {
+        if (!is_array($person[$key] ?? null)) {
+            continue;
+        }
+
+        $items = [];
+        foreach ($person[$key] as $entry) {
+            if (is_string($entry)) {
+                $text = trim($entry);
+                if ($text !== '') {
+                    $items[] = ['title' => 'Handover note', 'body' => $text, 'meta' => 'Current lane'];
+                }
+                continue;
+            }
+
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $body = aavgo_user_first_text($entry, ['body', 'message', 'note', 'content', 'text'], '');
+            if ($body === '') {
+                continue;
+            }
+
+            $items[] = [
+                'title' => aavgo_user_first_text($entry, ['title', 'hotelLabel', 'hotel', 'authorName'], 'Handover note'),
+                'body' => $body,
+                'meta' => aavgo_user_first_text($entry, ['createdAt', 'updatedAt', 'status'], 'Current lane'),
+            ];
+        }
+
+        return array_slice($items, 0, 4);
+    }
+
+    return [];
+}
+
+function aavgo_user_workspace_timeline(array $person, bool $guestMode, bool $hoursConnected): array
+{
+    $activeSession = is_array($person['activeSession'] ?? null) ? $person['activeSession'] : null;
+    $activeNow = (bool) ($person['activeNow'] ?? false) || $activeSession !== null;
+    $todayHours = (float) ($person['todayHours'] ?? 0);
+
+    if ($guestMode) {
+        return [
+            ['label' => 'Discord access', 'state' => 'current', 'detail' => 'Sign in to unlock your workspace.'],
+            ['label' => 'Hours sync', 'state' => 'idle', 'detail' => 'Your personal snapshot appears after login.'],
+            ['label' => 'Shift context', 'state' => 'idle', 'detail' => 'Hotel and handover context stay private.'],
+        ];
+    }
+
+    return [
+        [
+            'label' => 'Attendance',
+            'state' => $activeNow ? 'done' : 'current',
+            'detail' => $activeNow ? 'Attendance is connected to your live session.' : 'Post in Attendance before your shift window.',
+        ],
+        [
+            'label' => 'Login',
+            'state' => $activeNow ? 'done' : ($hoursConnected ? 'current' : 'idle'),
+            'detail' => $activeNow ? 'You are live right now.' : 'Waiting for the bot to confirm your next shift.',
+        ],
+        [
+            'label' => 'Shift desk',
+            'state' => $activeNow ? 'current' : 'idle',
+            'detail' => $activeNow ? aavgo_user_first_text($activeSession ?? [], ['kind'], 'Live shift') : 'Hotel lane appears when a session is active.',
+        ],
+        [
+            'label' => 'Hours posted',
+            'state' => $todayHours > 0 ? 'done' : 'idle',
+            'detail' => $todayHours > 0 ? aavgo_user_hours_label($todayHours) . 'h tracked today.' : 'Today is still clean.',
+        ],
+    ];
+}
+
+$activeSession = is_array($personalHours['activeSession'] ?? null) ? $personalHours['activeSession'] : null;
+$activeNow = !$guestMode && ((bool) ($personalHours['activeNow'] ?? false) || $activeSession !== null);
+$todayStatusLabel = $guestMode ? 'Sign in required' : ($activeNow ? 'Live now' : aavgo_user_first_text($personalHours, ['agentStatus'], 'Standby'));
+$todayStatusClass = $activeNow ? 'is-live' : 'is-idle';
+$todayHotelLabel = aavgo_user_first_text($personalHours, ['linkedHotel', 'assignedHotel'], $guestMode ? 'Private after login' : 'Hotel not assigned yet');
+$todayTeamLabel = aavgo_user_first_text($personalHours, ['team'], $guestMode ? 'Discord gated' : 'Team pending');
+$todayNextAction = $guestMode
+    ? 'Log in with Discord to open your private lane.'
+    : ($activeNow
+        ? 'Stay in voice, keep the hotel lane clean, and leave handover notes before logout.'
+        : ($hoursConnected ? 'Post in Attendance before your shift and wait for the bot confirmation.' : 'Wait for the next bot sync to refresh your personal snapshot.'));
+$handoverItems = aavgo_user_handover_items($personalHours);
+$workspaceTimeline = aavgo_user_workspace_timeline($personalHours, $guestMode, $hoursConnected);
+$attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -136,7 +241,8 @@ function aavgo_render_hours_day_list(array $days): string
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
-        <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
+        <a class="dashboard-nav-link is-active" href="/user/">Workspace</a>
+        <a class="dashboard-nav-link" href="#user-handover">Handover</a>
         <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
         <a class="dashboard-nav-link" href="#user-history">Hour history</a>
         <?php if ($showAdminLink): ?>
@@ -190,10 +296,10 @@ function aavgo_render_hours_day_list(array $days): string
     <main class="dashboard-main dashboard-main-user">
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
-          <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Personal hours'; ?></p>
-          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Log in to see your hours, pay periods, and history.' : 'Your hours, your current lane, and the two payroll cuts that matter.'; ?></h1>
+          <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Agent desk'; ?></p>
+          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Log in to see your private workspace.' : 'Your shift desk, handover inbox, and personal hours.'; ?></h1>
           <p class="dashboard-subtitle">
-            <?php echo $guestMode ? 'Aavgo keeps personal hours behind Discord. Log in to link your account, sync your role, and open the private workspace.' : 'The user workspace is intentionally quiet now: just the hours you need, the pay periods you care about, and a clean log out path.'; ?>
+            <?php echo $guestMode ? 'Aavgo keeps the user workspace behind Discord so each lane stays private.' : 'A quiet place to know your status, your current hotel context, and what needs attention before or after a shift.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -237,6 +343,115 @@ function aavgo_render_hours_day_list(array $days): string
         </section>
       <?php endif; ?>
 
+      <section class="dashboard-user-workspace reveal reveal-delay-1" aria-label="Agent workspace overview">
+        <article class="dashboard-panel dashboard-user-today-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Today</p>
+              <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
+            </div>
+            <span class="dashboard-status-pill <?php echo htmlspecialchars($todayStatusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo aavgo_user_text($todayStatusLabel); ?></span>
+          </div>
+          <div class="dashboard-user-today-body">
+            <div class="dashboard-user-today-focus">
+              <span>Next action</span>
+              <strong><?php echo aavgo_user_text($todayNextAction); ?></strong>
+            </div>
+            <div class="dashboard-user-context-grid">
+              <div>
+                <span>Team</span>
+                <strong><?php echo aavgo_user_text($todayTeamLabel); ?></strong>
+              </div>
+              <div>
+                <span>Session</span>
+                <strong><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></strong>
+              </div>
+              <div>
+                <span>Today</span>
+                <strong><?php echo aavgo_user_hours_label($personalHours['todayHours'] ?? 0); ?>h</strong>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-user-quick-actions" aria-label="Quick actions">
+            <a class="dashboard-user-action" href="<?php echo htmlspecialchars($attendanceDiscordUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Attendance</a>
+            <a class="dashboard-user-action" href="#user-handover">Handover</a>
+            <a class="dashboard-user-action" href="#user-pay-periods">Pay periods</a>
+          </div>
+        </article>
+
+        <article class="dashboard-panel dashboard-user-timeline-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Shift timeline</p>
+              <h2>Where your day stands</h2>
+            </div>
+          </div>
+          <ol class="dashboard-user-timeline">
+            <?php foreach ($workspaceTimeline as $step): ?>
+              <?php $state = in_array($step['state'] ?? 'idle', ['done', 'current', 'idle'], true) ? (string) $step['state'] : 'idle'; ?>
+              <li class="is-<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>">
+                <span></span>
+                <div>
+                  <strong><?php echo aavgo_user_text($step['label'] ?? 'Step'); ?></strong>
+                  <p><?php echo aavgo_user_text($step['detail'] ?? 'Waiting for the next sync.'); ?></p>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </article>
+      </section>
+
+      <section class="dashboard-user-grid dashboard-user-grid-handover reveal reveal-delay-2" id="user-handover">
+        <article class="dashboard-panel dashboard-user-handover-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Handover inbox</p>
+              <h2>Notes for your lane</h2>
+            </div>
+            <span class="dashboard-chip"><?php echo htmlspecialchars((string) count($handoverItems), ENT_QUOTES, 'UTF-8'); ?> open</span>
+          </div>
+          <div class="dashboard-user-handover-list">
+            <?php if ($handoverItems === []): ?>
+              <div class="dashboard-empty-state dashboard-user-empty-state">
+                <strong>No unread handover notes.</strong>
+                <p>Your lane is clear in the current website snapshot.</p>
+              </div>
+            <?php else: ?>
+              <?php foreach ($handoverItems as $item): ?>
+                <article class="dashboard-user-handover-item">
+                  <span><?php echo aavgo_user_text($item['meta'] ?? 'Current lane'); ?></span>
+                  <strong><?php echo aavgo_user_text($item['title'] ?? 'Handover note'); ?></strong>
+                  <p><?php echo aavgo_user_text($item['body'] ?? ''); ?></p>
+                </article>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </article>
+
+        <article class="dashboard-panel dashboard-user-shift-card">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Current assignment</p>
+              <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
+            </div>
+          </div>
+          <div class="dashboard-control-list">
+            <div class="dashboard-control-item">
+              <strong>Role</strong>
+              <span><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></span>
+            </div>
+            <div class="dashboard-control-item">
+              <strong>Status</strong>
+              <span><?php echo aavgo_user_text($todayStatusLabel); ?></span>
+            </div>
+            <div class="dashboard-control-item">
+              <strong>Team</strong>
+              <span><?php echo aavgo_user_text($todayTeamLabel); ?></span>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <section class="dashboard-stat-grid dashboard-stat-grid-admin reveal reveal-delay-1">
         <article class="dashboard-stat-card">
           <p>Today</p>
@@ -260,31 +475,7 @@ function aavgo_render_hours_day_list(array $days): string
         </article>
       </section>
 
-      <section class="dashboard-user-grid reveal reveal-delay-2">
-        <article class="dashboard-panel">
-          <div class="dashboard-panel-heading">
-            <div>
-              <p class="dashboard-kicker">Current lane</p>
-              <h2><?php echo aavgo_user_text($personalHours['linkedHotel'] ?? 'Hotel not assigned yet'); ?></h2>
-            </div>
-            <span class="dashboard-chip dashboard-chip-accent"><?php echo aavgo_user_text($personalHours['team'] ?? 'Team pending'); ?></span>
-          </div>
-          <div class="dashboard-control-list">
-            <div class="dashboard-control-item">
-              <strong>Role</strong>
-              <span><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Status</strong>
-              <span><?php echo aavgo_user_text($personalHours['agentStatus'] ?? 'Standby'); ?></span>
-            </div>
-            <div class="dashboard-control-item">
-              <strong>Session</strong>
-              <span><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></span>
-            </div>
-          </div>
-        </article>
-
+      <section class="dashboard-user-grid dashboard-user-grid-payroll reveal reveal-delay-2">
         <article class="dashboard-panel" id="user-pay-periods">
           <div class="dashboard-panel-heading">
             <div>

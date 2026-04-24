@@ -21,7 +21,6 @@ jobs:
           cp index.html deploy/index.html
           cp styles.css deploy/styles.css
           cp script.js deploy/script.js
-          cp -R revamp deploy/revamp
           cp -R portfolio deploy/portfolio
           cp -R admin deploy/admin
           cp -R user deploy/user
@@ -49,6 +48,8 @@ jobs:
           set ftp:ssl-force true
           set ftp:ssl-protect-data true
           set ssl:verify-certificate no
+          rm -rf revamp
+          rm -rf public_html/revamp
           mirror -R --verbose deploy/ /
           mirror -R --verbose deploy/ public_html/
           bye

@@ -1758,6 +1758,15 @@ h2 {
 }
 
 @media (max-width: 900px) {
+  .dashboard-user-workspace,
+  .dashboard-user-grid-handover {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-user-context-grid {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-panel-full-hours .dashboard-full-hours-month-picker.is-open {
     margin-bottom: 12.4rem;
   }
@@ -4126,6 +4135,191 @@ body.sidebar-collapsed .workspace-dashboard .dashboard-sidebar-shortcut[data-hou
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: 1rem;
   align-items: start;
+}
+
+.dashboard-user-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
+}
+
+.dashboard-user-today-panel,
+.dashboard-user-timeline-panel,
+.dashboard-user-handover-panel,
+.dashboard-user-shift-card {
+  min-width: 0;
+}
+
+.dashboard-user-today-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-user-today-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-user-today-focus {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dashboard-user-today-focus span,
+.dashboard-user-context-grid span,
+.dashboard-user-handover-item span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-user-today-focus strong {
+  color: #fff8ef;
+  font-size: clamp(1.08rem, 2vw, 1.45rem);
+  line-height: 1.35;
+}
+
+.dashboard-user-context-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-user-context-grid div {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 5.4rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-user-context-grid strong {
+  color: rgba(255, 248, 239, 0.92);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.dashboard-user-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dashboard-user-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.45rem;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 248, 239, 0.88);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-user-action:hover {
+  border-color: rgba(120, 179, 161, 0.28);
+  background: rgba(120, 179, 161, 0.12);
+  color: #fff8ef;
+}
+
+.dashboard-user-timeline {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-user-timeline li {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.dashboard-user-timeline li > span {
+  width: 0.74rem;
+  height: 0.74rem;
+  margin-top: 0.34rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-user-timeline li.is-done > span {
+  border-color: rgba(120, 179, 161, 0.82);
+  background: #78b3a1;
+}
+
+.dashboard-user-timeline li.is-current > span {
+  border-color: rgba(216, 176, 95, 0.9);
+  background: #d8b05f;
+}
+
+.dashboard-user-timeline strong {
+  color: rgba(255, 248, 239, 0.9);
+  font-size: 0.98rem;
+}
+
+.dashboard-user-timeline p {
+  margin: 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.dashboard-user-grid-handover {
+  margin-bottom: 1rem;
+}
+
+.dashboard-user-grid-payroll {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-user-handover-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-user-handover-item {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.032);
+}
+
+.dashboard-user-handover-item strong {
+  color: rgba(255, 248, 239, 0.92);
+}
+
+.dashboard-user-handover-item p,
+.dashboard-user-empty-state p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.6;
+}
+
+.dashboard-user-empty-state {
+  align-items: start;
+  min-height: 10rem;
+  text-align: left;
 }
 
 .dashboard-user-grid-history {
