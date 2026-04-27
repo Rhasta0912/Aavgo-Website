@@ -42,8 +42,31 @@ function formatHoursValue(value) {
   return String(rounded).replace(/\.0$/, "");
 }
 
+function formatHoursDisplay(value) {
+  const number = Number(value ?? 0);
+  if (!Number.isFinite(number)) return "0h";
+
+  const totalMinutes = Math.round(number * 60);
+  if (totalMinutes === 0) return "0h";
+
+  const sign = totalMinutes < 0 ? "-" : "";
+  const absMinutes = Math.abs(totalMinutes);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = absMinutes % 60;
+
+  if (hours === 0) {
+    return `${sign}${minutes}m`;
+  }
+
+  if (minutes === 0) {
+    return `${sign}${hours}h`;
+  }
+
+  return `${sign}${hours}h ${minutes}m`;
+}
+
 function formatHours(value) {
-  return `${formatHoursValue(value)}h`;
+  return formatHoursDisplay(value);
 }
 
 function formatSyncLabel(value) {
@@ -1470,7 +1493,7 @@ function openInlineHoursCellEditor(cell, person, shiftDate, currentHours) {
       const displayValue = roundHoursStep(nextValue);
       cell.setAttribute("data-hours", String(displayValue));
       cell.classList.toggle("has-hours", displayValue > 0);
-      cell.innerHTML = `<div class="dashboard-hours-cell-copy">${displayValue > 0 ? escapeHtml(formatHoursValue(displayValue)) : ""}</div>`;
+      cell.innerHTML = `<div class="dashboard-hours-cell-copy">${displayValue > 0 ? escapeHtml(formatHours(displayValue)) : ""}</div>`;
       setEditorFeedback("Saving hours...", false);
       void quickSetCellHours(person, shiftDate, currentHours, displayValue).then(success => {
         if (success === false) {
@@ -1950,7 +1973,7 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
           const hours = Number(dayMap.get(day) || 0);
           const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
           return `<td class="${className}" data-day="${day}" data-hours="${hours}" title="Double-click to edit hours">
-            <div class="dashboard-hours-cell-copy">${hours > 0 ? escapeHtml(formatHoursValue(hours)) : ""}</div>
+            <div class="dashboard-hours-cell-copy">${hours > 0 ? escapeHtml(formatHours(hours)) : ""}</div>
           </td>`;
         }).join("")}
         <td><div class="dashboard-hours-cell-copy">${formatHours(monthTotals.firstHalf)}</div></td>

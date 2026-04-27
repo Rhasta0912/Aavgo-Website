@@ -52,26 +52,6 @@ if ($guestMode) {
     $hoursPayload = aavgo_fetch_hours_bridge_payload();
     $personalHours = aavgo_find_hours_person_for_user($user);
     $hoursConnected = (bool) ($hoursPayload['ok'] ?? false) && is_array($personalHours);
-    if (!is_array($personalHours)) {
-        $personalHours = [
-            'linkedHotel' => 'Hotel not assigned yet',
-            'team' => 'Team pending',
-            'role' => $roleSummary,
-            'agentStatus' => 'Sync pending',
-            'todayHours' => 0,
-            'weeklyHours' => 0,
-            'monthlyHours' => 0,
-            'allHours' => 0,
-            'payPeriods' => [
-                'firstHalf' => ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []],
-                'secondHalf' => ['label' => '16th - end', 'totalHours' => 0, 'days' => []],
-            ],
-            'currentMonth' => ['label' => 'Current month', 'days' => []],
-            'recentMonths' => [],
-            'recentAdjustments' => [],
-            'activeSession' => null,
-        ];
-    }
     $payPeriods = is_array($personalHours['payPeriods'] ?? null) ? $personalHours['payPeriods'] : [];
     $firstHalf = is_array($payPeriods['firstHalf'] ?? null) ? $payPeriods['firstHalf'] : ['label' => '1st - 15th', 'totalHours' => 0, 'days' => []];
     $secondHalf = is_array($payPeriods['secondHalf'] ?? null) ? $payPeriods['secondHalf'] : ['label' => '16th - end', 'totalHours' => 0, 'days' => []];
@@ -81,7 +61,7 @@ if ($guestMode) {
     $sessionSummary = 'Offline right now';
     if (is_array($personalHours['activeSession'] ?? null)) {
         $sessionSummary = sprintf(
-            '%s - %sh',
+            '%s - %s',
             trim((string) ($personalHours['activeSession']['kind'] ?? 'Live Shift')),
             aavgo_user_hours_label($personalHours['activeSession']['elapsedHours'] ?? 0)
         );
@@ -95,8 +75,25 @@ function aavgo_user_hours_label(mixed $value): string
         $number = 0.0;
     }
 
-    $formatted = number_format($number, 1);
-    return preg_replace('/\.0$/', '', $formatted) ?: '0';
+    $totalMinutes = (int) round($number * 60);
+    if ($totalMinutes === 0) {
+        return '0h';
+    }
+
+    $sign = $totalMinutes < 0 ? '-' : '';
+    $absMinutes = abs($totalMinutes);
+    $hours = intdiv($absMinutes, 60);
+    $minutes = $absMinutes % 60;
+
+    if ($hours === 0) {
+        return $sign . $minutes . 'm';
+    }
+
+    if ($minutes === 0) {
+        return $sign . $hours . 'h';
+    }
+
+    return $sign . $hours . 'h ' . $minutes . 'm';
 }
 
 function aavgo_user_text(mixed $value, string $fallback = 'Unavailable'): string
@@ -119,39 +116,13 @@ function aavgo_render_hours_day_list(array $days): string
     $html = '<ul class="dashboard-inline-list">';
     foreach ($items as $day) {
         $label = 'Day ' . (int) ($day['day'] ?? 0);
-        $hours = aavgo_user_hours_label($day['totalHours'] ?? 0) . 'h';
+        $hours = aavgo_user_hours_label($day['totalHours'] ?? 0);
         $html .= '<li><span>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span><strong>' . htmlspecialchars($hours, ENT_QUOTES, 'UTF-8') . '</strong></li>';
     }
     $html .= '</ul>';
 
     return $html;
 }
-
-function aavgo_user_first_text(array $source, array $keys, string $fallback = 'Unavailable'): string
-{
-    foreach ($keys as $key) {
-        $value = trim((string) ($source[$key] ?? ''));
-        if ($value !== '') {
-            return $value;
-        }
-    }
-
-    return $fallback;
-}
-
-$activeSession = is_array($personalHours['activeSession'] ?? null) ? $personalHours['activeSession'] : null;
-$activeNow = !$guestMode && ((bool) ($personalHours['activeNow'] ?? false) || $activeSession !== null);
-$todayStatusLabel = $guestMode ? 'Sign in required' : ($activeNow ? 'Live now' : aavgo_user_first_text($personalHours, ['agentStatus'], 'Standby'));
-$todayStatusClass = $activeNow ? 'is-live' : 'is-idle';
-$todayHotelLabel = aavgo_user_first_text($personalHours, ['linkedHotel', 'assignedHotel'], $guestMode ? 'Private after login' : 'Hotel not assigned yet');
-$todayTeamLabel = aavgo_user_first_text($personalHours, ['team'], $guestMode ? 'Discord gated' : 'Team pending');
-$todayNextAction = $guestMode
-    ? 'Log in with Discord to open your private lane.'
-    : ($activeNow
-        ? 'You are live. Stay in the right voice channel and keep your hours clean.'
-        : ($hoursConnected ? 'Post in Attendance before your shift, then wait for the bot confirmation.' : 'Your hours are syncing. Refresh in a moment if something looks old.'));
-$attendanceDiscordUrl = 'https://discord.com/channels/1482220918355922974/1489840627209470022';
-$csrfToken = aavgo_csrf_token();
 
 ?>
 <!DOCTYPE html>
@@ -182,25 +153,22 @@ $csrfToken = aavgo_csrf_token();
       </div>
 
       <nav class="dashboard-nav dashboard-nav-vertical" aria-label="User navigation">
-        <a class="dashboard-nav-link dashboard-user-nav-home is-active" href="/user/">Workspace</a>
-        <details class="dashboard-user-nav-menu">
-          <summary>Sections</summary>
-          <div class="dashboard-user-nav-menu-list">
-            <a href="#user-pay-periods">Pay periods</a>
-            <a href="#user-history">Hour history</a>
-            <?php if ($showAdminLink): ?>
-              <a href="/admin/">Leadership board</a>
-            <?php endif; ?>
-          </div>
-        </details>
+        <a class="dashboard-nav-link is-active" href="/user/">My hours</a>
+        <a class="dashboard-nav-link" href="#user-pay-periods">Pay periods</a>
+        <a class="dashboard-nav-link" href="#user-history">Hour history</a>
+        <?php if ($showAdminLink): ?>
+          <a class="dashboard-nav-link" href="/admin/">Leadership board</a>
+        <?php endif; ?>
+        <a class="dashboard-nav-link" href="/">Front door</a>
+        <a class="dashboard-nav-link" href="/auth/logout/">Log out</a>
       </nav>
 
       <section class="dashboard-sidebar-glance" aria-label="Quick glance">
         <div class="dashboard-sidebar-glance-head">
           <span class="dashboard-sidebar-glance-dot" aria-hidden="true"></span>
-          <p class="dashboard-kicker">Start here</p>
+          <p class="dashboard-kicker">Personal view</p>
         </div>
-        <strong>Check today, confirm your hours, keep payroll clean.</strong>
+        <strong>Hours first. Clean pay cuts. Quiet workspace.</strong>
         <dl class="dashboard-sidebar-glance-grid">
           <div>
             <dt>Role</dt>
@@ -208,7 +176,7 @@ $csrfToken = aavgo_csrf_token();
           </div>
           <div>
             <dt>View</dt>
-            <dd>Workspace</dd>
+            <dd>My hours</dd>
           </div>
           <div>
             <dt>Sync</dt>
@@ -239,10 +207,10 @@ $csrfToken = aavgo_csrf_token();
     <main class="dashboard-main dashboard-main-user">
       <header class="dashboard-header dashboard-header-admin reveal reveal-in">
         <div>
-          <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Agent desk'; ?></p>
-          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Open your workspace.' : 'Workspace'; ?></h1>
+          <p class="dashboard-breadcrumb"><?php echo $guestMode ? 'Workspace / Discord access' : 'Workspace / Personal hours'; ?></p>
+          <h1 class="dashboard-title dashboard-title-wide"><?php echo $guestMode ? 'Log in to see your hours, pay periods, and history.' : 'Your hours, your current lane, and the two payroll cuts that matter.'; ?></h1>
           <p class="dashboard-subtitle">
-            <?php echo $guestMode ? 'Log in with Discord to see your private hours and shift context.' : 'Your shift, pay, and hour history in one clean desk.'; ?>
+            <?php echo $guestMode ? 'Aavgo keeps personal hours behind Discord. Log in to link your account, sync your role, and open the private workspace.' : 'The user workspace is intentionally quiet now: just the hours you need, the pay periods you care about, and a clean log out path.'; ?>
           </p>
         </div>
         <div class="dashboard-toolbar">
@@ -286,97 +254,87 @@ $csrfToken = aavgo_csrf_token();
         </section>
       <?php endif; ?>
 
-      <section class="dashboard-user-command reveal reveal-delay-1" aria-label="Agent command center">
-        <article class="dashboard-user-hero-card">
-          <div class="dashboard-user-hero-topline">
-            <span class="dashboard-user-eyebrow">Today at Aavgo</span>
-            <span class="dashboard-status-pill <?php echo htmlspecialchars($todayStatusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo aavgo_user_text($todayStatusLabel); ?></span>
-          </div>
-          <h2><?php echo aavgo_user_text($todayHotelLabel); ?></h2>
-          <p><?php echo aavgo_user_text($todayNextAction); ?></p>
-          <div class="dashboard-user-hero-actions" aria-label="Quick actions">
-            <a class="dashboard-user-primary-action" href="<?php echo htmlspecialchars($attendanceDiscordUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Open Attendance</a>
-            <a class="dashboard-user-secondary-action" href="#user-pay-periods">Check pay</a>
-            <a class="dashboard-user-secondary-action" href="#user-history">View history</a>
-          </div>
-        </article>
-
-        <aside class="dashboard-user-day-card" aria-label="Shift basics">
-          <p class="dashboard-user-eyebrow">Your shift card</p>
-          <dl>
-            <div>
-              <dt>Team</dt>
-              <dd><?php echo aavgo_user_text($todayTeamLabel); ?></dd>
-            </div>
-            <div>
-              <dt>Session</dt>
-              <dd><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></dd>
-            </div>
-            <div>
-              <dt>Role</dt>
-              <dd><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></dd>
-            </div>
-          </dl>
-        </aside>
-      </section>
-
-      <section class="dashboard-user-stat-grid reveal reveal-delay-1" aria-label="Personal hour totals">
+      <section class="dashboard-stat-grid dashboard-stat-grid-admin reveal reveal-delay-1">
         <article class="dashboard-stat-card">
           <p>Today</p>
-          <strong><?php echo aavgo_user_hours_label($personalHours['todayHours'] ?? 0); ?>h</strong>
-          <span>Logged today</span>
+                <strong><?php echo aavgo_user_hours_label($personalHours['todayHours'] ?? 0); ?></strong>
+          <span>Tracked in the current PH day</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Week</p>
-          <strong><?php echo aavgo_user_hours_label($personalHours['weeklyHours'] ?? 0); ?>h</strong>
-          <span>This week so far</span>
+          <p>This week</p>
+                <strong><?php echo aavgo_user_hours_label($personalHours['weeklyHours'] ?? 0); ?></strong>
+          <span>Tracked in the current PH week</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Month</p>
-          <strong><?php echo aavgo_user_hours_label($personalHours['monthlyHours'] ?? 0); ?>h</strong>
-          <span>This month so far</span>
+          <p>This month</p>
+                <strong><?php echo aavgo_user_hours_label($personalHours['monthlyHours'] ?? 0); ?></strong>
+          <span>Tracked in the current PH month</span>
         </article>
         <article class="dashboard-stat-card">
-          <p>Total</p>
-          <strong><?php echo aavgo_user_hours_label($personalHours['allHours'] ?? 0); ?>h</strong>
-          <span>Saved to your account</span>
+          <p>All time</p>
+                <strong><?php echo aavgo_user_hours_label($personalHours['allHours'] ?? 0); ?></strong>
+          <span>Total hours attached to your account</span>
         </article>
       </section>
 
-      <section class="dashboard-user-payroll-row reveal reveal-delay-2">
-        <article class="dashboard-panel dashboard-user-payroll-panel" id="user-pay-periods">
+      <section class="dashboard-user-grid reveal reveal-delay-2">
+        <article class="dashboard-panel">
+          <div class="dashboard-panel-heading">
+            <div>
+              <p class="dashboard-kicker">Current lane</p>
+              <h2><?php echo aavgo_user_text($personalHours['linkedHotel'] ?? 'Hotel not assigned yet'); ?></h2>
+            </div>
+            <span class="dashboard-chip dashboard-chip-accent"><?php echo aavgo_user_text($personalHours['team'] ?? 'Team pending'); ?></span>
+          </div>
+          <div class="dashboard-control-list">
+            <div class="dashboard-control-item">
+              <strong>Role</strong>
+              <span><?php echo aavgo_user_text($personalHours['role'] ?? $roleSummary); ?></span>
+            </div>
+            <div class="dashboard-control-item">
+              <strong>Status</strong>
+              <span><?php echo aavgo_user_text($personalHours['agentStatus'] ?? 'Standby'); ?></span>
+            </div>
+            <div class="dashboard-control-item">
+              <strong>Session</strong>
+              <span><?php echo aavgo_user_text($sessionSummary, 'Offline right now'); ?></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="dashboard-panel" id="user-pay-periods">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Pay periods</p>
-              <h2>Clean payroll readout</h2>
+              <h2>1st - 15th and 16th - month end</h2>
             </div>
           </div>
-          <div class="dashboard-user-payroll-grid">
-            <section class="dashboard-user-pay-card">
-              <span><?php echo aavgo_user_text($firstHalf['label'] ?? '1-15'); ?></span>
-              <strong><?php echo aavgo_user_hours_label($firstHalf['totalHours'] ?? 0); ?>h</strong>
-              <p>First payroll half</p>
+          <div class="dashboard-pay-period-grid">
+            <section class="dashboard-pay-period-card">
+              <span class="dashboard-chip"><?php echo aavgo_user_text($firstHalf['label'] ?? '1-15'); ?></span>
+                <strong><?php echo aavgo_user_hours_label($firstHalf['totalHours'] ?? 0); ?></strong>
+              <p>Hours tracked in the first payroll half.</p>
               <?php echo aavgo_render_hours_day_list(is_array($firstHalf['days'] ?? null) ? $firstHalf['days'] : []); ?>
             </section>
-            <section class="dashboard-user-pay-card is-current">
-              <span><?php echo aavgo_user_text($secondHalf['label'] ?? '16-end'); ?></span>
-              <strong><?php echo aavgo_user_hours_label($secondHalf['totalHours'] ?? 0); ?>h</strong>
-              <p>Second payroll half</p>
+            <section class="dashboard-pay-period-card">
+              <span class="dashboard-chip"><?php echo aavgo_user_text($secondHalf['label'] ?? '16-end'); ?></span>
+                <strong><?php echo aavgo_user_hours_label($secondHalf['totalHours'] ?? 0); ?></strong>
+              <p>Hours tracked from the 16th through month end.</p>
               <?php echo aavgo_render_hours_day_list(is_array($secondHalf['days'] ?? null) ? $secondHalf['days'] : []); ?>
             </section>
           </div>
         </article>
       </section>
 
-      <section class="dashboard-user-history reveal reveal-delay-2" id="user-history">
-        <article class="dashboard-panel dashboard-user-history-panel">
+      <section class="dashboard-user-grid dashboard-user-grid-history reveal reveal-delay-2" id="user-history">
+        <article class="dashboard-panel">
           <div class="dashboard-panel-heading">
             <div>
-              <p class="dashboard-kicker">Hour history</p>
+              <p class="dashboard-kicker">Current month history</p>
               <h2><?php echo aavgo_user_text($currentMonth['label'] ?? 'Current month'); ?></h2>
             </div>
           </div>
-          <div class="dashboard-hours-table-wrap dashboard-user-history-table-wrap">
+          <div class="dashboard-hours-table-wrap">
             <table class="dashboard-hours-table dashboard-hours-table-compact">
               <thead>
                 <tr>
@@ -406,9 +364,9 @@ $csrfToken = aavgo_csrf_token();
                   <?php foreach ($visibleMonthDays as $day): ?>
                     <tr>
                       <td>Day <?php echo htmlspecialchars((string) ($day['day'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo aavgo_user_hours_label($day['totalHours'] ?? 0); ?>h</td>
-                      <td><?php echo aavgo_user_hours_label($day['shiftHours'] ?? 0); ?>h</td>
-                      <td><?php echo aavgo_user_hours_label($day['trainingHours'] ?? 0); ?>h</td>
+            <td><?php echo aavgo_user_hours_label($day['totalHours'] ?? 0); ?></td>
+            <td><?php echo aavgo_user_hours_label($day['shiftHours'] ?? 0); ?></td>
+            <td><?php echo aavgo_user_hours_label($day['trainingHours'] ?? 0); ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -417,7 +375,7 @@ $csrfToken = aavgo_csrf_token();
           </div>
         </article>
 
-        <article class="dashboard-panel dashboard-user-month-card" id="user-month-summary">
+        <article class="dashboard-panel" id="user-month-summary">
           <div class="dashboard-panel-heading">
             <div>
               <p class="dashboard-kicker">Recent month totals</p>
@@ -434,9 +392,9 @@ $csrfToken = aavgo_csrf_token();
               <?php foreach ($recentMonths as $month): ?>
                 <div class="dashboard-mini-card">
                   <strong><?php echo aavgo_user_text($month['label'] ?? 'Month'); ?></strong>
-                  <p>Total: <?php echo aavgo_user_hours_label($month['totalHours'] ?? 0); ?>h</p>
-                  <span>Shift: <?php echo aavgo_user_hours_label($month['shiftHours'] ?? 0); ?>h</span>
-                  <span>Training: <?php echo aavgo_user_hours_label($month['trainingHours'] ?? 0); ?>h</span>
+            <p>Total: <?php echo aavgo_user_hours_label($month['totalHours'] ?? 0); ?></p>
+            <span>Shift: <?php echo aavgo_user_hours_label($month['shiftHours'] ?? 0); ?></span>
+            <span>Training: <?php echo aavgo_user_hours_label($month['trainingHours'] ?? 0); ?></span>
                 </div>
               <?php endforeach; ?>
             <?php endif; ?>
@@ -462,7 +420,7 @@ $csrfToken = aavgo_csrf_token();
                     -
                     <?php echo aavgo_user_text($entry['logoutTime'] ?? '--:--'); ?>
                     &middot;
-                    <?php echo aavgo_user_hours_label($entry['hours'] ?? 0); ?>h
+                    <?php echo aavgo_user_hours_label($entry['hours'] ?? 0); ?>
                   </p>
                   <span><?php echo aavgo_user_text($entry['reason'] ?? 'Manual adjustment'); ?></span>
                 </article>
@@ -475,47 +433,8 @@ $csrfToken = aavgo_csrf_token();
     </main>
   </div>
 
-  <?php if (!$guestMode): ?>
-    <aside class="aavgo-support-widget" data-support-widget aria-label="Aavgo support">
-      <button class="aavgo-support-bubble" type="button" data-support-toggle aria-expanded="false" aria-label="Open support" title="Support">
-        <span aria-hidden="true">💬</span>
-      </button>
-      <form class="aavgo-support-panel" data-support-panel hidden>
-        <div class="aavgo-support-head">
-          <div>
-            <p class="dashboard-kicker">Agent support</p>
-            <h2>Send a request</h2>
-          </div>
-          <button type="button" data-support-close aria-label="Close support">Close</button>
-        </div>
-        <div class="aavgo-support-type-grid" role="radiogroup" aria-label="Request type">
-          <label>
-            <input type="radio" name="supportType" value="feature" checked>
-            <span>Feature request</span>
-          </label>
-          <label>
-            <input type="radio" name="supportType" value="bug">
-            <span>Report a bug</span>
-          </label>
-        </div>
-        <label class="aavgo-support-field">
-          <span>Title</span>
-          <input name="supportTitle" type="text" maxlength="140" placeholder="Short summary">
-        </label>
-        <label class="aavgo-support-field">
-          <span>Details</span>
-          <textarea name="supportMessage" rows="5" maxlength="1200" placeholder="What happened, what should change, or what would help?"></textarea>
-        </label>
-        <p class="aavgo-support-feedback" data-support-feedback>Requests go to the Developer panel only.</p>
-        <button class="aavgo-support-submit" type="submit">Send to developers</button>
-      </form>
-    </aside>
-  <?php endif; ?>
-
   <script>
     window.AAVGO_LIVE_SIGNALS_ENDPOINT = '/api/live-signals/';
-    window.AAVGO_SUPPORT_REQUEST_ENDPOINT = '/api/support-request/';
-    window.AAVGO_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
   </script>
 <script src="<?= htmlspecialchars(aavgo_asset_url('/script.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 </body>

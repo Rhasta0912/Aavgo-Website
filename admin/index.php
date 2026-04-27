@@ -78,8 +78,25 @@ function aavgo_admin_hours_label(mixed $value): string
         $number = 0.0;
     }
 
-    $formatted = number_format($number, 1);
-    return preg_replace('/\.0$/', '', $formatted) ?: '0';
+    $totalMinutes = (int) round($number * 60);
+    if ($totalMinutes === 0) {
+        return '0h';
+    }
+
+    $sign = $totalMinutes < 0 ? '-' : '';
+    $absMinutes = abs($totalMinutes);
+    $hours = intdiv($absMinutes, 60);
+    $minutes = $absMinutes % 60;
+
+    if ($hours === 0) {
+        return $sign . $minutes . 'm';
+    }
+
+    if ($minutes === 0) {
+        return $sign . $hours . 'h';
+    }
+
+    return $sign . $hours . 'h ' . $minutes . 'm';
 }
 
 $bootstrapJson = json_encode(
@@ -215,17 +232,17 @@ $csrfToken = aavgo_csrf_token();
         </article>
         <article class="dashboard-stat-card">
           <p>Today</p>
-          <strong id="hours-summary-today"><?php echo aavgo_admin_hours_label($summary['todayHours'] ?? 0); ?>h</strong>
+  <strong id="hours-summary-today"><?php echo aavgo_admin_hours_label($summary['todayHours'] ?? 0); ?></strong>
           <span>Tracked since the current PH day opened</span>
         </article>
         <article class="dashboard-stat-card">
           <p>This week</p>
-          <strong id="hours-summary-weekly"><?php echo aavgo_admin_hours_label($summary['weeklyHours'] ?? 0); ?>h</strong>
+  <strong id="hours-summary-weekly"><?php echo aavgo_admin_hours_label($summary['weeklyHours'] ?? 0); ?></strong>
           <span>Combined tracked hours for the live week</span>
         </article>
         <article class="dashboard-stat-card">
           <p>This month</p>
-          <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?>h</strong>
+  <strong id="hours-summary-monthly"><?php echo aavgo_admin_hours_label($summary['monthlyHours'] ?? 0); ?></strong>
           <span>Combined tracked hours for the live month</span>
         </article>
       </section>
