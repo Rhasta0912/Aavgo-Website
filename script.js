@@ -554,34 +554,67 @@ const HOTEL_TEAM_GROUPS = [
     key: "team-1",
     label: "Team 1",
     hotels: [
-      "AD1",
-      "Indianhead/Magnuson",
-      "The Garden Inn At Campsite",
+      "Days Inn Bishop",
+      "Day Inns Bishop",
       "Ramada / Super 8",
-      "Travelodge",
-      "Day Inns Bishop"
+      "Super 8 / Ramada",
+      "Parmani",
+      "Econolodge",
+      "Quality Russelville",
+      "Buenavista Inn",
+      "Buenavista",
+      "Travelodge"
     ]
   },
   {
     key: "team-2",
     label: "Team 2",
     hotels: [
-      "Prospero Flagship",
-      "Glendale / The Leef Hotel",
-      "Inn at the Fingerlakes",
       "Value Suites",
+      "Inn at the Fingerlakes",
+      "Anchor Beach / Pacific Inn",
+      "Town House / Bayside",
       "Bayside / Townhouse",
-      "Anchor Beach / Pacific Inn"
+      "Glendale / The Leef Hotel",
+      "The Leef Hotel"
     ]
   },
   {
     key: "team-3",
     label: "Team 3",
     hotels: [
-      "Econolodge",
-      "Buenavista",
-      "Quality Russelville",
-      "Thousand Oaks"
+      "Mylo / Alpine",
+      "Alpine / Mylo",
+      "Flagship",
+      "Prospero Flagship",
+      "Sage",
+      "AD1",
+      "Hotel Zico"
+    ]
+  },
+  {
+    key: "team-4",
+    label: "Team 4",
+    hotels: [
+      "WG Fresno",
+      "Thousand Oaks",
+      "BW Springfield",
+      "LQ Stockton",
+      "LQ Fresno",
+      "BW Visalia"
+    ]
+  },
+  {
+    key: "team-5",
+    label: "Team 5",
+    hotels: [
+      "The Live Hotel",
+      "Garden Inn and the Campground",
+      "The Garden Inn At Campsite",
+      "Magnuson / Ironwood",
+      "Indianhead/Magnuson",
+      "Brentwood Inn",
+      "Brentwood"
     ]
   }
 ];
