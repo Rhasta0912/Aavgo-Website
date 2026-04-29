@@ -3405,21 +3405,70 @@ function initializeDeveloperWorkspace() {
     const dd = String(today.getDate()).padStart(2, "0");
     return target === `${yyyy}-${mm}-${dd}`;
   };
-  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      resolve({
-        id: createTaskId(),
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        size: file.size || 0,
-        dataUrl: String(reader.result || ""),
-        createdAt: nowIso()
-      });
+  const compressImageFile = (file, options = {}) => new Promise((resolve) => {
+    const type = String(file?.type || "").toLowerCase();
+    if (!type.startsWith("image/") || type === "image/gif" || typeof Image !== "function") {
+      resolve(file);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxSide = Number(options.maxSide || 1600);
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || image.width || maxSide, image.naturalHeight || image.height || maxSide));
+      if (scale >= 1 && Number(file.size || 0) < 900000) {
+        resolve(file);
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width || 1) * scale));
+      canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height || 1) * scale));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        resolve(file);
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          resolve(file);
+          return;
+        }
+        const safeName = String(file.name || "screenshot.png").replace(/\.[^.]+$/, ".jpg");
+        const compressed = typeof File === "function"
+          ? new File([blob], safeName, { type: "image/jpeg", lastModified: Date.now() })
+          : Object.assign(blob, { name: safeName, lastModified: Date.now() });
+        resolve(compressed);
+      }, "image/jpeg", 0.84);
     };
-    reader.onerror = () => reject(reader.error || new Error("Unable to read attachment."));
-    reader.readAsDataURL(file);
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+    image.src = objectUrl;
   });
+
+  const readFileAsDataUrl = async (file) => {
+    const preparedFile = await compressImageFile(file);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          id: createTaskId(),
+          name: preparedFile.name,
+          type: preparedFile.type || "application/octet-stream",
+          size: preparedFile.size || 0,
+          dataUrl: String(reader.result || ""),
+          createdAt: nowIso()
+        });
+      };
+      reader.onerror = () => reject(reader.error || new Error("Unable to read attachment."));
+      reader.readAsDataURL(preparedFile);
+    });
+  };
 
   const normalizeStatus = (status) => {
     const value = String(status || "").trim();
@@ -4346,16 +4395,16 @@ function initializeDeveloperWorkspace() {
     const attachments = Array.isArray(task.attachments) ? task.attachments : [];
     const isArchived = loadHistory().some(item => String(item.id || "") === String(task.id || ""));
     const creator = activity.find(entry => entry.type === "created") || activity[activity.length - 1] || null;
-    const attachmentMarkup = attachments.length ? `
+    const attachmentMarkup = `
       <section class="dashboard-developer-detail-media">
         <div class="dashboard-developer-detail-section-heading">
           <div>
-            <span class="dashboard-kicker">Screenshots</span>
-            <strong>${escapeHtml(String(attachments.length))} attachment${attachments.length === 1 ? "" : "s"}</strong>
+            <span class="dashboard-kicker">Evidence</span>
+            <strong>${attachments.length ? `${escapeHtml(String(attachments.length))} attachment${attachments.length === 1 ? "" : "s"}` : "No screenshot attached"}</strong>
           </div>
-          <span>Click a screenshot to view fullscreen</span>
+          <span>${attachments.length ? "Click any screenshot to view fullscreen" : "Edit this card and paste the screenshot into the form"}</span>
         </div>
-        <div class="dashboard-developer-detail-screenshot-grid">
+        ${attachments.length ? `<div class="dashboard-developer-detail-screenshot-grid">
           ${attachments.map(attachment => {
             const name = String(attachment.name || "Attachment").trim() || "Attachment";
             const size = `${Math.max(1, Math.ceil((attachment.size || 0) / 1024))} KB`;
@@ -4384,9 +4433,15 @@ function initializeDeveloperWorkspace() {
               </a>
             `;
           }).join("")}
-        </div>
+        </div>` : `
+          <div class="dashboard-developer-detail-empty-media">
+            <strong>No image is saved on this card yet.</strong>
+            <p>Open Edit, click anywhere in the form, then paste the screenshot. It will appear here as a large fullscreen-ready preview.</p>
+            <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-edit="${escapeHtml(task.id)}">Add screenshot</button>
+          </div>
+        `}
       </section>
-    ` : "";
+    `;
     detailTitle.textContent = task.title || "Untitled card";
     detailBody.innerHTML = `
       <div class="dashboard-developer-detail-hero">
@@ -4395,10 +4450,6 @@ function initializeDeveloperWorkspace() {
           <span class="dashboard-chip ${priorityClass(task.priority)}">${escapeHtml(priorityLabel(task.priority))}</span>
           ${task.deadlineDate ? `<span class="dashboard-chip ${getTaskTimingState(task).isOverdue ? "dashboard-chip-danger" : ""}">${escapeHtml(task.deadlineDate)}</span>` : ""}
         </div>
-        <div class="dashboard-developer-detail-title-row">
-          <span class="dashboard-kicker">Card title</span>
-          <strong>${escapeHtml(task.title || "Untitled card")}</strong>
-        </div>
         <div class="dashboard-developer-detail-note-panel">
           <span class="dashboard-kicker">Note</span>
           <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No note added yet.")}</p>
@@ -4406,23 +4457,27 @@ function initializeDeveloperWorkspace() {
       </div>
       ${attachmentMarkup}
       <div class="dashboard-developer-detail-grid">
-        <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-toggle">
-          <summary>
-            <span>Details</span>
-            <span class="dashboard-chip dashboard-chip-muted">Show</span>
-          </summary>
+        <section class="dashboard-developer-detail-block">
+          <div class="dashboard-developer-detail-section-heading dashboard-developer-detail-section-heading-compact">
+            <div>
+              <span class="dashboard-kicker">Details</span>
+              <strong>Ownership and timing</strong>
+            </div>
+          </div>
           <dl>
             <div><dt>Owner</dt><dd>${escapeHtml(task.owner || "Unassigned")}</dd></div>
             <div><dt>Created by</dt><dd>${escapeHtml(creator?.actorName || getActorName())}</dd></div>
             <div><dt>Created at</dt><dd>${escapeHtml(toDateLabel(task.createdAt || creator?.createdAt || ""))}</dd></div>
             <div><dt>Updated at</dt><dd>${escapeHtml(toDateLabel(task.updatedAt || ""))}</dd></div>
           </dl>
-        </details>
-        <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-activity-toggle">
-          <summary>
-            <span>Activity</span>
-            <span class="dashboard-chip dashboard-chip-muted">${escapeHtml(String(activity.length || 0))}</span>
-          </summary>
+        </section>
+        <section class="dashboard-developer-detail-block">
+          <div class="dashboard-developer-detail-section-heading dashboard-developer-detail-section-heading-compact">
+            <div>
+              <span class="dashboard-kicker">Activity</span>
+              <strong>${escapeHtml(String(activity.length || 0))} update${activity.length === 1 ? "" : "s"}</strong>
+            </div>
+          </div>
           ${activity.length ? `
             <ol class="dashboard-developer-detail-activity">
               ${activity.map(entry => `
@@ -4438,7 +4493,7 @@ function initializeDeveloperWorkspace() {
               <p>This card has not been updated since it was created.</p>
             </div>
           `}
-        </details>
+        </section>
       </div>
       <div class="dashboard-developer-detail-actions">
         <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>

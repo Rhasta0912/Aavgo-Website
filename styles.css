@@ -6593,7 +6593,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .dashboard-developer-detail-modal {
-  width: min(1160px, calc(100vw - 1.5rem));
+  width: min(1220px, calc(100vw - 1.5rem));
   max-height: min(92vh, 980px);
   overflow: auto;
 }
@@ -6605,7 +6605,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-detail-hero {
   display: grid;
-  gap: 0.95rem;
+  gap: 0.9rem;
   padding: 1.05rem;
   border-radius: 12px;
   border: 1px solid rgba(216, 176, 95, 0.18);
@@ -6633,7 +6633,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-developer-detail-note-panel {
   display: grid;
   gap: 0.45rem;
-  padding: 0.95rem 1rem;
+  padding: 1rem 1.05rem;
   border-radius: 10px;
   border: 1px solid rgba(216, 176, 95, 0.14);
   background: rgba(11, 13, 18, 0.38);
@@ -6649,7 +6649,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-developer-detail-media {
   display: grid;
   gap: 0.9rem;
-  padding: 1rem;
+  padding: 1.05rem;
   border-radius: 12px;
   border: 1px solid rgba(91, 141, 206, 0.2);
   background:
@@ -6661,6 +6661,10 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.dashboard-developer-detail-section-heading-compact {
+  align-items: start;
 }
 
 .dashboard-developer-detail-section-heading div {
@@ -6681,7 +6685,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-detail-screenshot-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 0.8rem;
 }
 
@@ -6710,11 +6714,11 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-detail-screenshot img {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
+  aspect-ratio: 16 / 10;
+  object-fit: contain;
   border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.32);
 }
 
 .dashboard-developer-detail-screenshot span,
@@ -6748,6 +6752,28 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   text-decoration: none;
 }
 
+.dashboard-developer-detail-empty-media {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+  padding: 1.1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(216, 176, 95, 0.2);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dashboard-developer-detail-empty-media strong {
+  color: #fff8ef;
+  font-size: 1rem;
+}
+
+.dashboard-developer-detail-empty-media p {
+  max-width: 58rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.64);
+  line-height: 1.65;
+}
+
 .dashboard-developer-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -6757,8 +6783,9 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-developer-detail-block,
 .dashboard-developer-detail-block-wide {
   display: grid;
-  gap: 0.6rem;
-  padding: 0.78rem 0.9rem;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 1rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.025);
@@ -6771,12 +6798,12 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-developer-detail-block dl {
   margin: 0;
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
 }
 
 .dashboard-developer-detail-block dl div {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
+  grid-template-columns: 120px minmax(0, 1fr);
   gap: 0.65rem;
   align-items: start;
 }
@@ -6831,16 +6858,20 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-detail-activity {
   margin: 0;
-  padding: 0.72rem 0.8rem 0.82rem 1rem;
+  padding: 0;
   display: grid;
-  gap: 0.38rem;
+  gap: 0.55rem;
   max-height: 190px;
   overflow: auto;
+  list-style: none;
 }
 
 .dashboard-developer-detail-activity li {
   display: grid;
-  gap: 0.12rem;
+  gap: 0.16rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .dashboard-developer-detail-activity li strong {
