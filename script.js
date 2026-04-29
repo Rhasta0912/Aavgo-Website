@@ -3723,6 +3723,7 @@ function initializeDeveloperWorkspace() {
   let boardSyncInFlight = false;
   let boardRefreshTimer = null;
   let attachmentPreviewSeed = [];
+  let pastedAttachmentFiles = [];
   let attachmentPreviewUrls = [];
   const shortDateFormatter = new Intl.DateTimeFormat([], { month: "short", day: "numeric", year: "numeric" });
   const currentUser = {
@@ -3866,7 +3867,7 @@ function initializeDeveloperWorkspace() {
     clearAttachmentPreviewUrls();
     const existingAttachments = Array.isArray(attachmentPreviewSeed) ? attachmentPreviewSeed : [];
     const selectedFiles = Array.from(fields.attachments?.files || []);
-    const selectedAttachments = selectedFiles.map(file => {
+    const selectedAttachments = [...selectedFiles, ...pastedAttachmentFiles].map(file => {
       const isImage = String(file.type || "").toLowerCase().startsWith("image/");
       const previewUrl = isImage ? URL.createObjectURL(file) : "";
       if (previewUrl) {
@@ -3876,13 +3877,14 @@ function initializeDeveloperWorkspace() {
         name: file.name,
         type: file.type || "application/octet-stream",
         size: file.size || 0,
-        previewUrl
+        previewUrl,
+        sourceLabel: file.__aavgoPasted ? "Pasted now" : "Selected now"
       };
     });
     const renderEntry = (item, isExisting = false) => {
       const sizeLabel = attachmentSizeLabel(item.size || 0);
       const fileName = escapeHtml(item.name || "attachment");
-      const typeLabel = escapeHtml(isExisting ? "Already attached" : "Selected now");
+      const typeLabel = escapeHtml(isExisting ? "Already attached" : (item.sourceLabel || "Selected now"));
       const previewUrl = String(item.previewUrl || item.dataUrl || "").trim();
       const preview = previewUrl ? `<div class="dashboard-developer-attachment-thumb" style="background-image:url('${escapeAttr(previewUrl)}')"></div>` : `<div class="dashboard-developer-attachment-thumb dashboard-developer-attachment-thumb-file">${escapeHtml(String(item.name || "file").slice(0, 2).toUpperCase())}</div>`;
       if (previewUrl) {
@@ -3933,7 +3935,7 @@ function initializeDeveloperWorkspace() {
       fields.attachmentsPreview.innerHTML = `
         <div class="dashboard-developer-attachment-preview-empty">
           <strong>No attachments yet.</strong>
-          <p>PNG screenshots and supporting files will appear here once selected.</p>
+          <p>Paste a screenshot here, or choose files from your device.</p>
         </div>
       `;
       return;
@@ -4312,6 +4314,7 @@ function initializeDeveloperWorkspace() {
     if (fields.status) fields.status.value = STATUS_ORDER.includes(status) ? status : "To Do";
     if (fields.notes) fields.notes.value = "";
     if (fields.attachments) fields.attachments.value = "";
+    pastedAttachmentFiles = [];
     attachmentPreviewSeed = [];
     renderAttachmentPreview();
     aavgoCloseAllDatePickers();
@@ -4320,6 +4323,7 @@ function initializeDeveloperWorkspace() {
   const closeModal = () => {
     aavgoCloseAllDatePickers();
     attachmentPreviewSeed = [];
+    pastedAttachmentFiles = [];
     clearAttachmentPreviewUrls();
     renderAttachmentPreview();
     modal.hidden = true;
@@ -5012,9 +5016,36 @@ function initializeDeveloperWorkspace() {
   });
 
   const readAttachments = async () => {
-    const files = Array.from(fields.attachments?.files || []);
+    const files = [...Array.from(fields.attachments?.files || []), ...pastedAttachmentFiles];
     if (!files.length) return [];
     return Promise.all(files.map(readFileAsDataUrl));
+  };
+
+  const createPastedImageFile = (blob, index = 0) => {
+    const extension = String(blob?.type || "image/png").split("/").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() || "png";
+    const stamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+    const name = `pasted-image-${stamp}${index ? `-${index + 1}` : ""}.${extension}`;
+    const file = typeof File === "function"
+      ? new File([blob], name, { type: blob.type || "image/png", lastModified: Date.now() })
+      : Object.assign(blob, { name, lastModified: Date.now() });
+    file.__aavgoPasted = true;
+    return file;
+  };
+
+  const handleAttachmentPaste = (event) => {
+    if (!modal || modal.hidden) return;
+    const imageFiles = Array.from(event.clipboardData?.items || [])
+      .filter(item => item.kind === "file" && String(item.type || "").toLowerCase().startsWith("image/"))
+      .map(item => item.getAsFile())
+      .filter(Boolean)
+      .map(createPastedImageFile);
+
+    if (!imageFiles.length) return;
+
+    event.preventDefault();
+    pastedAttachmentFiles = [...pastedAttachmentFiles, ...imageFiles];
+    renderAttachmentPreview();
+    setFeedback(`${imageFiles.length} pasted image${imageFiles.length === 1 ? "" : "s"} added to this card.`, false);
   };
 
   if (fields.attachments) {
@@ -5022,6 +5053,7 @@ function initializeDeveloperWorkspace() {
       renderAttachmentPreview();
     });
   }
+  form.addEventListener("paste", handleAttachmentPaste);
 
   const submitTask = async () => {
     aavgoCloseAllDatePickers();

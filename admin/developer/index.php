@@ -398,7 +398,7 @@ $csrfToken = aavgo_csrf_token();
             <label class="dashboard-control-field dashboard-control-field-wide dashboard-developer-attachment-dropzone">
               <span>Attachments</span>
               <input id="developer-task-attachments" type="file" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.json,image/*,application/pdf,text/plain">
-              <small class="dashboard-control-hint">Upload screenshots or files that support the note. PNGs will preview here before you save.</small>
+              <small class="dashboard-control-hint">Paste a screenshot directly into this form, or upload screenshots/files that support the note.</small>
               <div class="dashboard-developer-attachments-preview" id="developer-task-attachments-preview" aria-live="polite"></div>
             </label>
           </div>
