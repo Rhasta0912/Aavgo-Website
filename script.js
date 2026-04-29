@@ -4346,6 +4346,47 @@ function initializeDeveloperWorkspace() {
     const attachments = Array.isArray(task.attachments) ? task.attachments : [];
     const isArchived = loadHistory().some(item => String(item.id || "") === String(task.id || ""));
     const creator = activity.find(entry => entry.type === "created") || activity[activity.length - 1] || null;
+    const attachmentMarkup = attachments.length ? `
+      <section class="dashboard-developer-detail-media">
+        <div class="dashboard-developer-detail-section-heading">
+          <div>
+            <span class="dashboard-kicker">Screenshots</span>
+            <strong>${escapeHtml(String(attachments.length))} attachment${attachments.length === 1 ? "" : "s"}</strong>
+          </div>
+          <span>Click a screenshot to view fullscreen</span>
+        </div>
+        <div class="dashboard-developer-detail-screenshot-grid">
+          ${attachments.map(attachment => {
+            const name = String(attachment.name || "Attachment").trim() || "Attachment";
+            const size = `${Math.max(1, Math.ceil((attachment.size || 0) / 1024))} KB`;
+            if (isPreviewableAttachment(attachment)) {
+              return `
+                <button
+                  type="button"
+                  class="dashboard-developer-detail-screenshot"
+                  data-attachment-view="${escapeAttr(attachment.dataUrl)}"
+                  data-attachment-name="${escapeAttr(name)}"
+                  data-attachment-type="${escapeAttr(attachment.type || "image")}"
+                  aria-label="Open ${escapeAttr(name)} fullscreen"
+                >
+                  <img src="${escapeAttr(attachment.dataUrl)}" alt="${escapeAttr(name)}" loading="lazy">
+                  <span>
+                    <strong>${escapeHtml(name)}</strong>
+                    <small>${escapeHtml(size)} - Open fullscreen</small>
+                  </span>
+                </button>
+              `;
+            }
+            return `
+              <a class="dashboard-developer-detail-file" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(name)}">
+                <strong>${escapeHtml(name)}</strong>
+                <span>${escapeHtml(size)}</span>
+              </a>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    ` : "";
     detailTitle.textContent = task.title || "Untitled card";
     detailBody.innerHTML = `
       <div class="dashboard-developer-detail-hero">
@@ -4363,6 +4404,7 @@ function initializeDeveloperWorkspace() {
           <p class="dashboard-developer-detail-note">${escapeHtml(task.notes || "No note added yet.")}</p>
         </div>
       </div>
+      ${attachmentMarkup}
       <div class="dashboard-developer-detail-grid">
         <details class="dashboard-developer-detail-block dashboard-developer-detail-block-wide dashboard-developer-detail-toggle">
           <summary>
@@ -4398,33 +4440,6 @@ function initializeDeveloperWorkspace() {
           `}
         </details>
       </div>
-      ${attachments.length ? `
-        <article class="dashboard-developer-detail-block dashboard-developer-detail-block-wide">
-          <p class="dashboard-kicker">Attachments</p>
-          <div class="dashboard-developer-attachments">
-            ${attachments.map(attachment => `
-              ${isPreviewableAttachment(attachment) ? `
-                <button
-                  type="button"
-                  class="dashboard-developer-attachment dashboard-developer-attachment-previewable"
-                  data-attachment-view="${escapeAttr(attachment.dataUrl)}"
-                  data-attachment-name="${escapeAttr(attachment.name)}"
-                  data-attachment-type="${escapeAttr(attachment.type || "image")}"
-                  aria-label="Open ${escapeAttr(attachment.name)}"
-                >
-                  <strong>${escapeHtml(attachment.name)}</strong>
-                  <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
-                </button>
-              ` : `
-                <a class="dashboard-developer-attachment" href="${escapeAttr(attachment.dataUrl)}" download="${escapeAttr(attachment.name)}">
-                  <strong>${escapeHtml(attachment.name)}</strong>
-                  <span>${escapeHtml(Math.max(1, Math.ceil((attachment.size || 0) / 1024)))} KB</span>
-                </a>
-              `}
-            `).join("")}
-          </div>
-        </article>
-      ` : ""}
       <div class="dashboard-developer-detail-actions">
         <button type="button" class="button button-secondary dashboard-inline-button dashboard-inline-button-small" data-developer-task-detail-edit="${escapeHtml(task.id)}">Edit</button>
         ${isArchived ? `
