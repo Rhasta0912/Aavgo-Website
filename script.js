@@ -1260,6 +1260,46 @@ function initializeCustomDatePickers() {
     const emptyLabel = String(wrapper.dataset.emptyLabel || "Choose a date").trim() || "Choose a date";
     const valuePrefix = String(wrapper.dataset.valuePrefix || "Date").trim() || "Date";
 
+    const resetPopoverPosition = () => {
+      popover.style.position = "";
+      popover.style.top = "";
+      popover.style.right = "";
+      popover.style.bottom = "";
+      popover.style.left = "";
+      popover.style.width = "";
+      popover.style.maxHeight = "";
+    };
+
+    const positionPopover = () => {
+      if (popover.hidden) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const margin = 16;
+      const gap = 8;
+      const width = Math.min(416, Math.max(240, viewportWidth - (margin * 2)));
+      const left = Math.min(
+        Math.max(triggerRect.left, margin),
+        Math.max(margin, viewportWidth - width - margin)
+      );
+      const spaceBelow = viewportHeight - triggerRect.bottom - margin - gap;
+      const spaceAbove = triggerRect.top - margin - gap;
+      const openAbove = spaceBelow < 280 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(220, Math.min(520, openAbove ? spaceAbove : spaceBelow));
+      const top = openAbove
+        ? Math.max(margin, triggerRect.top - gap - maxHeight)
+        : Math.min(triggerRect.bottom + gap, viewportHeight - margin);
+
+      popover.style.position = "fixed";
+      popover.style.left = `${Math.round(left)}px`;
+      popover.style.right = "auto";
+      popover.style.top = `${Math.round(top)}px`;
+      popover.style.bottom = "auto";
+      popover.style.width = `${Math.round(width)}px`;
+      popover.style.maxHeight = `${Math.round(maxHeight)}px`;
+    };
+
     const syncTrigger = () => {
       const label = (() => {
         const parsed = parseLocalDate(input.value);
@@ -1310,6 +1350,7 @@ function initializeCustomDatePickers() {
     const closePicker = () => {
       if (popover.hidden) return;
       popover.hidden = true;
+      resetPopoverPosition();
       syncTrigger();
     };
 
@@ -1319,6 +1360,7 @@ function initializeCustomDatePickers() {
       popover.hidden = false;
       syncTrigger();
       renderCalendar();
+      positionPopover();
     };
 
     const togglePicker = () => {
@@ -1333,6 +1375,7 @@ function initializeCustomDatePickers() {
       aavgoDispatchInputChange(input, value);
       syncTrigger();
       renderCalendar(value);
+      positionPopover();
       if (close) {
         closePicker();
       }
@@ -1391,12 +1434,17 @@ function initializeCustomDatePickers() {
     input.addEventListener("change", () => {
       syncTrigger();
       renderCalendar(input.value || "");
+      positionPopover();
     });
 
     input.addEventListener("input", () => {
       syncTrigger();
       renderCalendar(input.value || "");
+      positionPopover();
     });
+
+    window.addEventListener("resize", positionPopover);
+    window.addEventListener("scroll", positionPopover, true);
 
     document.addEventListener("keydown", event => {
       if (event.key === "Escape" && !popover.hidden) {
