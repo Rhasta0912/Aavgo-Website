@@ -5819,7 +5819,8 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   padding: 0.72rem 0.55rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
-  height: 4.1rem;
+  height: auto;
+  min-height: 4.1rem;
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
@@ -5830,6 +5831,19 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
+}
+
+.dashboard-hours-sheet tbody td:nth-child(2) .dashboard-staff-cell strong,
+.dashboard-hours-sheet tbody td:nth-child(2) .dashboard-staff-cell span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.22;
+}
+
+.dashboard-hours-sheet tbody td:nth-child(2) .dashboard-staff-cell {
+  gap: 0.18rem;
 }
 
 .dashboard-hours-cell-copy {
@@ -5901,20 +5915,19 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-hours-sheet tbody td:nth-child(4),
 .dashboard-hours-sheet tbody td:nth-child(5) {
   white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .dashboard-hours-sheet tbody td:nth-child(3) .dashboard-hours-cell-copy,
 .dashboard-hours-sheet tbody td:nth-child(4) .dashboard-hours-cell-copy,
 .dashboard-hours-sheet tbody td:nth-child(5) .dashboard-hours-cell-copy {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  display: block;
+  overflow: visible;
+  text-overflow: clip;
   white-space: normal;
-  line-height: 1.25;
-}
-
-.dashboard-hours-sheet tbody td:nth-child(5) .dashboard-hours-cell-copy {
-  -webkit-line-clamp: 3;
+  overflow-wrap: anywhere;
+  line-height: 1.24;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
