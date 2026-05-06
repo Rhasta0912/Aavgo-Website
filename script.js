@@ -937,6 +937,15 @@ function resolveFullHoursShiftDate(day, monthValue = "") {
   return `${year}-${String(month).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
 }
 
+function getCurrentFullHoursDay(monthValue = "") {
+  const referenceDate = getFullHoursMonthReferenceDate();
+  const selectedMonth = parseFullHoursMonthValue(monthValue);
+  if (selectedMonth !== referenceDate.getMonth() + 1) {
+    return null;
+  }
+  return referenceDate.getDate();
+}
+
 function aggregateHoursSummary(people) {
   return (Array.isArray(people) ? people : []).reduce((acc, person) => {
     acc.totalPeople += 1;
@@ -2024,8 +2033,10 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
   }
 
   const selectedIds = new Set(getSelectedBulkDiscordIds());
+  const currentFullHoursDay = getCurrentFullHoursDay(monthValue);
   const rows = [];
   people.forEach(person => {
+    const activeNow = Boolean(person?.activeNow);
     const selectedMonthDays = getSelectedFullHoursMonthDays(person, monthValue);
     const dayMap = new Map(
       selectedMonthDays
@@ -2034,7 +2045,7 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
     const monthTotals = getSelectedFullHoursMonthTotals(person, monthValue);
     const isSelected = selectedIds.has(String(person?.discordId || ""));
     rows.push(`
-      <tr class="${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
+      <tr class="${activeNow ? "is-live" : ""} ${isSelected ? "is-selected" : ""}" data-full-hours-row="${escapeHtml(person?.discordId || "")}">
         <td>
           <label class="dashboard-checkbox">
             <input type="checkbox" data-full-hours-select="${escapeHtml(person?.discordId || "")}" ${isSelected ? "checked" : ""}>
@@ -2052,9 +2063,14 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
         <td><div class="dashboard-hours-cell-copy">${escapeHtml(getPrimaryHotelLabel(person))}</div></td>
         ${dayNumbers.map(day => {
           const hours = Number(dayMap.get(day) || 0);
-          const className = hours > 0 ? "dashboard-hours-cell has-hours" : "dashboard-hours-cell";
+          const isOnShift = activeNow && currentFullHoursDay === day;
+          const className = [
+            "dashboard-hours-cell",
+            hours > 0 ? "has-hours" : "",
+            isOnShift ? "is-on-shift" : ""
+          ].filter(Boolean).join(" ");
           return `<td class="${className}" data-day="${day}" data-hours="${hours}" title="Double-click to edit hours">
-            <div class="dashboard-hours-cell-copy">${hours > 0 ? escapeHtml(formatHours(hours)) : ""}</div>
+            <div class="dashboard-hours-cell-copy">${isOnShift ? "On-Shift" : hours > 0 ? escapeHtml(formatHours(hours)) : ""}</div>
           </td>`;
         }).join("")}
         <td><div class="dashboard-hours-cell-copy">${formatHours(monthTotals.firstHalf)}</div></td>

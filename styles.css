@@ -5927,9 +5927,25 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   background: rgba(216, 176, 95, 0.08);
 }
 
+.dashboard-hours-sheet tbody tr.is-live {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.dashboard-hours-sheet tbody tr.is-live:hover {
+  background: rgba(239, 68, 68, 0.11);
+}
+
+.dashboard-hours-sheet tbody tr.is-live td {
+  background: rgba(239, 68, 68, 0.045);
+}
+
 .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
 .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+2) {
   background: #141821;
+}
+
+.dashboard-hours-sheet tbody tr.is-live td:nth-child(-n+2) {
+  background: #211316;
 }
 
 .dashboard-hours-sheet tbody td.dashboard-hours-cell.has-hours {
@@ -5938,6 +5954,20 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
     rgba(255, 255, 255, 0.018);
   color: #fff8ef;
   font-weight: 800;
+}
+
+.dashboard-hours-sheet tbody tr.is-live td.dashboard-hours-cell.has-hours {
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.16) 0%, rgba(239, 68, 68, 0.055) 100%),
+    rgba(255, 255, 255, 0.018);
+}
+
+.dashboard-hours-sheet tbody td.dashboard-hours-cell.is-on-shift {
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.08) 100%),
+    rgba(255, 255, 255, 0.02);
+  color: #ffd6d1;
+  font-weight: 900;
 }
 
 .dashboard-theme-toggle {
@@ -7550,9 +7580,21 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   background: rgba(191, 90, 50, 0.08);
 }
 
+.theme-light .dashboard-hours-sheet tbody tr.is-live {
+  background: rgba(191, 54, 50, 0.11);
+}
+
+.theme-light .dashboard-hours-sheet tbody tr.is-live:hover {
+  background: rgba(191, 54, 50, 0.15);
+}
+
 .theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
 .theme-light .dashboard-hours-sheet tbody tr.is-selected td:nth-child(-n+2) {
   background: #e5ddcf;
+}
+
+.theme-light .dashboard-hours-sheet tbody tr.is-live td:nth-child(-n+2) {
+  background: #ead2cf;
 }
 
 .theme-light .dashboard-hours-cell {
@@ -7561,6 +7603,13 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .theme-light .dashboard-hours-cell.has-hours {
   color: #172234;
+}
+
+.theme-light .dashboard-hours-cell.is-on-shift {
+  background:
+    linear-gradient(180deg, rgba(191, 54, 50, 0.16) 0%, rgba(191, 54, 50, 0.07) 100%),
+    rgba(255, 249, 240, 0.76);
+  color: #8f1d1d;
 }
 
 .theme-light .dashboard-sidebar *,
@@ -8438,6 +8487,27 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
     linear-gradient(180deg, rgba(191, 90, 50, 0.1) 0%, rgba(216, 176, 95, 0.11) 100%),
     rgba(250, 245, 237, 0.98);
   color: #18202c;
+}
+
+.theme-light .dashboard-hours-sheet tbody tr.is-live td {
+  background: rgba(191, 54, 50, 0.095);
+}
+
+.theme-light .dashboard-hours-sheet tbody tr.is-live td:nth-child(-n+2) {
+  background: #ead2cf;
+}
+
+.theme-light .dashboard-hours-sheet tbody tr.is-live td.dashboard-hours-cell.has-hours {
+  background:
+    linear-gradient(180deg, rgba(191, 54, 50, 0.16) 0%, rgba(191, 54, 50, 0.07) 100%),
+    rgba(250, 245, 237, 0.98);
+}
+
+.theme-light .dashboard-hours-sheet tbody td.dashboard-hours-cell.is-on-shift {
+  background:
+    linear-gradient(180deg, rgba(191, 54, 50, 0.19) 0%, rgba(191, 54, 50, 0.08) 100%),
+    rgba(250, 245, 237, 0.98);
+  color: #8f1d1d;
 }
 
 .theme-light .dashboard-hours-sheet tbody tr:hover td:nth-child(-n+2),
