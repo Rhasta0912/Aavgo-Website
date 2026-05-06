@@ -1994,9 +1994,9 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
   cols.innerHTML = `
       <col style="width:56px">
       <col style="width:185px">
-      <col style="width:82px">
-      <col style="width:94px">
-      <col style="width:124px">
+      <col style="width:108px">
+      <col style="width:122px">
+      <col style="width:168px">
       ${dayNumbers.map(() => `<col style="width:96px">`).join("")}
       <col style="width:108px">
       <col style="width:108px">

@@ -5869,9 +5869,9 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   position: static;
   left: auto;
   z-index: 1;
-  width: 82px;
-  min-width: 82px;
-  max-width: 82px;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
   background: transparent;
 }
 
@@ -5880,9 +5880,9 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   position: static;
   left: auto;
   z-index: 1;
-  width: 94px;
-  min-width: 94px;
-  max-width: 94px;
+  width: 122px;
+  min-width: 122px;
+  max-width: 122px;
   background: transparent;
 }
 
@@ -5891,10 +5891,26 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   position: static;
   left: auto;
   z-index: 1;
-  width: 124px;
-  min-width: 124px;
-  max-width: 124px;
+  width: 168px;
+  min-width: 168px;
+  max-width: 168px;
   background: transparent;
+}
+
+.dashboard-hours-sheet tbody td:nth-child(3),
+.dashboard-hours-sheet tbody td:nth-child(4),
+.dashboard-hours-sheet tbody td:nth-child(5) {
+  white-space: normal;
+}
+
+.dashboard-hours-sheet tbody td:nth-child(3) .dashboard-hours-cell-copy,
+.dashboard-hours-sheet tbody td:nth-child(4) .dashboard-hours-cell-copy,
+.dashboard-hours-sheet tbody td:nth-child(5) .dashboard-hours-cell-copy {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
