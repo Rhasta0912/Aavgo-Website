@@ -5819,7 +5819,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   padding: 0.72rem 0.55rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
-  height: 3.05rem;
+  height: 4.1rem;
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
@@ -5880,9 +5880,9 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   position: static;
   left: auto;
   z-index: 1;
-  width: 122px;
-  min-width: 122px;
-  max-width: 122px;
+  width: 144px;
+  min-width: 144px;
+  max-width: 144px;
   background: transparent;
 }
 
@@ -5891,9 +5891,9 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   position: static;
   left: auto;
   z-index: 1;
-  width: 168px;
-  min-width: 168px;
-  max-width: 168px;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
   background: transparent;
 }
 
@@ -5911,6 +5911,10 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   -webkit-box-orient: vertical;
   white-space: normal;
   line-height: 1.25;
+}
+
+.dashboard-hours-sheet tbody td:nth-child(5) .dashboard-hours-cell-copy {
+  -webkit-line-clamp: 3;
 }
 
 .dashboard-hours-sheet thead th:nth-child(n+6),
