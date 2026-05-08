@@ -686,8 +686,8 @@ $csrfToken = aavgo_csrf_token();
     <div class="dashboard-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="hours-editor-modal-title">
       <div class="dashboard-panel-heading">
         <div>
-          <p class="dashboard-kicker">Manual edit lane</p>
-          <h2 id="hours-editor-modal-title">Edit a specific day clearly.</h2>
+          <p class="dashboard-kicker">Emergency shift control</p>
+          <h2 id="hours-editor-modal-title">Log staff in or out from the website.</h2>
         </div>
         <button class="dashboard-modal-close" type="button" data-hours-modal-close aria-label="Close hours editor">Close</button>
       </div>
@@ -740,20 +740,17 @@ $csrfToken = aavgo_csrf_token();
               <input id="hours-editor-logout" type="time">
             </label>
             <label class="dashboard-control-field dashboard-control-field-wide">
-              <span>Hotel</span>
-              <select id="hours-editor-hotel">
-                <option value="">Use linked hotel</option>
-              </select>
-            </label>
-            <label class="dashboard-control-field dashboard-control-field-wide">
               <span>Reason</span>
-              <input id="hours-editor-reason" type="text" maxlength="140" placeholder="Why are you editing this shift?">
+              <input id="hours-editor-reason" type="text" maxlength="140" placeholder="Example: Discord outage manual recovery">
             </label>
           </div>
 
           <div class="dashboard-control-row">
-            <button class="button button-primary dashboard-inline-button" id="hours-editor-add-submit" type="button">Save manual shift</button>
+            <button class="button button-primary dashboard-inline-button" id="hours-editor-login-submit" type="button">Mark logged in</button>
+            <button class="button button-secondary dashboard-inline-button" id="hours-editor-logout-submit" type="button">Log out at selected time</button>
+            <button class="button button-secondary dashboard-inline-button" id="hours-editor-add-submit" type="button">Add completed shift</button>
           </div>
+          <p class="dashboard-panel-copy">Hotel is inferred automatically from the agent profile or latest session. Use Login for the start time and Logout for the end time.</p>
         </section>
 
         <section class="dashboard-hours-modal-card">

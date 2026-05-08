@@ -1534,6 +1534,35 @@ function hoursToClock(hours) {
   return `${normalizedHours}:${normalizedMinutes}`;
 }
 
+function getCurrentDateInputValue() {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function getCurrentClockValue() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildLocalClockIso(shiftDate, clockTime) {
+  const dateValue = String(shiftDate || "").trim();
+  const timeValue = String(clockTime || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue) || !/^\d{2}:\d{2}$/.test(timeValue)) {
+    return "";
+  }
+
+  const localDate = new Date(`${dateValue}T${timeValue}:00`);
+  if (Number.isNaN(localDate.getTime())) {
+    return "";
+  }
+
+  return localDate.toISOString();
+}
+
 async function quickSetCellHours(person, shiftDate, currentHours, nextHours) {
   const safeNext = roundHoursStep(nextHours);
   const safeCurrent = roundHoursStep(currentHours);
@@ -1772,8 +1801,9 @@ function setActionControlsDisabled(disabled) {
     "hours-editor-mode",
     "hours-editor-login",
     "hours-editor-logout",
-    "hours-editor-hotel",
     "hours-editor-reason",
+    "hours-editor-login-submit",
+    "hours-editor-logout-submit",
     "hours-editor-add-submit",
     "hours-remove-date",
     "hours-remove-hours",
@@ -2398,7 +2428,7 @@ function renderAdjustmentLog(person) {
         <span class="dashboard-chip">${escapeHtml(entry?.mode === "training" ? "Training" : "Live shift")}</span>
         <strong>${escapeHtml(entry?.shiftDate || "")}</strong>
       </div>
-      <p>${escapeHtml(entry?.hotelLabel || "N/A")} &middot; ${escapeHtml(entry?.loginTime || "--:--")} - ${escapeHtml(entry?.logoutTime || "--:--")} &middot; ${formatHours(entry?.hours)}</p>
+      <p>${escapeHtml(entry?.loginTime || "--:--")} - ${escapeHtml(entry?.logoutTime || "--:--")} &middot; ${formatHours(entry?.hours)}</p>
       <span>${escapeHtml(entry?.reason || "Manual adjustment")}</span>
     </article>
   `).join("");
@@ -2419,19 +2449,15 @@ function syncHoursEditorState(person) {
     return;
   }
 
-  const editorHotel = document.getElementById("hours-editor-hotel");
-  if (editorHotel && !editorHotel.value) {
-    editorHotel.value = getPrimaryHotelId(person);
-  }
-
   const editorDate = document.getElementById("hours-editor-date");
   if (editorDate && !editorDate.value) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    aavgoDispatchInputChange(editorDate, `${year}-${month}-${day}`);
+    aavgoDispatchInputChange(editorDate, getCurrentDateInputValue());
   }
+
+  const editorLogin = document.getElementById("hours-editor-login");
+  const editorLogout = document.getElementById("hours-editor-logout");
+  if (editorLogin && !editorLogin.value) editorLogin.value = getCurrentClockValue();
+  if (editorLogout && !editorLogout.value) editorLogout.value = getCurrentClockValue();
 
   const removeDate = document.getElementById("hours-remove-date");
   if (removeDate && !removeDate.value && editorDate?.value) {
@@ -2464,7 +2490,6 @@ function renderSelectedStaff(person) {
   const meta = getAdminMeta();
   syncSelectOptions("hours-action-team-select", meta.teams || [], "Choose a team", person?.team || "");
   syncSelectOptions("hours-action-hotel-select", meta.hotels || [], "Choose a hotel", getPrimaryHotelId(person));
-  syncSelectOptions("hours-editor-hotel", meta.hotels || [], "Use linked hotel", getPrimaryHotelId(person));
 }
 
 function normalizeAdminPayload(payload) {
@@ -2578,7 +2603,6 @@ function applyAdminBoardPayload(payload) {
   syncSelectOptions("hours-hotel-force-select", meta.hotels || [], "Choose a hotel", document.getElementById("hours-hotel-force-select")?.value || "");
   syncSelectOptions("hours-bulk-team-select", meta.teams || [], "Choose a team", document.getElementById("hours-bulk-team-select")?.value || "");
   syncSelectOptions("hours-bulk-hotel-select", meta.hotels || [], "Choose a hotel", document.getElementById("hours-bulk-hotel-select")?.value || "");
-  syncSelectOptions("hours-editor-hotel", meta.hotels || [], "Use linked hotel", document.getElementById("hours-editor-hotel")?.value || "");
 
   const visiblePeople = filterAdminPeople(allPeople);
   const monthOptions = deriveFullHoursMonthOptions();
@@ -3140,20 +3164,73 @@ function initializeAdminBoard() {
     sendAdminCommand("bulk_force_logout_agents", { discordIds: selected, confirmation }, { feedback: "bulk" });
   });
 
+  document.getElementById("hours-editor-login-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const shiftDate = String(document.getElementById("hours-editor-date")?.value || "").trim();
+    const loginTime = String(document.getElementById("hours-editor-login")?.value || "").trim();
+    const mode = String(document.getElementById("hours-editor-mode")?.value || "shift").trim();
+    const reason = String(document.getElementById("hours-editor-reason")?.value || "").trim();
+    const loginTimeIso = buildLocalClockIso(shiftDate, loginTime);
+
+    if (!person) {
+      setEditorFeedback("Select a staff row before marking login.", true);
+      return;
+    }
+    if (!shiftDate || !loginTime || !loginTimeIso || !reason) {
+      setEditorFeedback("Fill in the date, login time, and reason before marking login.", true);
+      return;
+    }
+
+    sendAdminHoursAction("manual_login_agent", {
+      discordId: person.discordId,
+      shiftDate,
+      loginTime,
+      loginTimeIso,
+      mode,
+      reason
+    }, { feedback: "editor" });
+  });
+
+  document.getElementById("hours-editor-logout-submit")?.addEventListener("click", () => {
+    const person = findSelectedStaff();
+    const shiftDate = String(document.getElementById("hours-editor-date")?.value || "").trim();
+    const logoutTime = String(document.getElementById("hours-editor-logout")?.value || "").trim();
+    const reason = String(document.getElementById("hours-editor-reason")?.value || "").trim();
+    const logoutTimeIso = buildLocalClockIso(shiftDate, logoutTime);
+
+    if (!person) {
+      setEditorFeedback("Select a staff row before logging out.", true);
+      return;
+    }
+    if (!shiftDate || !logoutTime || !logoutTimeIso || !reason) {
+      setEditorFeedback("Fill in the date, logout time, and reason before logging out.", true);
+      return;
+    }
+
+    sendAdminHoursAction("manual_logout_agent", {
+      discordId: person.discordId,
+      shiftDate,
+      logoutTime,
+      logoutTimeIso,
+      reason
+    }, { feedback: "editor" });
+  });
+
   document.getElementById("hours-editor-add-submit")?.addEventListener("click", () => {
     const person = findSelectedStaff();
     const shiftDate = String(document.getElementById("hours-editor-date")?.value || "").trim();
     const loginTime = String(document.getElementById("hours-editor-login")?.value || "").trim();
     const logoutTime = String(document.getElementById("hours-editor-logout")?.value || "").trim();
     const mode = String(document.getElementById("hours-editor-mode")?.value || "shift").trim();
-    const hotelId = String(document.getElementById("hours-editor-hotel")?.value || "").trim();
     const reason = String(document.getElementById("hours-editor-reason")?.value || "").trim();
+    const loginTimeIso = buildLocalClockIso(shiftDate, loginTime);
+    const logoutTimeIso = buildLocalClockIso(shiftDate, logoutTime);
 
     if (!person) {
       setEditorFeedback("Select a staff row before adding hours.", true);
       return;
     }
-    if (!shiftDate || !loginTime || !logoutTime || !reason) {
+    if (!shiftDate || !loginTime || !logoutTime || !loginTimeIso || !logoutTimeIso || !reason) {
       setEditorFeedback("Fill in the date, login, logout, and reason before adding hours.", true);
       return;
     }
@@ -3163,8 +3240,9 @@ function initializeAdminBoard() {
       shiftDate,
       loginTime,
       logoutTime,
+      loginTimeIso,
+      logoutTimeIso,
       mode,
-      hotelId,
       reason
     }, { feedback: "editor" });
   });

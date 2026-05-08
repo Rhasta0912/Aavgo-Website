@@ -999,6 +999,8 @@ function aavgo_command_action_label(string $action): string
         'force_logout_agent' => 'Force logout (staff)',
         'force_logout_hotel' => 'Force logout (hotel)',
         'bulk_force_logout_agents' => 'Bulk force logout',
+        'manual_login_agent' => 'Manual login',
+        'manual_logout_agent' => 'Manual logout',
         'add_manual_hours' => 'Manual hours added',
         'remove_manual_hours' => 'Manual hours removed',
         'sync_all_roles' => 'Discord role resync',
@@ -1024,8 +1026,10 @@ function aavgo_command_target_label(array $command): string
         'force_logout_agent' => $displayName,
         'force_logout_hotel' => $hotelLabel,
         'bulk_force_logout_agents' => count($displayNames) . ' staff selected',
-        'add_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' · ' . $shiftDate : '')),
-        'remove_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' · ' . $shiftDate : '')),
+        'manual_login_agent' => trim($displayName . ($shiftDate !== '' ? ' - ' . $shiftDate : '')),
+        'manual_logout_agent' => trim($displayName . ($shiftDate !== '' ? ' - ' . $shiftDate : '')),
+        'add_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' - ' . $shiftDate : '')),
+        'remove_manual_hours' => trim($displayName . ($shiftDate !== '' ? ' - ' . $shiftDate : '')),
         default => $displayName !== '' ? $displayName : $hotelLabel,
     };
 }
