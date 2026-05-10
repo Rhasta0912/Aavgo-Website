@@ -3889,6 +3889,69 @@ function initializeDeveloperWorkspace() {
       '<option value="">Choose a developer</option>',
       ...options.map(name => `<option value="${escapeHtml(name)}"${name === selected ? " selected" : ""}>${escapeHtml(name)}</option>`)
     ].join("");
+    syncDeveloperFancySelect(fields.owner);
+  };
+  const syncDeveloperFancySelect = (select) => {
+    if (!select?.id) return;
+    const shell = select.closest(".dashboard-control-field")?.querySelector(`[data-fancy-select-for="${select.id}"]`);
+    if (!shell) return;
+    const value = String(select.value || "");
+    const selectedOption = Array.from(select.options || []).find(option => option.value === value) || select.options?.[0] || null;
+    const label = shell.querySelector("[data-fancy-select-label]");
+    const menu = shell.querySelector("[data-fancy-select-menu]");
+    if (label) label.textContent = selectedOption?.textContent || "Choose";
+    if (!menu) return;
+    menu.innerHTML = Array.from(select.options || []).map(option => `
+      <button
+        type="button"
+        class="dashboard-fancy-select-option${option.value === value ? " is-selected" : ""}"
+        data-fancy-select-value="${escapeHtml(option.value)}"
+      >${escapeHtml(option.textContent || option.value)}</button>
+    `).join("");
+  };
+  const closeDeveloperFancySelects = (except = null) => {
+    document.querySelectorAll(".dashboard-fancy-select.is-open").forEach(shell => {
+      if (except && shell === except) return;
+      shell.classList.remove("is-open");
+      shell.querySelector("[data-fancy-select-button]")?.setAttribute("aria-expanded", "false");
+    });
+  };
+  const enhanceDeveloperSelect = (select) => {
+    if (!select?.id || select.dataset.fancySelectReady === "true") return;
+    const field = select.closest(".dashboard-control-field");
+    if (!field) return;
+    select.dataset.fancySelectReady = "true";
+    select.classList.add("dashboard-native-select-hidden");
+    const shell = document.createElement("div");
+    shell.className = "dashboard-fancy-select";
+    shell.dataset.fancySelectFor = select.id;
+    shell.innerHTML = `
+      <button type="button" class="dashboard-fancy-select-button" data-fancy-select-button aria-haspopup="listbox" aria-expanded="false">
+        <span data-fancy-select-label>Choose</span>
+      </button>
+      <div class="dashboard-fancy-select-menu" data-fancy-select-menu role="listbox"></div>
+    `;
+    select.insertAdjacentElement("afterend", shell);
+    const button = shell.querySelector("[data-fancy-select-button]");
+    button?.addEventListener("click", () => {
+      const isOpen = shell.classList.contains("is-open");
+      closeDeveloperFancySelects(shell);
+      shell.classList.toggle("is-open", !isOpen);
+      button.setAttribute("aria-expanded", !isOpen ? "true" : "false");
+    });
+    shell.addEventListener("click", event => {
+      const option = event.target.closest("[data-fancy-select-value]");
+      if (!option) return;
+      select.value = option.getAttribute("data-fancy-select-value") || "";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncDeveloperFancySelect(select);
+      closeDeveloperFancySelects();
+    });
+    select.addEventListener("change", () => syncDeveloperFancySelect(select));
+    syncDeveloperFancySelect(select);
+  };
+  const enhanceDeveloperSelects = () => {
+    [fields.owner, fields.priority, fields.status].forEach(enhanceDeveloperSelect);
   };
   const boardBootstrap = (() => {
     const globalBoard = window.__AAVGO_DEVELOPER_BOARD__;
@@ -4196,7 +4259,7 @@ function initializeDeveloperWorkspace() {
     attachmentViewerTitle.textContent = String(attachment.name || "Preview").trim() || "Preview";
     attachmentViewerCaption.textContent = `${attachmentSizeLabel(attachment.size || 0)} · ${String(attachment.type || "image").trim() || "image"}`;
     attachmentViewerModal.hidden = false;
-    document.body.classList.add("dashboard-modal-open");
+    document.body.classList.add("dashboard-modal-open", "dashboard-attachment-viewer-open");
   };
 
   const closeAttachmentViewer = () => {
@@ -4209,7 +4272,12 @@ function initializeDeveloperWorkspace() {
     if (attachmentViewerCaption) {
       attachmentViewerCaption.textContent = "";
     }
-    document.body.classList.remove("dashboard-modal-open");
+    document.body.classList.remove("dashboard-attachment-viewer-open");
+    if (!modal?.hidden || !detailModal?.hidden) {
+      document.body.classList.add("dashboard-modal-open");
+    } else {
+      document.body.classList.remove("dashboard-modal-open");
+    }
   };
 
   const normalizeActivityEntry = (entry = {}) => ({
@@ -4570,12 +4638,14 @@ function initializeDeveloperWorkspace() {
     renderAttachmentPreview();
     modal.hidden = true;
     document.body.classList.remove("dashboard-modal-open");
+    closeDeveloperFancySelects();
   };
 
   const closeDetailModal = () => {
     if (!detailModal) return;
     detailModal.hidden = true;
     document.body.classList.remove("dashboard-modal-open");
+    closeDeveloperFancySelects();
     viewingTaskId = "";
   };
 
@@ -5327,6 +5397,15 @@ function initializeDeveloperWorkspace() {
       renderAttachmentPreview();
     });
   }
+  enhanceDeveloperSelects();
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".dashboard-fancy-select")) {
+      closeDeveloperFancySelects();
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeDeveloperFancySelects();
+  });
   form.addEventListener("paste", handleAttachmentPaste);
 
   const submitTask = async () => {

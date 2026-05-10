@@ -6592,30 +6592,55 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .dashboard-attachment-viewer {
-  z-index: 70;
+  z-index: 140;
+}
+
+.dashboard-attachment-viewer .dashboard-modal-backdrop {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(216, 176, 95, 0.12), transparent 28%),
+    rgba(3, 4, 7, 0.94);
+  backdrop-filter: blur(16px) saturate(1.1);
 }
 
 .dashboard-attachment-viewer-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   width: calc(100vw - 1rem);
+  min-height: calc(100vh - 1rem);
   max-height: calc(100vh - 1rem);
   margin: 0.5rem auto;
-  padding: 1rem;
-  background: rgba(6, 7, 10, 0.98);
+  padding: 1rem 1.1rem 1.1rem;
+  border-color: rgba(216, 176, 95, 0.16);
+  background:
+    radial-gradient(circle at 80% 10%, rgba(191, 90, 50, 0.12), transparent 26%),
+    linear-gradient(180deg, rgba(8, 9, 13, 0.99), rgba(4, 5, 8, 0.99));
+}
+
+.dashboard-attachment-viewer-dialog .dashboard-panel-heading {
+  margin: 0;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard-attachment-viewer-figure {
-  margin: 0.9rem 0 0;
+  min-height: 0;
+  margin: 1rem 0 0;
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 0.75rem;
 }
 
 .dashboard-attachment-viewer-figure img {
   width: 100%;
-  max-height: calc(100vh - 8.5rem);
+  height: 100%;
+  max-height: calc(100vh - 8rem);
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.38);
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.035) 50% 75%, transparent 75%),
+    rgba(0, 0, 0, 0.52);
+  background-size: 18px 18px;
 }
 
 .dashboard-attachment-viewer-figure figcaption {
@@ -7092,6 +7117,108 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   min-height: 12rem;
 }
 
+.dashboard-native-select-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.dashboard-fancy-select {
+  position: relative;
+}
+
+.dashboard-fancy-select-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.78rem 0.95rem;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(180deg, rgba(17, 20, 28, 0.94), rgba(9, 11, 17, 0.94));
+  color: #fff8ef;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.dashboard-fancy-select-button::after {
+  content: "";
+  width: 0.48rem;
+  height: 0.48rem;
+  border-right: 2px solid rgba(255, 248, 239, 0.78);
+  border-bottom: 2px solid rgba(255, 248, 239, 0.78);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 180ms ease;
+}
+
+.dashboard-fancy-select.is-open .dashboard-fancy-select-button {
+  border-color: rgba(216, 176, 95, 0.36);
+  background:
+    radial-gradient(circle at top left, rgba(216, 176, 95, 0.12), transparent 45%),
+    linear-gradient(180deg, rgba(22, 25, 33, 0.96), rgba(10, 12, 18, 0.96));
+}
+
+.dashboard-fancy-select.is-open .dashboard-fancy-select-button::after {
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+
+.dashboard-fancy-select-menu {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + 0.45rem);
+  z-index: 80;
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.42rem;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 176, 95, 0.18);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(216, 176, 95, 0.14), transparent 40%),
+    rgba(9, 11, 17, 0.98);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.46);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.dashboard-fancy-select.is-open .dashboard-fancy-select-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.dashboard-fancy-select-option {
+  min-height: 2.45rem;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 248, 239, 0.76);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.dashboard-fancy-select-option:hover,
+.dashboard-fancy-select-option:focus-visible,
+.dashboard-fancy-select-option.is-selected {
+  background: rgba(216, 176, 95, 0.14);
+  color: #fff8ef;
+}
+
+.dashboard-fancy-select-option:hover {
+  transform: translateX(2px);
+}
+
 .dashboard-developer-attachments-preview {
   display: grid;
   gap: 0.7rem;
@@ -7125,14 +7252,15 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-developer-attachment-preview-item.is-image {
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .dashboard-developer-attachment-preview-item.is-image:hover,
 .dashboard-developer-attachment-preview-item.is-image:focus-visible {
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.01);
   border-color: rgba(216, 176, 95, 0.24);
   background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
 }
 
 .dashboard-developer-attachment-preview-item strong {
@@ -7349,6 +7477,14 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   z-index: 60;
 }
 
+.dashboard-modal:not([hidden]) .dashboard-modal-backdrop {
+  animation: dashboardBackdropIn 180ms ease-out both;
+}
+
+.dashboard-modal:not([hidden]) .dashboard-modal-dialog {
+  animation: dashboardModalRise 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
 .dashboard-modal-backdrop {
   position: absolute;
   inset: 0;
@@ -7397,6 +7533,40 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-modal-open {
   overflow: hidden;
+}
+
+@keyframes dashboardBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dashboardModalRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-modal:not([hidden]) .dashboard-modal-backdrop,
+  .dashboard-modal:not([hidden]) .dashboard-modal-dialog {
+    animation: none;
+  }
+
+  .dashboard-fancy-select-menu,
+  .dashboard-fancy-select-button,
+  .dashboard-fancy-select-option,
+  .dashboard-developer-attachment-preview-item.is-image {
+    transition: none;
+  }
 }
 
 .dashboard-chip[data-role="developer"] {
@@ -8863,6 +9033,34 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .theme-light .dashboard-deadline-cell.is-today {
   border-color: rgba(190, 118, 22, 0.22);
+}
+
+.theme-light .dashboard-fancy-select-button {
+  border-color: rgba(24, 32, 44, 0.12);
+  background: linear-gradient(180deg, rgba(251, 247, 240, 0.98), rgba(244, 237, 226, 0.98));
+  color: #18202c;
+}
+
+.theme-light .dashboard-fancy-select-button::after {
+  border-color: rgba(24, 32, 44, 0.72);
+}
+
+.theme-light .dashboard-fancy-select-menu {
+  border-color: rgba(191, 90, 50, 0.18);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(191, 90, 50, 0.12), transparent 40%),
+    rgba(255, 252, 248, 0.99);
+}
+
+.theme-light .dashboard-fancy-select-option {
+  color: rgba(24, 32, 44, 0.78);
+}
+
+.theme-light .dashboard-fancy-select-option:hover,
+.theme-light .dashboard-fancy-select-option:focus-visible,
+.theme-light .dashboard-fancy-select-option.is-selected {
+  background: rgba(191, 90, 50, 0.1);
+  color: #18202c;
 }
 
 .workspace-page-developer .dashboard-panel-history {
