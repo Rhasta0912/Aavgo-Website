@@ -6257,6 +6257,20 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   grid-column: auto;
 }
 
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-task-modal-side-grid .dashboard-control-field::after {
+  content: "";
+  display: block;
+  min-height: 2.35rem;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-task-modal-side-grid .dashboard-control-field:has(.dashboard-control-hint)::after {
+  display: none;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-developer-task-modal-side-grid .dashboard-control-hint {
+  min-height: 2.35rem;
+}
+
 .workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field-wide {
   grid-column: 1 / -1;
 }
