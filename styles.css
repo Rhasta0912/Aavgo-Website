@@ -5767,6 +5767,8 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 
 .dashboard-hours-sheet-wrap {
   overflow: auto;
+  isolation: isolate;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(216, 176, 95, 0.65) rgba(255, 255, 255, 0.08);
 }
@@ -5794,14 +5796,15 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-hours-sheet {
   width: max-content;
   min-width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
 }
 
 .dashboard-hours-sheet thead th {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 30;
   padding: 0.82rem 0.78rem;
   background: #11141c;
   color: rgba(255, 248, 239, 0.72);
@@ -5810,9 +5813,12 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   letter-spacing: 0.11em;
   text-transform: uppercase;
   white-space: nowrap;
+  border-top: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   overflow: hidden;
   text-overflow: ellipsis;
+  box-shadow: 0 10px 18px rgba(8, 10, 14, 0.26);
 }
 
 .dashboard-hours-sheet tbody td {
@@ -5859,7 +5865,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-hours-sheet tbody td:nth-child(1) {
   position: sticky;
   left: 0;
-  z-index: 6;
+  z-index: 12;
   width: 56px;
   min-width: 56px;
   max-width: 56px;
@@ -5870,7 +5876,7 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 .dashboard-hours-sheet tbody td:nth-child(2) {
   position: sticky;
   left: 56px;
-  z-index: 6;
+  z-index: 12;
   width: 185px;
   min-width: 185px;
   max-width: 185px;
@@ -5937,9 +5943,16 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
   max-width: 96px;
 }
 
+.dashboard-hours-sheet thead th:nth-child(n+3) {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #11141c;
+}
+
 .dashboard-hours-sheet thead th:nth-child(1),
 .dashboard-hours-sheet thead th:nth-child(2) {
-  z-index: 7;
+  z-index: 40;
   box-shadow: 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
