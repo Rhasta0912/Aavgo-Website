@@ -2005,10 +2005,10 @@ function renderHoursRows(people, selectedDiscordId) {
         <td>${escapeHtml(person?.team || "Unassigned")}</td>
         <td>${escapeHtml(getPrimaryHotelLabel(person))}</td>
         <td>${activeLabel}</td>
-        <td>${formatHours(person?.todayHours)}</td>
-        <td>${formatHours(person?.weeklyHours)}</td>
-        <td>${formatHours(person?.monthlyHours)}</td>
-        <td>${formatHours(person?.allHours)}</td>
+        <td>${escapeHtml(person?.todayHoursLabel || formatHours(person?.todayHours))}</td>
+        <td>${escapeHtml(person?.weeklyHoursLabel || formatHours(person?.weeklyHours))}</td>
+        <td>${escapeHtml(person?.monthlyHoursLabel || formatHours(person?.monthlyHours))}</td>
+        <td>${escapeHtml(person?.allHoursLabel || formatHours(person?.finalizedAllHours ?? person?.allHours))}</td>
       </tr>
     `;
   }).join("");
@@ -2100,13 +2100,13 @@ function renderFullHoursRows(people, monthValue = "offset:0") {
             isOnShift ? "is-on-shift" : ""
           ].filter(Boolean).join(" ");
           return `<td class="${className}" data-day="${day}" data-hours="${hours}" title="Double-click to edit hours">
-            <div class="dashboard-hours-cell-copy">${isOnShift ? "On-Shift" : hours > 0 ? escapeHtml(formatHours(hours)) : ""}</div>
+            <div class="dashboard-hours-cell-copy">${isOnShift ? "IN SHIFT" : hours > 0 ? escapeHtml(formatHours(hours)) : ""}</div>
           </td>`;
         }).join("")}
         <td><div class="dashboard-hours-cell-copy">${formatHours(monthTotals.firstHalf)}</div></td>
         <td><div class="dashboard-hours-cell-copy">${formatHours(monthTotals.secondHalf)}</div></td>
         <td><div class="dashboard-hours-cell-copy">${formatHours(monthTotals.month)}</div></td>
-        <td><div class="dashboard-hours-cell-copy">${formatHours(person?.allHours)}</div></td>
+        <td><div class="dashboard-hours-cell-copy">${escapeHtml(person?.activeNow ? "IN SHIFT" : formatHours(person?.finalizedAllHours ?? person?.allHours))}</div></td>
       </tr>
     `);
   });
@@ -2336,13 +2336,13 @@ function renderSelectedPeriods(person) {
     <article class="dashboard-period-card">
       <span class="dashboard-chip">${escapeHtml(firstHalf?.label || "1st - 15th")}</span>
       <strong>${formatHours(firstHalf?.totalHours)}</strong>
-      <p>First payroll cut for the selected staff member.</p>
+      <p>Finalized logout hours only. Active shifts stay out of payroll totals until logout.</p>
       ${renderPeriodDays(firstHalf?.days)}
     </article>
     <article class="dashboard-period-card">
       <span class="dashboard-chip">${escapeHtml(secondHalf?.label || "16th - month end")}</span>
       <strong>${formatHours(secondHalf?.totalHours)}</strong>
-      <p>Second payroll cut through the end of the month.</p>
+      <p>Manual changes are listed below for audit before payroll review.</p>
       ${renderPeriodDays(secondHalf?.days)}
     </article>
   `;
@@ -3940,7 +3940,80 @@ function initializeDeveloperWorkspace() {
       isStartingSoon: Boolean(item.startDate) && normalizeStatus(item.status) !== "Done" && startDelta !== null && startDelta >= 0 && startDelta <= 3
     };
   };
+  const MAX_ATTACHMENT_COUNT = 4;
+  const MAX_ATTACHMENT_SIZE_BYTES = 900 * 1024;
+  const MAX_ATTACHMENT_TOTAL_BYTES = 2400 * 1024;
   const attachmentSizeLabel = (size = 0) => `${Math.max(1, Math.ceil(Number(size || 0) / 1024))} KB`;
+  const getSelectedAttachmentFiles = () => [...Array.from(fields.attachments?.files || []), ...pastedAttachmentFiles];
+  const getExistingAttachmentBytes = () => (Array.isArray(attachmentPreviewSeed) ? attachmentPreviewSeed : [])
+    .reduce((total, attachment) => total + Number(attachment?.size || 0), 0);
+  const trimAttachmentSelection = () => {
+    const currentFiles = getSelectedAttachmentFiles();
+    if (currentFiles.length <= MAX_ATTACHMENT_COUNT) return false;
+    pastedAttachmentFiles = pastedAttachmentFiles.slice(0, Math.max(0, MAX_ATTACHMENT_COUNT - Array.from(fields.attachments?.files || []).length));
+    return true;
+  };
+  const compressImageFile = (file, options = {}) => new Promise((resolve) => {
+    const type = String(file?.type || "").toLowerCase();
+    if (!type.startsWith("image/") || type === "image/gif" || typeof Image !== "function") {
+      resolve(file);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxSide = Number(options.maxSide || 1280);
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || image.width || maxSide, image.naturalHeight || image.height || maxSide));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width || 1) * scale));
+      canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height || 1) * scale));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        resolve(file);
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          resolve(file);
+          return;
+        }
+        const safeName = String(file.name || "screenshot.png").replace(/\.[^.]+$/, ".jpg");
+        const compressed = typeof File === "function"
+          ? new File([blob], safeName, { type: "image/jpeg", lastModified: Date.now() })
+          : Object.assign(blob, { name: safeName, lastModified: Date.now() });
+        resolve(Number(compressed.size || 0) < Number(file.size || 0) ? compressed : file);
+      }, "image/jpeg", 0.78);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+    image.src = objectUrl;
+  });
+  const readFileAsDataUrl = async (file) => {
+    const preparedFile = await compressImageFile(file);
+    if (Number(preparedFile.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
+      throw new Error(`${preparedFile.name || "Attachment"} is still ${attachmentSizeLabel(preparedFile.size)} after compression. Keep each file under ${attachmentSizeLabel(MAX_ATTACHMENT_SIZE_BYTES)}.`);
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          id: createTaskId(),
+          name: preparedFile.name,
+          type: preparedFile.type || "application/octet-stream",
+          size: preparedFile.size || 0,
+          dataUrl: String(reader.result || ""),
+          createdAt: nowIso()
+        });
+      };
+      reader.onerror = () => reject(reader.error || new Error("Unable to read attachment."));
+      reader.readAsDataURL(preparedFile);
+    });
+  };
   const compareTaskOrder = (left = {}, right = {}) => {
     const leftOrder = Number(left.order || 0);
     const rightOrder = Number(right.order || 0);
@@ -4008,6 +4081,7 @@ function initializeDeveloperWorkspace() {
   const renderAttachmentPreview = () => {
     if (!fields.attachmentsPreview) return;
     clearAttachmentPreviewUrls();
+    const wasTrimmed = trimAttachmentSelection();
     const existingAttachments = Array.isArray(attachmentPreviewSeed) ? attachmentPreviewSeed : [];
     const selectedFiles = Array.from(fields.attachments?.files || []);
     const selectedAttachments = [...selectedFiles, ...pastedAttachmentFiles].map(file => {
@@ -4069,9 +4143,16 @@ function initializeDeveloperWorkspace() {
     const selectedMarkup = selectedAttachments.length ? `
       <div class="dashboard-developer-attachment-preview-group">
         <span class="dashboard-kicker">Selected now</span>
+        <small class="dashboard-control-hint">Images are compressed before saving. Limit ${MAX_ATTACHMENT_COUNT} files, ${attachmentSizeLabel(MAX_ATTACHMENT_SIZE_BYTES)} each.</small>
         <div class="dashboard-developer-attachment-preview-list">
           ${selectedAttachments.map(item => renderEntry(item, false)).join("")}
         </div>
+      </div>
+    ` : "";
+    const trimMarkup = wasTrimmed ? `
+      <div class="dashboard-inline-notice dashboard-inline-notice-warning">
+        <strong>Attachment limit applied.</strong>
+        <p>Only the first ${MAX_ATTACHMENT_COUNT} files are kept to protect website bandwidth.</p>
       </div>
     ` : "";
     if (!existingMarkup && !selectedMarkup) {
@@ -4083,7 +4164,7 @@ function initializeDeveloperWorkspace() {
       `;
       return;
     }
-    fields.attachmentsPreview.innerHTML = `${existingMarkup}${selectedMarkup}`;
+    fields.attachmentsPreview.innerHTML = `${trimMarkup}${existingMarkup}${selectedMarkup}`;
   };
   const escapeAttr = (value) => escapeHtml(String(value || ""));
   const getActorName = () => currentUser.displayName || "Leadership";
@@ -5180,9 +5261,14 @@ function initializeDeveloperWorkspace() {
   });
 
   const readAttachments = async () => {
-    const files = [...Array.from(fields.attachments?.files || []), ...pastedAttachmentFiles];
+    const files = getSelectedAttachmentFiles().slice(0, MAX_ATTACHMENT_COUNT);
     if (!files.length) return [];
-    return Promise.all(files.map(readFileAsDataUrl));
+    const attachments = await Promise.all(files.map(readFileAsDataUrl));
+    const totalBytes = getExistingAttachmentBytes() + attachments.reduce((sum, attachment) => sum + Number(attachment?.size || 0), 0);
+    if (totalBytes > MAX_ATTACHMENT_TOTAL_BYTES) {
+      throw new Error(`This card would store ${attachmentSizeLabel(totalBytes)} of attachments. Keep each card under ${attachmentSizeLabel(MAX_ATTACHMENT_TOTAL_BYTES)} to protect bandwidth.`);
+    }
+    return attachments;
   };
 
   const createPastedImageFile = (blob, index = 0) => {
@@ -5207,9 +5293,14 @@ function initializeDeveloperWorkspace() {
     if (!imageFiles.length) return;
 
     event.preventDefault();
-    pastedAttachmentFiles = [...pastedAttachmentFiles, ...imageFiles];
+    const remainingSlots = Math.max(0, MAX_ATTACHMENT_COUNT - getSelectedAttachmentFiles().length);
+    if (remainingSlots <= 0) {
+      setFeedback(`Attachment limit reached. Keep up to ${MAX_ATTACHMENT_COUNT} files per card.`, true);
+      return;
+    }
+    pastedAttachmentFiles = [...pastedAttachmentFiles, ...imageFiles.slice(0, remainingSlots)];
     renderAttachmentPreview();
-    setFeedback(`${imageFiles.length} pasted image${imageFiles.length === 1 ? "" : "s"} added to this card.`, false);
+    setFeedback(`${Math.min(imageFiles.length, remainingSlots)} pasted image${Math.min(imageFiles.length, remainingSlots) === 1 ? "" : "s"} added and will be compressed on save.`, false);
   };
 
   if (fields.attachments) {
@@ -5246,7 +5337,13 @@ function initializeDeveloperWorkspace() {
     const note = String(fields.notes?.value || "").trim();
     const nextStatus = normalizeStatus(fields.status?.value || "To Do");
     const editingIndex = editingTaskId ? items.findIndex(item => String(item.id || "") === String(editingTaskId || "")) : -1;
-    const attachments = await readAttachments().catch(() => []);
+    let attachments = [];
+    try {
+      attachments = await readAttachments();
+    } catch (error) {
+      setFeedback(error?.message || "Attachments could not be saved. Try a smaller screenshot.", true);
+      return;
+    }
 
     if (editingIndex >= 0) {
       const existing = items[editingIndex];

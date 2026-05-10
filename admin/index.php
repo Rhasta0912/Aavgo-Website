@@ -273,6 +273,10 @@ $csrfToken = aavgo_csrf_token();
               <span>Pending bot actions</span>
               <strong id="hours-sync-pending">0</strong>
             </div>
+            <div>
+              <span>Website version</span>
+              <strong id="hours-site-version"><?php echo htmlspecialchars(aavgo_site_version(), ENT_QUOTES, 'UTF-8'); ?></strong>
+            </div>
           </div>
           <p class="dashboard-panel-copy" id="hours-sync-health-copy">The board will flag stale data before high-risk actions are sent.</p>
         </article>
@@ -621,10 +625,11 @@ $csrfToken = aavgo_csrf_token();
             <div>
               <h3 id="hours-editor-summary-selected">Pick a staff row to edit hours.</h3>
             </div>
-            <div class="dashboard-hours-editor-inline-actions">
-              <span class="dashboard-chip">Double-click any day cell</span>
-              <button class="button button-secondary dashboard-inline-button" id="hours-open-editor-secondary" type="button">Open hours editor</button>
-            </div>
+          <div class="dashboard-hours-editor-inline-actions">
+            <span class="dashboard-chip">Double-click any day cell</span>
+            <span class="dashboard-chip dashboard-chip-warning">Active shifts show IN SHIFT until logout</span>
+            <button class="button button-secondary dashboard-inline-button" id="hours-open-editor-secondary" type="button">Open hours editor</button>
+          </div>
             <p class="dashboard-panel-copy" id="hours-editor-feedback">Select a staff row in the full hours table, then add or remove hours with a clear reason.</p>
           </div>
 

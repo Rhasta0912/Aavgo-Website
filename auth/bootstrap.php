@@ -73,6 +73,31 @@ function aavgo_asset_url(string $path): string
     return $normalizedPath . '?v=' . rawurlencode($version);
 }
 
+function aavgo_site_version(): string
+{
+    $root = aavgo_repo_root_path();
+    $gitHeadPath = $root . '/.git/HEAD';
+
+    if (is_file($gitHeadPath)) {
+        $head = trim((string) file_get_contents($gitHeadPath));
+        if (strncmp($head, 'ref:', 4) === 0) {
+            $ref = trim(substr($head, 4));
+            $refPath = $root . '/.git/' . $ref;
+            if (is_file($refPath)) {
+                $hash = trim((string) file_get_contents($refPath));
+                if ($hash !== '') {
+                    return substr($hash, 0, 7);
+                }
+            }
+        } elseif ($head !== '') {
+            return substr($head, 0, 7);
+        }
+    }
+
+    $scriptPath = $root . '/script.js';
+    return is_file($scriptPath) ? 'mtime-' . date('YmdHi', (int) filemtime($scriptPath)) : 'unknown';
+}
+
 function aavgo_bootstrap_session(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {

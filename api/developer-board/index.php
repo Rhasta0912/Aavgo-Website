@@ -34,6 +34,41 @@ $board = is_array($decoded['state'] ?? null) ? $decoded['state'] : $decoded;
 $tasks = is_array($board['tasks'] ?? null) ? $board['tasks'] : [];
 $history = is_array($board['history'] ?? null) ? $board['history'] : [];
 $audit = is_array($board['audit'] ?? null) ? $board['audit'] : [];
+$maxAttachmentCount = 4;
+$maxAttachmentBytes = 900 * 1024;
+$maxTaskAttachmentBytes = 2400 * 1024;
+
+foreach ($tasks as &$task) {
+    if (!is_array($task)) {
+        continue;
+    }
+
+    $attachments = is_array($task['attachments'] ?? null) ? array_values($task['attachments']) : [];
+    $safeAttachments = [];
+    $taskAttachmentBytes = 0;
+
+    foreach ($attachments as $attachment) {
+        if (!is_array($attachment) || count($safeAttachments) >= $maxAttachmentCount) {
+            continue;
+        }
+
+        $size = (int) ($attachment['size'] ?? 0);
+        if ($size <= 0 || $size > $maxAttachmentBytes || ($taskAttachmentBytes + $size) > $maxTaskAttachmentBytes) {
+            continue;
+        }
+
+        $dataUrl = trim((string) ($attachment['dataUrl'] ?? ''));
+        if ($dataUrl === '') {
+            continue;
+        }
+
+        $safeAttachments[] = $attachment;
+        $taskAttachmentBytes += $size;
+    }
+
+    $task['attachments'] = $safeAttachments;
+}
+unset($task);
 $existingBoard = aavgo_read_developer_board();
 $supportRequests = is_array($board['supportRequests'] ?? null)
     ? $board['supportRequests']
