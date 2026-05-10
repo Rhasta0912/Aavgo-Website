@@ -3873,6 +3873,23 @@ function initializeDeveloperWorkspace() {
     displayName: String(window.AAVGO_CURRENT_USER?.displayName || window.AAVGO_CURRENT_USER?.name || "Leadership").trim() || "Leadership",
     roleSummary: String(window.AAVGO_CURRENT_USER?.roleSummary || window.AAVGO_CURRENT_USER?.role || "Leadership").trim() || "Leadership"
   };
+  const developerOwnerOptions = (() => {
+    const defaults = ["Alpha", "Astra"];
+    const currentName = currentUser.displayName || "";
+    return [...new Set([...defaults, currentName].map(name => String(name || "").trim()).filter(Boolean))];
+  })();
+  const syncDeveloperOwnerOptions = (selectedOwner = "") => {
+    if (!fields.owner || String(fields.owner.tagName || "").toLowerCase() !== "select") return;
+    const selected = String(selectedOwner || fields.owner.value || "").trim();
+    const options = [...developerOwnerOptions];
+    if (selected && !options.includes(selected)) {
+      options.push(selected);
+    }
+    fields.owner.innerHTML = [
+      '<option value="">Choose a developer</option>',
+      ...options.map(name => `<option value="${escapeHtml(name)}"${name === selected ? " selected" : ""}>${escapeHtml(name)}</option>`)
+    ].join("");
+  };
   const boardBootstrap = (() => {
     const globalBoard = window.__AAVGO_DEVELOPER_BOARD__;
     if (globalBoard && typeof globalBoard === "object") {
@@ -4531,6 +4548,7 @@ function initializeDeveloperWorkspace() {
 
   const resetFields = (status = "To Do") => {
     if (fields.title) fields.title.value = "";
+    syncDeveloperOwnerOptions("");
     if (fields.owner) fields.owner.value = "";
     if (fields.start) aavgoDispatchInputChange(fields.start, "");
     if (fields.deadline) aavgoDispatchInputChange(fields.deadline, "");
@@ -4708,6 +4726,7 @@ function initializeDeveloperWorkspace() {
     editingTaskId = String(task.id || "");
     resetFields(task.status || "To Do");
     if (fields.title) fields.title.value = task.title || "";
+    syncDeveloperOwnerOptions(task.owner || "");
     if (fields.owner) fields.owner.value = task.owner || "";
     if (fields.start) aavgoDispatchInputChange(fields.start, String(task.startDate || ""));
     if (fields.deadline) aavgoDispatchInputChange(fields.deadline, String(task.deadlineDate || ""));

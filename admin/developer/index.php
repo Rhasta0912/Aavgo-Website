@@ -315,7 +315,11 @@ $csrfToken = aavgo_csrf_token();
             </label>
             <label class="dashboard-control-field">
               <span>Owner</span>
-              <input id="developer-task-owner" type="text" maxlength="60" placeholder="Who is handling this?">
+              <select id="developer-task-owner">
+                <option value="">Choose a developer</option>
+                <option value="Alpha">Alpha</option>
+                <option value="Astra">Astra</option>
+              </select>
             </label>
             <label class="dashboard-control-field dashboard-control-field-wide">
               <span>Note / context</span>

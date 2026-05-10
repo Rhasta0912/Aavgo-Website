@@ -7026,7 +7026,70 @@ body.sidebar-collapsed .workspace-page-user .dashboard-user-nav-menu {
 }
 
 .dashboard-modal-dialog.dashboard-developer-task-modal {
+  position: relative;
   width: min(1280px, calc(100vw - 1.5rem));
+  border: 1px solid rgba(216, 176, 95, 0.16);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(216, 176, 95, 0.13), transparent 34%),
+    radial-gradient(circle at 88% 16%, rgba(191, 90, 50, 0.13), transparent 32%),
+    linear-gradient(145deg, rgba(17, 20, 28, 0.99) 0%, rgba(10, 12, 18, 0.99) 54%, rgba(26, 19, 17, 0.98) 100%);
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.dashboard-modal-dialog.dashboard-developer-task-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(216, 176, 95, 0.22), transparent 18rem),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 11px);
+  opacity: 0.5;
+}
+
+.dashboard-modal-dialog.dashboard-developer-task-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-panel-heading-tight {
+  padding: 0.25rem 0 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-panel-heading-tight h2 {
+  max-width: 38rem;
+  letter-spacing: -0.06em;
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field {
+  padding: 0.75rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field:focus-within {
+  border-color: rgba(216, 176, 95, 0.24);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field input,
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-field select,
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-textarea,
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-deadline-trigger {
+  border-radius: 13px;
+  border-color: rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(180deg, rgba(17, 20, 28, 0.92), rgba(9, 11, 17, 0.92));
+}
+
+.workspace-page-developer .dashboard-developer-task-modal .dashboard-control-textarea {
+  min-height: 12rem;
 }
 
 .dashboard-developer-attachments-preview {
